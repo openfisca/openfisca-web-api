@@ -1,0 +1,11 @@
+build/
+cache/
+config-*.ini
+development-*.ini
+dist/
+*.egg-info
+*.mo
+*.pyc
+*.pyo
+*~
+
