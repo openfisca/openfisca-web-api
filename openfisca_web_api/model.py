@@ -26,12 +26,22 @@
 """The application's model objects"""
 
 
+#from openfisca_core import model as core_model
+
+
 #def configure(ctx):
 #    pass
 
 
 #def init():
-#    pass
+#    # Initialize model from OpenFisca-Core model.
+#    core_model_public_keys = getattr(core_model, '__all__', None)
+#    if core_model_public_keys is None:
+#        globals().update(core_model.__dict__)
+#    else:
+#        model_dict = globals()
+#        for key in core_model_public_keys:
+#            model_dict[key] = getattr(core_model, key)
 
 
 #def setup():

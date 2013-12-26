@@ -26,6 +26,8 @@
 """Root controllers"""
 
 
+from openfisca_core import model
+
 from . import contexts, templates, urls, wsgihelpers
 
 
@@ -35,6 +37,7 @@ router = None
 @wsgihelpers.wsgify
 def index(req):
     ctx = contexts.Ctx(req)
+    print model.InputDescription
     return templates.render(ctx, '/index.mako')
 
 

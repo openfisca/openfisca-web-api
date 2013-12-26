@@ -97,7 +97,9 @@ def load_environment(global_conf, app_conf):
         errorware['from_address'] = conf['from_address']
         errorware['smtp_server'] = conf.get('smtp_server', 'localhost')
 
-    openfisca_web_api.model = model = importlib.import_module('.model', package = conf['country_package'])
+    country_package = importlib.import_module(conf['country_package'])
+    country_package.init_country()
+
 #    model.init()
 
     # Create the Mako TemplateLookup, with the default auto-escaping.
