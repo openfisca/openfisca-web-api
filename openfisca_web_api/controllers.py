@@ -26,18 +26,159 @@
 """Root controllers"""
 
 
-from openfisca_core import model
+import collections
 
-from . import contexts, templates, urls, wsgihelpers
+from openfisca_core import model
+from openfisca_core.simulations import ScenarioSimulation
+
+from . import contexts, conv, templates, urls, wsgihelpers
 
 
 router = None
 
 
 @wsgihelpers.wsgify
+def api1_simulate(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'POST', req.method
+
+    inputs_converters = dict(
+        # Shared secret between client and server
+#        api_key = conv.pipe(
+#            conv.test_isinstance(basestring),
+#            conv.input_to_uuid,
+#            conv.not_none,
+#            ),
+        # For asynchronous calls
+        context = conv.test_isinstance(basestring),
+        )
+
+    content_type = req.content_type
+    if content_type is not None:
+        content_type = content_type.split(';', 1)[0].strip()
+    if content_type == 'application/json':
+        inputs, error = conv.pipe(
+            conv.make_input_to_json(),
+            conv.test_isinstance(dict),
+            )(req.body, state = ctx)
+        if error is not None:
+            return wsgihelpers.respond_json(ctx,
+                collections.OrderedDict(sorted(dict(
+                    apiVersion = '1.0',
+                    error = collections.OrderedDict(sorted(dict(
+                        code = 400,  # Bad Request
+                        errors = [error],
+                        message = ctx._(u'Invalid JSON in request POST body'),
+                        ).iteritems())),
+                    method = req.script_name,
+                    params = req.body,
+                    url = req.url.decode('utf-8'),
+                    ).iteritems())),
+                headers = headers,
+                )
+        inputs_converters.update(dict(
+            value = conv.pipe(
+                model.Scenario.json_to_attributes,
+                conv.not_none,
+                ),
+            ))
+    else:
+        # URL-encoded POST.
+        inputs = dict(req.POST)
+        inputs_converters.update(dict(
+            value = conv.pipe(
+                conv.make_input_to_json(),
+                model.Scenario.json_to_attributes,
+                conv.not_none,
+                ),
+            ))
+
+    data, errors = conv.struct(inputs_converters)(inputs, state = ctx)
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [errors],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+#    api_key = data['api_key']
+#    account = model.Account.find_one(
+#        dict(
+#            api_key = api_key,
+#            ),
+#        as_class = collections.OrderedDict,
+#        )
+#    if account is None:
+#        return wsgihelpers.respond_json(ctx,
+#            collections.OrderedDict(sorted(dict(
+#                apiVersion = '1.0',
+#                context = data['context'],
+#                error = collections.OrderedDict(sorted(dict(
+#                    code = 401,  # Unauthorized
+#                    message = ctx._('Unknown API Key: {}').format(api_key),
+#                    ).iteritems())),
+#                method = req.script_name,
+#                params = inputs,
+#                url = req.url.decode('utf-8'),
+#                ).iteritems())),
+#            headers = headers,
+#            )
+#    if not account.admin:
+#        return wsgihelpers.respond_json(ctx,
+#            collections.OrderedDict(sorted(dict(
+#                apiVersion = '1.0',
+#                context = data['context'],
+#                error = collections.OrderedDict(sorted(dict(
+#                    code = 403,  # Forbidden
+#                    message = ctx._('Non-admin API Key: {}').format(api_key),
+#                    ).iteritems())),
+#                method = req.script_name,
+#                params = inputs,
+#                url = req.url.decode('utf-8'),
+#                ).iteritems())),
+#            headers = headers,
+#            )
+
+    scenario_attributes = data['value']
+    simulation = ScenarioSimulation()
+    simulation.set_config(year = scenario_attributes.pop('year'), country = 'france', reforme = False, nmen = 3,
+        maxrev = 100000, xaxis = 'sali')
+    simulation.scenario.__dict__.update(scenario_attributes)
+    simulation.set_param()
+
+    # The aefa prestation can be disabled by uncommenting the following line:
+    # simulation.disable_prestations( ['aefa'])
+    df = simulation.get_results_dataframe()
+    print df.to_string()
+
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            context = data['context'],
+            method = req.script_name,
+            params = inputs,
+            url = req.url.decode('utf-8'),
+            value = df.to_json(orient = 'index'),
+            ).iteritems())),
+        headers = headers,
+        )
+
+
+@wsgihelpers.wsgify
 def index(req):
     ctx = contexts.Ctx(req)
-    print model.InputDescription
     return templates.render(ctx, '/index.mako')
 
 
@@ -46,15 +187,6 @@ def make_router():
     global router
     router = urls.make_router(
         ('GET', '^/?$', index),
-
-#        (None, '^/admin/accounts(?=/|$)', accounts.route_admin_class),
-#        (None, '^/admin/formulas(?=/|$)', formulas.route_admin_class),
-#        (None, '^/admin/sessions(?=/|$)', sessions.route_admin_class),
-#        (None, '^/admin/parameters(?=/|$)', parameters.route_admin_class),
-#        (None, '^/api/1/accounts(?=/|$)', accounts.route_api1_class),
-#        (None, '^/api/1/formulas(?=/|$)', formulas.route_api1_class),
-#        (None, '^/api/1/parameters(?=/|$)', parameters.route_api1_class),
-#        ('POST', '^/login/?$', accounts.login),
-#        ('POST', '^/logout/?$', accounts.logout),
+        ('POST', '^/api/1/simulate/?$', api1_simulate),
         )
     return router
