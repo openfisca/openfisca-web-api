@@ -154,7 +154,7 @@ def api1_simulate(req):
     scenario_attributes = data['value']
     simulation = ScenarioSimulation()
     simulation.set_config(year = scenario_attributes.pop('year'), reforme = False, nmen = 3,
-        maxrev = 100000, xaxis = scenario_attributes.pop('xaxis'))
+        maxrev = 100000, x_axis = scenario_attributes.pop('x_axis'))
     simulation.scenario.__dict__.update(scenario_attributes)
     simulation.set_param()
 
