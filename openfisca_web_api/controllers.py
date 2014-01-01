@@ -27,13 +27,16 @@
 
 
 import collections
+import datetime
+import itertools
+import os
 
-from openfisca_core import model
-from openfisca_core.simulations import ScenarioSimulation
+from openfisca_core import datatables, model, parameters, simulations, taxbenefitsystems
 
 from . import contexts, conv, templates, urls, wsgihelpers
 
 
+N_ = lambda message: message
 router = None
 
 
@@ -44,58 +47,94 @@ def api1_simulate(req):
 
     assert req.method == 'POST', req.method
 
-    inputs_converters = dict(
-        # Shared secret between client and server
-#        api_key = conv.pipe(
-#            conv.test_isinstance(basestring),
-#            conv.input_to_uuid,
-#            conv.not_none,
-#            ),
-        # For asynchronous calls
-        context = conv.test_isinstance(basestring),
-        )
-
     content_type = req.content_type
     if content_type is not None:
         content_type = content_type.split(';', 1)[0].strip()
-    if content_type == 'application/json':
-        inputs, error = conv.pipe(
-            conv.make_input_to_json(),
-            conv.test_isinstance(dict),
-            )(req.body, state = ctx)
-        if error is not None:
-            return wsgihelpers.respond_json(ctx,
-                collections.OrderedDict(sorted(dict(
-                    apiVersion = '1.0',
-                    error = collections.OrderedDict(sorted(dict(
-                        code = 400,  # Bad Request
-                        errors = [error],
-                        message = ctx._(u'Invalid JSON in request POST body'),
-                        ).iteritems())),
-                    method = req.script_name,
-                    params = req.body,
-                    url = req.url.decode('utf-8'),
+    if content_type != 'application/json':
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    message = ctx._(u'Bad content-type: {}').format(content_type),
                     ).iteritems())),
-                headers = headers,
-                )
-        inputs_converters.update(dict(
-            value = conv.pipe(
-                model.Scenario.json_to_attributes,
-                conv.not_none,
-                ),
-            ))
-    else:
-        # URL-encoded POST.
-        inputs = dict(req.POST)
-        inputs_converters.update(dict(
-            value = conv.pipe(
-                conv.make_input_to_json(),
-                model.Scenario.json_to_attributes,
-                conv.not_none,
-                ),
-            ))
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
 
-    data, errors = conv.struct(inputs_converters)(inputs, state = ctx)
+    inputs, error = conv.pipe(
+        conv.make_input_to_json(),
+        conv.test_isinstance(dict),
+        )(req.body, state = ctx)
+    if error is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [error],
+                    message = ctx._(u'Invalid JSON in request POST body'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = req.body,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    data, errors = conv.struct(
+        dict(
+#            api_key = conv.pipe(  # Shared secret between client and server
+#                conv.test_isinstance(basestring),
+#                conv.input_to_uuid,
+#                conv.not_none,
+#                ),
+            context = conv.test_isinstance(basestring),  # For asynchronous calls
+            difference = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            maxrev = conv.pipe(
+                conv.test_isinstance((float, int)),
+                conv.anything_to_float,
+                conv.not_none,
+                ),
+            nmen = conv.pipe(
+                conv.test_isinstance(int),
+                conv.test_greater_or_equal(1),
+                conv.not_none,
+                ),
+            reform = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            scenarios = conv.pipe(
+                conv.test_isinstance(list),
+                conv.uniform_sequence(
+                    conv.pipe(
+                        model.Scenario.json_to_attributes,
+                        conv.not_none,
+                        ),
+                    ),
+                conv.test(lambda scenarios: len(scenarios) >= 1, error = N_(u'At least one scenario is required')),
+                conv.test(lambda scenarios: len(scenarios) <= 2, error = N_(u'There can be no more than 2 scenarios')),
+                conv.not_none,
+                ),
+            x_axis = conv.pipe(
+                conv.test_isinstance(basestring),
+                conv.test_in(model.x_axes.keys()),
+                ),
+            ),
+        )(inputs, state = ctx)
+    if errors is None:
+        if data['reform'] and len(data['scenarios']) > 1:
+            errors = dict(reform = ctx._(u'In reform mode, a single scenario must be provided'))
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
@@ -151,17 +190,74 @@ def api1_simulate(req):
 #            headers = headers,
 #            )
 
-    scenario_attributes = data['value']
-    simulation = ScenarioSimulation()
-    simulation.set_config(year = scenario_attributes.pop('year'), reforme = False, nmen = 3,
-        maxrev = 100000, x_axis = scenario_attributes.pop('x_axis'))
-    simulation.scenario.__dict__.update(scenario_attributes)
-    simulation.set_param()
-
+    decomp_file = os.path.join(model.DECOMP_DIR, model.DEFAULT_DECOMP_FILE)
+    difference = data['difference']
     # The aefa prestation can be disabled by uncommenting the following line:
-    # simulation.disable_prestations( ['aefa'])
-    df = simulation.get_results_dataframe()
-    print df.to_string()
+    disabled_prestations = None  # ['aefa']
+    maxrev = data['maxrev']
+    nmen = data['nmen']
+    num_table = 1
+    reform = data['reform']
+    subset = None
+    verbose = False
+
+    legislations = []
+    scenarios = []
+    for scenario_data in data['scenarios']:
+        datesim = datetime.date(scenario_data.pop('year'), 1, 1)
+
+        scenario = model.Scenario()
+        scenario.maxrev = maxrev
+        scenario.nmen = nmen
+        scenario.same_rev_couple = False
+        scenario.x_axis = data['x_axis']
+        scenario.year = datesim.year
+        scenario.__dict__.update(scenario_data)
+        scenarios.append(scenario)
+
+        reader = parameters.XmlReader(model.PARAM_FILE, datesim)
+        legislation_tree = reader.tree
+        legislation = parameters.Tree2Object(legislation_tree, defaut = True)
+        legislation.datesim = datesim
+        legislations.append(legislation)
+    if reform:
+        scenario = model.Scenario()
+        scenario.maxrev = maxrev
+        scenario.nmen = nmen
+        scenario.same_rev_couple = False
+        scenario.x_axis = data['x_axis']
+        scenario.year = datesim.year
+        scenario.__dict__.update(scenario_data)
+        scenarios.append(scenario)
+
+        reader = parameters.XmlReader(model.PARAM_FILE, datesim)
+        legislation_tree = reader.tree
+        legislation = parameters.Tree2Object(legislation_tree, defaut = False)
+        legislation.datesim = datesim
+        legislations.append(legislation)
+
+    output_trees = []
+    for index, (legislation, scenario) in enumerate(itertools.izip(legislations, scenarios)):
+        datesim = legislation.datesim
+        input_table = datatables.DataTable(model.InputDescription, datesim = datesim, num_table = num_table,
+            subset = subset, print_missing = verbose)
+        input_table.test_case = scenario
+        scenario.populate_datatable(input_table)
+
+        previous_legislation = legislations[index - 1] if index > 0 else legislation
+        output_table = taxbenefitsystems.TaxBenefitSystem(model.OutputDescription, legislation, previous_legislation,
+            datesim = datesim, num_table = num_table)
+        output_table.set_inputs(input_table)
+        output_table.disable(disabled_prestations)
+        output_table.decomp_file = decomp_file
+        output_tree = output_table.test_case_calculate()
+
+        if (difference or reform) and index > 0:
+            output_tree.difference(output_trees[0])
+
+        output_trees.append(output_tree)
+
+#    gc.collect()
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
@@ -170,7 +266,10 @@ def api1_simulate(req):
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
-            value = df.to_json(orient = 'index'),
+            value = [
+                output_tree.to_json()
+                for output_tree in output_trees
+                ],
             ).iteritems())),
         headers = headers,
         )
