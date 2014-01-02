@@ -4,7 +4,7 @@
 ## OpenFisca -- A versatile microsimulation software
 ## By: OpenFisca Team <contact@openfisca.fr>
 ##
-## Copyright (C) 2011, 2012, 2013 OpenFisca Team
+## Copyright (C) 2011, 2012, 2013, 2014 OpenFisca Team
 ## https://github.com/openfisca
 ##
 ## This file is part of OpenFisca.
@@ -103,7 +103,7 @@ ${conf['realm']}
                 ${_('{0}:').format(_('Software'))}
                 <a href="https://github.com/openfisca" rel="external">OpenFisca</a>
                 &mdash;
-                <span>Copyright © 2011, 2012, 2013 OpenFisca Team</span>
+                <span>Copyright © 2011, 2012, 2013, 2014 OpenFisca Team</span>
                 &mdash;
                 <a href="http://www.gnu.org/licenses/agpl.html" rel="external">${_(
                     'GNU Affero General Public License')}</a>
