@@ -32,25 +32,13 @@ The main decorator :class:`wsgify` turns a function into a WSGI application.
 import collections
 import json
 
-from markupsafe import Markup
 import webob.dec
 import webob.exc
-
-from . import templates
 
 
 N_ = lambda message: message
 
 
-errors_explanation = {
-    400: N_("Request is faulty"),
-    401: N_("Access is restricted to authorized persons."),
-    403: N_("Access is forbidden."),
-    404: N_("The requested page was not found."),
-    }
-errors_message = {
-    401: N_("You must login to access this page."),
-    }
 errors_title = {
     400: N_("Unable to Access"),
     401: N_("Access Denied"),
@@ -62,10 +50,6 @@ errors_title = {
 wsgify = webob.dec.wsgify
 
 
-def bad_request(ctx, **kw):
-    return error(ctx, 400, **kw)
-
-
 def discard_empty_items(data):
     if isinstance(data, collections.Mapping):
         # Use type(data) to keep OrderedDicts.
@@ -75,40 +59,6 @@ def discard_empty_items(data):
             if value is not None
             )
     return data
-
-
-def error(ctx, code, **kw):
-    response = webob.exc.status_map[code](headers = kw.pop('headers', None))
-    if code != 204:  # No content
-        body = kw.pop('body', None)
-        if body is None:
-            template_path = kw.pop('template_path', '/http-error.mako')
-            explanation = kw.pop('explanation', None)
-            if explanation is None:
-                explanation = errors_explanation.get(code)
-                explanation = ctx._(explanation) if explanation is not None else response.explanation
-            message = kw.pop('message', None)
-            if message is None:
-                message = errors_message.get(code)
-                if message is not None:
-                    message = ctx._(message)
-            title = kw.pop('title', None)
-            if title is None:
-                title = errors_title.get(code)
-                title = ctx._(title) if title is not None else response.status
-            body = templates.render(ctx, template_path,
-                comment = kw.pop('comment', None),
-                explanation = explanation,
-                message = message,
-                response = response,
-                title = title,
-                **kw)
-        response.body = body.encode('utf-8') if isinstance(body, unicode) else body
-    return response
-
-
-def forbidden(ctx, **kw):
-    return error(ctx, 403, **kw)
 
 
 def handle_cross_origin_resource_sharing(ctx):
@@ -127,56 +77,10 @@ def handle_cross_origin_resource_sharing(ctx):
         headers.append(('Access-Control-Max-Age', '3628800'))
         headers.append(('Access-Control-Allow-Methods', method))
         headers.append(('Access-Control-Allow-Headers', headers_name))
-        raise no_content(ctx, headers = headers)
+        raise webob.exc.status_map[204](headers = headers)  # No Content
     headers.append(('Access-Control-Allow-Origin', origin))
     headers.append(('Access-Control-Expose-Headers', 'WWW-Authenticate'))
     return headers
-
-
-def internal_error(ctx, **kw):
-    return error(ctx, 500, **kw)
-
-
-def method_not_allowed(ctx, **kw):
-    return error(ctx, 405, **kw)
-
-
-def no_content(ctx, headers = None):
-    return error(ctx, 204, headers = headers)
-
-
-def not_found(ctx, **kw):
-    return error(ctx, 404, **kw)
-
-
-def redirect(ctx, code = 302, location = None, **kw):
-    assert location is not None
-    location_str = location.encode('utf-8') if isinstance(location, unicode) else location
-    response = webob.exc.status_map[code](headers = kw.pop('headers', None), location = location_str)
-    body = kw.pop('body', None)
-    if body is None:
-        template_path = kw.pop('template_path', '/http-error.mako')
-        explanation = kw.pop('explanation', None)
-        if explanation is None:
-            explanation = Markup(ctx._('{0} <a href="{1}">{1}</a>.')).format(
-                ctx._(u"You'll be redirected to page"), location)
-        message = kw.pop('message', None)
-        if message is None:
-            message = errors_message.get(code)
-            if message is not None:
-                message = ctx._(message)
-        title = kw.pop('title', None)
-        if title is None:
-            title = ctx._("Redirection in progress...")
-        body = templates.render(ctx, template_path,
-            comment = kw.pop('comment', None),
-            explanation = explanation,
-            message = message,
-            response = response,
-            title = title,
-            **kw)
-    response.body = body.encode('utf-8') if isinstance(body, unicode) else body
-    return response
 
 
 def respond_json(ctx, data, code = None, headers = None, jsonp = None):
@@ -223,7 +127,3 @@ def respond_json(ctx, data, code = None, headers = None, jsonp = None):
         text = u'{0}({1})'.format(jsonp, text)
     response.text = text
     return response
-
-
-def unauthorized(ctx, **kw):
-    return error(ctx, 401, **kw)

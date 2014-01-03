@@ -29,24 +29,14 @@
 import webob
 from weberror.errormiddleware import ErrorMiddleware
 
-from . import conf, contexts, controllers, environment, urls
+from . import conf, controllers, environment, urls
 
 
 def environment_setter(app):
     """WSGI middleware that sets request-dependant environment."""
     def set_environment(environ, start_response):
         req = webob.Request(environ)
-        ctx = contexts.Ctx(req)
         urls.application_url = req.application_url
-#        if conf['host_urls'] is not None:
-#            host_url = req.host_url + '/'
-#            if host_url not in conf['host_urls']:
-#                return wsgihelpers.bad_request(ctx, explanation = ctx._('Web site not found.'))(environ,
-#                    start_response)
-
-#        from . import model
-#        model.configure(ctx)
-
         return app(req.environ, start_response)
 
     return set_environment

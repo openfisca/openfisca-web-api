@@ -34,7 +34,7 @@ import sys
 from biryani1 import strings
 
 import openfisca_web_api
-from . import conv, templates
+from . import conv
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
@@ -65,14 +65,6 @@ def load_environment(global_conf, app_conf):
                 ),
             'debug': conv.pipe(conv.guess_bool, conv.default(False)),
             'global_conf': conv.set_value(global_conf),
-#            'host_urls': conv.pipe(
-#                conv.function(lambda host_urls: host_urls.split()),
-#                conv.uniform_sequence(
-#                    conv.make_input_to_url(error_if_fragment = True, error_if_path = True, error_if_query = True,
-#                        full = True, schemes = (u'ws', u'wss')),
-#                    constructor = lambda host_urls: sorted(set(host_urls)),
-#                    ),
-#                ),
             'i18n_dir': conv.default(os.path.join(app_dir, 'i18n')),
             'log_level': conv.pipe(
                 conv.default('WARNING'),
@@ -99,15 +91,3 @@ def load_environment(global_conf, app_conf):
 
     country_package = importlib.import_module(conf['country_package'])
     country_package.init_country()
-
-#    model.init()
-
-    # Create the Mako TemplateLookup, with the default auto-escaping.
-    templates.dirs = [os.path.join(app_dir, 'templates')]
-
-
-#def setup_environment():
-#    """Setup the application environment (after it has been loaded)."""
-
-#    # Setup MongoDB database.
-#    model.setup()

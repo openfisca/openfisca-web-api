@@ -31,9 +31,9 @@ import datetime
 import itertools
 import os
 
-from openfisca_core import datatables, model, parameters, simulations, taxbenefitsystems
+from openfisca_core import datatables, model, parameters, taxbenefitsystems
 
-from . import contexts, conv, templates, urls, wsgihelpers
+from . import contexts, conv, urls, wsgihelpers
 
 
 N_ = lambda message: message
@@ -54,13 +54,11 @@ def api1_simulate(req):
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
                 apiVersion = '1.0',
-                context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
                     message = ctx._(u'Bad content-type: {}').format(content_type),
                     ).iteritems())),
                 method = req.script_name,
-                params = inputs,
                 url = req.url.decode('utf-8'),
                 ).iteritems())),
             headers = headers,
@@ -275,17 +273,10 @@ def api1_simulate(req):
         )
 
 
-@wsgihelpers.wsgify
-def index(req):
-    ctx = contexts.Ctx(req)
-    return templates.render(ctx, '/index.mako')
-
-
 def make_router():
     """Return a WSGI application that searches requests to controllers """
     global router
     router = urls.make_router(
-        ('GET', '^/?$', index),
         ('POST', '^/api/1/simulate/?$', api1_simulate),
         )
     return router

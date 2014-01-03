@@ -33,7 +33,7 @@ import urlparse
 from biryani1 import strings
 import webob
 
-from . import conf, contexts, wsgihelpers
+from . import contexts, wsgihelpers
 
 
 application_url = None  # Set to req.application_url as soon as application is called.
@@ -105,11 +105,8 @@ def get_url(ctx, *path, **query):
 #                ('?' + urllib.urlencode(query, doseq = True)) if query else '')
 
 
-# To use in Python 3:
-# def make_router(*routings, error_format = None):
-def make_router(*routings, **kwargs):
+def make_router(*routings):
     """Return a WSGI application that dispatches requests to controllers """
-    error_format = kwargs.get('error_format')
     routes = []
     for routing in routings:
         methods, regex, app = routing[:3]
@@ -126,8 +123,17 @@ def make_router(*routings, **kwargs):
             # When path_info doesn't start with a "/" this is an error or a attack => Reject request.
             # An example of an URL with such a invalid path_info: http://127.0.0.1http%3A//127.0.0.1%3A80/result?...
             ctx = contexts.Ctx(req)
-            return wsgihelpers.bad_request(ctx, explanation = ctx._(u"Invalid path: {0}").format(
-                req.path_info))(environ, start_response)
+            headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+            return wsgihelpers.respond_json(ctx,
+                dict(
+                    apiVersion = '1.0',
+                    error = dict(
+                        code = 400,  # Bad Request
+                        message = ctx._(u"Invalid path: {0}").format(req.path_info),
+                        ),
+                    ),
+                headers = headers,
+                )(environ, start_response)
         for methods, regex, app, vars in routes:
             if methods is None or req.method in methods:
                 match = regex.match(req.path_info)
@@ -140,21 +146,17 @@ def make_router(*routings, **kwargs):
                     req.path_info = req.path_info[match.end():]
                     return app(req.environ, start_response)
         ctx = contexts.Ctx(req)
-        if error_format == 'json':
-            headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
-            return wsgihelpers.respond_json(ctx,
-                dict(
-                    apiVersion = '1.0',
-                    error = dict(
-                        code = 404,  # Not Found
-                        message = ctx._(u"Path not found: {0}").format(
-                            req.path_info),
-                        ),
+        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+        return wsgihelpers.respond_json(ctx,
+            dict(
+                apiVersion = '1.0',
+                error = dict(
+                    code = 404,  # Not Found
+                    message = ctx._(u"Path not found: {0}").format(req.path_info),
                     ),
-                headers = headers,
-                )(environ, start_response)
-        return wsgihelpers.not_found(ctx, explanation = ctx._(u"Page not found: {0}").format(
-            req.path_info))(environ, start_response)
+                ),
+            headers = headers,
+            )(environ, start_response)
 
     return router
 
