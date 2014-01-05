@@ -172,21 +172,6 @@ def api1_simulate(req):
 #                ).iteritems())),
 #            headers = headers,
 #            )
-#    if not account.admin:
-#        return wsgihelpers.respond_json(ctx,
-#            collections.OrderedDict(sorted(dict(
-#                apiVersion = '1.0',
-#                context = data['context'],
-#                error = collections.OrderedDict(sorted(dict(
-#                    code = 403,  # Forbidden
-#                    message = ctx._('Non-admin API Key: {}').format(api_key),
-#                    ).iteritems())),
-#                method = req.script_name,
-#                params = inputs,
-#                url = req.url.decode('utf-8'),
-#                ).iteritems())),
-#            headers = headers,
-#            )
 
     decomp_file = os.path.join(model.DECOMP_DIR, model.DEFAULT_DECOMP_FILE)
     difference = data['difference']
@@ -196,7 +181,6 @@ def api1_simulate(req):
     nmen = data['nmen']
     num_table = 1
     reform = data['reform']
-    subset = None
     verbose = False
 
     legislations = []
@@ -213,12 +197,13 @@ def api1_simulate(req):
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
 
-        reader = parameters.XmlReader(model.PARAM_FILE, datesim)
-        legislation_tree = reader.tree
+        legislation_reader = parameters.XmlReader(model.PARAM_FILE, datesim)
+        legislation_tree = legislation_reader.tree
         legislation = parameters.Tree2Object(legislation_tree, defaut = True)
         legislation.datesim = datesim
         legislations.append(legislation)
     if reform:
+        # Keep datesim from the latest scenario (assume there is only one).
         scenario = model.Scenario()
         scenario.maxrev = maxrev
         scenario.nmen = nmen
@@ -228,22 +213,22 @@ def api1_simulate(req):
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
 
-        reader = parameters.XmlReader(model.PARAM_FILE, datesim)
-        legislation_tree = reader.tree
-        legislation = parameters.Tree2Object(legislation_tree, defaut = False)
+        legislation_reader = parameters.XmlReader(model.PARAM_FILE, datesim)
+        legislation_tree = legislation_reader.tree
+        legislation = parameters.Tree2Object(legislation_tree, defaut = False)  # default is changed.
         legislation.datesim = datesim
         legislations.append(legislation)
 
     output_trees = []
     for index, (legislation, scenario) in enumerate(itertools.izip(legislations, scenarios)):
         datesim = legislation.datesim
-        input_table = datatables.DataTable(model.InputDescription, datesim = datesim, num_table = num_table,
-            subset = subset, print_missing = verbose)
+        input_table = datatables.DataTable(model.column_by_name, datesim = datesim, num_table = num_table,
+            print_missing = verbose)
         input_table.test_case = scenario
         scenario.populate_datatable(input_table)
 
         previous_legislation = legislations[index - 1] if index > 0 else legislation
-        output_table = taxbenefitsystems.TaxBenefitSystem(model.OutputDescription, legislation, previous_legislation,
+        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, legislation, previous_legislation,
             datesim = datesim, num_table = num_table)
         output_table.set_inputs(input_table)
         output_table.disable(disabled_prestations)
@@ -254,8 +239,6 @@ def api1_simulate(req):
             output_tree.difference(output_trees[0])
 
         output_trees.append(output_tree)
-
-#    gc.collect()
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
