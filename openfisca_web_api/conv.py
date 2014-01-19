@@ -26,6 +26,4 @@
 """Conversion functions"""
 
 
-from biryani1.baseconv import *
-from biryani1.jsonconv import *
-from biryani1.states import default_state, State
+from openfisca_core.conv import *

@@ -30,8 +30,9 @@ import collections
 import datetime
 import itertools
 import os
+from xml.etree import ElementTree
 
-from openfisca_core import datatables, model, parameters, taxbenefitsystems
+from openfisca_core import datatables, legislations, legislationsxml, model, taxbenefitsystems
 
 from . import contexts, conv, urls, wsgihelpers
 
@@ -183,7 +184,13 @@ def api1_simulate(req):
     reform = data['reform']
     verbose = False
 
-    legislations = []
+    legislation_tree = ElementTree.parse(model.PARAM_FILE)
+    legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
+    legislation_xml_json, error = legislationsxml.validate_node_xml_json(legislation_xml_json, state = ctx)
+    # TODO: Fail on error.
+    _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
+
+    compact_legislations = []
     scenarios = []
     for scenario_data in data['scenarios']:
         datesim = datetime.date(scenario_data.pop('year'), 1, 1)
@@ -197,13 +204,12 @@ def api1_simulate(req):
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
 
-        legislation_reader = parameters.XmlReader(model.PARAM_FILE, datesim)
-        legislation_tree = legislation_reader.tree
-        legislation = parameters.Tree2Object(legislation_tree, defaut = True)
-        legislation.datesim = datesim
-        legislations.append(legislation)
+        dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
+        compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
+        compact_legislations.append(compact_legislation)
     if reform:
         # Keep datesim from the latest scenario (assume there is only one).
+
         scenario = model.Scenario()
         scenario.maxrev = maxrev
         scenario.nmen = nmen
@@ -213,23 +219,22 @@ def api1_simulate(req):
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
 
-        legislation_reader = parameters.XmlReader(model.PARAM_FILE, datesim)
-        legislation_tree = legislation_reader.tree
-        legislation = parameters.Tree2Object(legislation_tree, defaut = False)  # default is changed.
-        legislation.datesim = datesim
-        legislations.append(legislation)
+        # TODO: Use variant legislation instead of the default one.
+        dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
+        compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
+        compact_legislations.append(compact_legislation)
 
     output_trees = []
-    for index, (legislation, scenario) in enumerate(itertools.izip(legislations, scenarios)):
-        datesim = legislation.datesim
+    for index, (compact_legislation, scenario) in enumerate(itertools.izip(compact_legislations, scenarios)):
+        datesim = compact_legislation.datesim
         input_table = datatables.DataTable(model.column_by_name, datesim = datesim, num_table = num_table,
             print_missing = verbose)
         input_table.test_case = scenario
         scenario.populate_datatable(input_table)
 
-        previous_legislation = legislations[index - 1] if index > 0 else legislation
-        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, legislation, previous_legislation,
-            datesim = datesim, num_table = num_table)
+        previous_compact_legislation = compact_legislations[index - 1] if index > 0 else compact_legislation
+        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, compact_legislation,
+            previous_compact_legislation, datesim = datesim, num_table = num_table)
         output_table.set_inputs(input_table)
         output_table.disable(disabled_prestations)
         output_table.decomp_file = decomp_file
