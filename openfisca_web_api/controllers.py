@@ -101,12 +101,11 @@ def api1_simulate(req):
             maxrev = conv.pipe(
                 conv.test_isinstance((float, int)),
                 conv.anything_to_float,
-                conv.not_none,
                 ),
             nmen = conv.pipe(
                 conv.test_isinstance(int),
                 conv.test_greater_or_equal(1),
-                conv.not_none,
+                conv.default(1),
                 ),
             reform = conv.pipe(
                 conv.test_isinstance((bool, int)),
@@ -132,8 +131,17 @@ def api1_simulate(req):
             ),
         )(inputs, state = ctx)
     if errors is None:
-        if data['reform'] and len(data['scenarios']) > 1:
-            errors = dict(reform = ctx._(u'In reform mode, a single scenario must be provided'))
+        data, errors = conv.struct(
+            dict(
+                maxrev = conv.not_none if data['nmen'] > 1 else conv.test_none(
+                    error = u'No value allowed when "nmen" is 1'),
+                reform = conv.test_equals(False, error = u'In reform mode, only a single scenario must be provided')
+                    if len(data['scenarios']) > 1 else conv.noop,
+                x_axis = conv.not_none if data['nmen'] > 1 else conv.test_none(
+                    error = u'No value allowed when "nmen" is 1'),
+                ),
+            default = conv.noop,
+            )(data, state = ctx)
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
@@ -196,10 +204,14 @@ def api1_simulate(req):
         datesim = datetime.date(scenario_data.pop('year'), 1, 1)
 
         scenario = model.Scenario()
-        scenario.maxrev = maxrev
-        scenario.nmen = nmen
+        if nmen == 1:
+            scenario.dummy_x_axis = True
+            scenario.nmen = 2
+        else:
+            scenario.maxrev = maxrev
+            scenario.nmen = nmen
+            scenario.x_axis = data['x_axis']
         scenario.same_rev_couple = False
-        scenario.x_axis = data['x_axis']
         scenario.year = datesim.year
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
@@ -211,10 +223,14 @@ def api1_simulate(req):
         # Keep datesim from the latest scenario (assume there is only one).
 
         scenario = model.Scenario()
-        scenario.maxrev = maxrev
-        scenario.nmen = nmen
+        if nmen == 1:
+            scenario.dummy_x_axis = True
+            scenario.nmen = 2
+        else:
+            scenario.maxrev = maxrev
+            scenario.nmen = nmen
+            scenario.x_axis = data['x_axis']
         scenario.same_rev_couple = False
-        scenario.x_axis = data['x_axis']
         scenario.year = datesim.year
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
