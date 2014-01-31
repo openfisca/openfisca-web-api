@@ -123,6 +123,7 @@ def api1_simulate(req):
     inputs, error = conv.pipe(
         conv.make_input_to_json(),
         conv.test_isinstance(dict),
+        conv.not_none,
         )(req.body, state = ctx)
     if error is not None:
         return wsgihelpers.respond_json(ctx,
