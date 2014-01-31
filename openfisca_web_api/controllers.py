@@ -179,6 +179,11 @@ def api1_simulate(req):
                 conv.test(lambda scenarios: len(scenarios) <= 2, error = N_(u'There can be no more than 2 scenarios')),
                 conv.not_none,
                 ),
+            validate = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
             x_axis = conv.pipe(
                 conv.test_isinstance(basestring),
                 conv.test_in(model.x_axes.keys()),
@@ -236,6 +241,19 @@ def api1_simulate(req):
 #                ).iteritems())),
 #            headers = headers,
 #            )
+
+    if data['validate']:
+        # Only a validation is requested. Don't launch simulation
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
 
     decomp_file = os.path.join(model.DECOMP_DIR, model.DEFAULT_DECOMP_FILE)
     difference = data['difference']
