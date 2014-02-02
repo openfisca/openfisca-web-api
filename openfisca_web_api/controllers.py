@@ -278,12 +278,9 @@ def api1_simulate(req):
         datesim = datetime.date(scenario_data.pop('year'), 1, 1)
 
         scenario = model.Scenario()
-        if nmen == 1:
-            scenario.dummy_x_axis = True
-            scenario.nmen = 2
-        else:
+        scenario.nmen = nmen
+        if nmen > 1:
             scenario.maxrev = maxrev
-            scenario.nmen = nmen
             scenario.x_axis = data['x_axis']
         scenario.same_rev_couple = False
         scenario.year = datesim.year
@@ -297,12 +294,9 @@ def api1_simulate(req):
         # Keep datesim from the latest scenario (assume there is only one).
 
         scenario = model.Scenario()
-        if nmen == 1:
-            scenario.dummy_x_axis = True
-            scenario.nmen = 2
-        else:
+        scenario.nmen = nmen
+        if nmen > 1:
             scenario.maxrev = maxrev
-            scenario.nmen = nmen
             scenario.x_axis = data['x_axis']
         scenario.same_rev_couple = False
         scenario.year = datesim.year
