@@ -328,7 +328,7 @@ def api1_simulate(req):
         output_table.set_inputs(input_table)
         output_table.disable(disabled_prestations)
         output_table.decomp_file = decomp_file
-        output_tree = output_table.test_case_calculate()
+        output_tree = output_table.calculate_test_case()
 
         if (difference or reform) and index > 0:
             output_tree.difference(output_trees[0])
