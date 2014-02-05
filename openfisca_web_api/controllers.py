@@ -28,7 +28,6 @@
 
 import collections
 import datetime
-import itertools
 import os
 from xml.etree import ElementTree
 
@@ -267,16 +266,10 @@ def api1_simulate(req):
     reform = data['reform']
     verbose = False
 
-    legislation_tree = ElementTree.parse(model.PARAM_FILE)
-    legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
-    legislation_xml_json, error = legislationsxml.validate_node_xml_json(legislation_xml_json, state = ctx)
-    # TODO: Fail on error.
-    _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
-
-    compact_legislations = []
     scenarios = []
     for scenario_data in data['scenarios']:
         datesim = datetime.date(scenario_data.pop('year'), 1, 1)
+        legislation_json = scenario_data.pop('legislation_json')
 
         scenario = model.Scenario()
         scenario.nmen = nmen
@@ -287,10 +280,6 @@ def api1_simulate(req):
         scenario.year = datesim.year
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
-
-        dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
-        compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
-        compact_legislations.append(compact_legislation)
     if reform:
         # Keep datesim from the latest scenario (assume there is only one).
 
@@ -304,21 +293,17 @@ def api1_simulate(req):
         scenario.__dict__.update(scenario_data)
         scenarios.append(scenario)
 
-        # TODO: Use variant legislation instead of the default one.
-        dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
-        compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
-        compact_legislations.append(compact_legislation)
-
     output_trees = []
-    for index, (compact_legislation, scenario) in enumerate(itertools.izip(compact_legislations, scenarios)):
-        datesim = compact_legislation.datesim
+    for index, scenario in enumerate(scenarios):
+        datesim = scenario.compact_legislation.datesim
         input_table = datatables.DataTable(model.column_by_name, datesim = datesim, num_table = num_table,
             print_missing = verbose)
         input_table.test_case = scenario
         scenario.populate_datatable(input_table)
 
-        previous_compact_legislation = compact_legislations[index - 1] if index > 0 else compact_legislation
-        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, compact_legislation,
+        previous_compact_legislation = scenarios[index - 1].compact_legislation if index > 0 \
+            else scenario.compact_legislation
+        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, scenario.compact_legislation,
             previous_compact_legislation, datesim = datesim, num_table = num_table)
         output_table.set_inputs(input_table)
         output_table.disable(disabled_prestations)
@@ -341,6 +326,182 @@ def api1_simulate(req):
                 output_tree.to_json()
                 for output_tree in output_trees
                 ],
+            ).iteritems())),
+        headers = headers,
+        )
+
+
+@wsgihelpers.wsgify
+def api1_simulate_survey(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'POST', req.method
+
+    content_type = req.content_type
+    if content_type is not None:
+        content_type = content_type.split(';', 1)[0].strip()
+    if content_type != 'application/json':
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    message = ctx._(u'Bad content-type: {}').format(content_type),
+                    ).iteritems())),
+                method = req.script_name,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    inputs, error = conv.pipe(
+        conv.make_input_to_json(),
+        conv.test_isinstance(dict),
+        conv.not_none,
+        )(req.body, state = ctx)
+    if error is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [error],
+                    message = ctx._(u'Invalid JSON in request POST body'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = req.body,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    data, errors = conv.struct(
+        dict(
+#            api_key = conv.pipe(  # Shared secret between client and server
+#                conv.test_isinstance(basestring),
+#                conv.input_to_uuid,
+#                conv.not_none,
+#                ),
+            context = conv.test_isinstance(basestring),  # For asynchronous calls
+            difference = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            num_table = conv.pipe(
+                conv.test_isinstance(int),
+                conv.test_in((1, 3)),
+                conv.not_none,
+                ),
+            reform = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            year = conv.pipe(
+                conv.test_isinstance(int),
+                conv.test_greater_or_equal(1900),  # TODO: Check that year is valid in params.
+                conv.not_none,
+                ),
+            ),
+        )(inputs, state = ctx)
+    if errors is None:
+        if data['reform'] and len(data['scenarios']) > 1:
+            errors = dict(reform = ctx._(u'In reform mode, a single scenario must be provided'))
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [errors],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+#    api_key = data['api_key']
+#    account = model.Account.find_one(
+#        dict(
+#            api_key = api_key,
+#            ),
+#        as_class = collections.OrderedDict,
+#        )
+#    if account is None:
+#        return wsgihelpers.respond_json(ctx,
+#            collections.OrderedDict(sorted(dict(
+#                apiVersion = '1.0',
+#                context = data['context'],
+#                error = collections.OrderedDict(sorted(dict(
+#                    code = 401,  # Unauthorized
+#                    message = ctx._('Unknown API Key: {}').format(api_key),
+#                    ).iteritems())),
+#                method = req.script_name,
+#                params = inputs,
+#                url = req.url.decode('utf-8'),
+#                ).iteritems())),
+#            headers = headers,
+#            )
+
+    datesim = datetime.date(data['year'], 1, 1)
+    difference = data['difference']
+    # The aefa prestation can be disabled by uncommenting the following line:
+    disabled_prestations = None  # ['aefa']
+    num_table = data['num_table']
+    reform = data['reform']
+    survey_filename = {
+        1: 'survey.h5',
+        3: 'survey3.h5',
+        }[num_table]
+    survey_file_path = os.path.join(model.DATA_DIR, survey_filename)
+    verbose = False
+
+    legislation_tree = ElementTree.parse(model.PARAM_FILE)
+    legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
+    legislation_xml_json, error = legislationsxml.validate_node_xml_json(legislation_xml_json, state = ctx)
+    # TODO: Fail on error.
+    _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
+
+    compact_legislations = []
+    dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
+    compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
+    compact_legislations.append(compact_legislation)
+    if reform:
+        # TODO: Use variant legislation instead of the default one.
+        dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
+        compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
+        compact_legislations.append(compact_legislation)
+
+    for index, compact_legislation in enumerate(compact_legislations):
+        datesim = compact_legislation.datesim
+        input_table = datatables.DataTable(model.column_by_name, datesim = datesim, num_table = num_table,
+            print_missing = verbose)
+        input_table.load_data_from_survey(survey_file_path, num_table = num_table, print_missing = verbose)
+
+        previous_compact_legislation = compact_legislations[index - 1] if index > 0 else compact_legislation
+        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, compact_legislation,
+            previous_compact_legislation, datesim = datesim, num_table = num_table)
+        output_table.set_inputs(input_table)
+        output_table.disable(disabled_prestations)
+        output_table.calculate_survey()
+
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            context = data['context'],
+            method = req.script_name,
+            params = inputs,
+            url = req.url.decode('utf-8'),
+#            value = [
+#                output_tree.to_json()
+#                for output_tree in output_trees
+#                ],
             ).iteritems())),
         headers = headers,
         )
