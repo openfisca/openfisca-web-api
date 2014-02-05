@@ -82,6 +82,7 @@ def api1_fields(req):
             columns = collections.OrderedDict(
                 (name, column.to_json())
                 for name, column in model.column_by_name.iteritems()
+                if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
                 ),
             context = data['context'],
             method = req.script_name,
@@ -345,11 +346,127 @@ def api1_simulate(req):
         )
 
 
+@wsgihelpers.wsgify
+def api1_submit_legislation(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'POST', req.method
+
+    content_type = req.content_type
+    if content_type is not None:
+        content_type = content_type.split(';', 1)[0].strip()
+    if content_type != 'application/json':
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    message = ctx._(u'Bad content-type: {}').format(content_type),
+                    ).iteritems())),
+                method = req.script_name,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    inputs, error = conv.pipe(
+        conv.make_input_to_json(),
+        conv.test_isinstance(dict),
+        conv.not_none,
+        )(req.body, state = ctx)
+    if error is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [error],
+                    message = ctx._(u'Invalid JSON in request POST body'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = req.body,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    data, errors = conv.struct(
+        dict(
+#            api_key = conv.pipe(  # Shared secret between client and server
+#                conv.test_isinstance(basestring),
+#                conv.input_to_uuid,
+#                conv.not_none,
+#                ),
+            context = conv.test_isinstance(basestring),  # For asynchronous calls
+            value = conv.pipe(
+                legislations.validate_node_json,
+                conv.not_none,
+                ),
+            ),
+        )(inputs, state = ctx)
+    if errors is None:
+        if data['reform'] and len(data['scenarios']) > 1:
+            errors = dict(reform = ctx._(u'In reform mode, a single scenario must be provided'))
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [errors],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+#    api_key = data['api_key']
+#    account = model.Account.find_one(
+#        dict(
+#            api_key = api_key,
+#            ),
+#        as_class = collections.OrderedDict,
+#        )
+#    if account is None:
+#        return wsgihelpers.respond_json(ctx,
+#            collections.OrderedDict(sorted(dict(
+#                apiVersion = '1.0',
+#                context = data['context'],
+#                error = collections.OrderedDict(sorted(dict(
+#                    code = 401,  # Unauthorized
+#                    message = ctx._('Unknown API Key: {}').format(api_key),
+#                    ).iteritems())),
+#                method = req.script_name,
+#                params = inputs,
+#                url = req.url.decode('utf-8'),
+#                ).iteritems())),
+#            headers = headers,
+#            )
+
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            context = data['context'],
+            method = req.script_name,
+            params = inputs,
+            url = req.url.decode('utf-8'),
+            value = data,
+            ).iteritems())),
+        headers = headers,
+        )
+
+
 def make_router():
     """Return a WSGI application that searches requests to controllers """
     global router
     router = urls.make_router(
         ('GET', '^/api/1/fields/?$', api1_fields),
+        ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
         ('POST', '^/api/1/simulate/?$', api1_simulate),
         )
     return router
