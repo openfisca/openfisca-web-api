@@ -87,9 +87,9 @@ def api1_fields(req):
             method = req.script_name,
             params = inputs,
             prestations = collections.OrderedDict(
-                    (name, column.to_json())
-                    for name, column in model.prestation_by_name.iteritems()
-                    ),
+                (name, column.to_json())
+                for name, column in model.prestation_by_name.iteritems()
+                ),
             url = req.url.decode('utf-8'),
             ).iteritems())),
         headers = headers,
@@ -566,9 +566,6 @@ def api1_submit_legislation(req):
                 ),
             ),
         )(inputs, state = ctx)
-    if errors is None:
-        if data['reform'] and len(data['scenarios']) > 1:
-            errors = dict(reform = ctx._(u'In reform mode, a single scenario must be provided'))
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
