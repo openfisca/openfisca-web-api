@@ -269,7 +269,6 @@ def api1_simulate(req):
     scenarios = []
     for scenario_data in data['scenarios']:
         datesim = datetime.date(scenario_data.pop('year'), 1, 1)
-        legislation_json = scenario_data.pop('legislation_json')
 
         scenario = model.Scenario()
         scenario.nmen = nmen
