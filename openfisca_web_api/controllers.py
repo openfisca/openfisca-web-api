@@ -626,5 +626,6 @@ def make_router():
         ('GET', '^/api/1/fields/?$', api1_fields),
         ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
         ('POST', '^/api/1/simulate/?$', api1_simulate),
+        ('POST', '^/api/1/simulate-survey/?$', api1_simulate_survey),
         )
     return router
