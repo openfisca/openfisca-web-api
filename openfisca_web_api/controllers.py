@@ -95,8 +95,20 @@ def api1_fields(req):
         for name, column in model.column_by_name.iteritems()
         if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
         )
-    columns_tree = copy.deepcopy(model.columns_name_tree_by_entity)
-    columns_tree['ind']['children'][:] = [
+
+    columns_tree = collections.OrderedDict(
+        (
+            dict(
+                fam = 'familles',
+                foy = 'foyers_fiscaux',
+                ind = 'individus',
+                men = 'menages',
+                )[entity],
+            copy.deepcopy(tree),
+            )
+        for entity, tree in model.columns_name_tree_by_entity.iteritems()
+        )
+    columns_tree['individus']['children'][0]['children'][0:0] = [
         'prenom',
         'birth',
         ]
