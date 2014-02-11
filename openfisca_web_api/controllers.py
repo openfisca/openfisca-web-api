@@ -78,6 +78,7 @@ def api1_fields(req):
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = '1.0',
+            columns_tree = model.columns_name_tree_by_entity,
             columns = collections.OrderedDict(
                 (name, column.to_json())
                 for name, column in model.column_by_name.iteritems()
