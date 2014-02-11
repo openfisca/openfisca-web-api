@@ -27,6 +27,7 @@
 
 
 import collections
+import copy
 import datetime
 import os
 from xml.etree import ElementTree
@@ -75,15 +76,36 @@ def api1_fields(req):
             headers = headers,
             )
 
+    columns = collections.OrderedDict([
+        (u'prenom', {
+            u"@type": u"String",
+            u"entity": u"ind",
+            u"label": u"Prénom",
+            u"name": u"prenom",
+            }),
+        (u'birth', {
+            u"@type": u"Date",
+            u"entity": u"ind",
+            u"label": u"Date de naissance",
+            u"name": u"birth",
+            }),
+        ])
+    columns.update(
+        (name, column.to_json())
+        for name, column in model.column_by_name.iteritems()
+        if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
+        )
+    columns_tree = copy.deepcopy(model.columns_name_tree_by_entity)
+    columns_tree['ind']['children'][:] = [
+        'prenom',
+        'birth',
+        ]
+
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = '1.0',
-            columns_tree = model.columns_name_tree_by_entity,
-            columns = collections.OrderedDict(
-                (name, column.to_json())
-                for name, column in model.column_by_name.iteritems()
-                if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
-                ),
+            columns = columns,
+            columns_tree = columns_tree,
             context = data['context'],
             method = req.script_name,
             params = inputs,
