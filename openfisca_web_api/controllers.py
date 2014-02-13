@@ -34,7 +34,7 @@ from xml.etree import ElementTree
 
 from openfisca_core import datatables, legislations, legislationsxml, model, taxbenefitsystems
 
-from . import contexts, conv, urls, wsgihelpers
+from . import conf, contexts, conv, urls, wsgihelpers
 
 
 N_ = lambda message: message
@@ -207,7 +207,7 @@ def api1_simulate(req):
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
                     conv.pipe(
-                        model.Scenario.json_to_attributes,
+                        model.Scenario.make_json_to_attributes(cache_dir = conf['cache_dir']),
                         conv.not_none,
                         ),
                     ),
