@@ -42,6 +42,23 @@ router = None
 
 
 @wsgihelpers.wsgify
+def api1_default_legislation(req):
+    """Return default legislation in JSON format."""
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'GET', req.method
+
+    legislation_tree = ElementTree.parse(model.PARAM_FILE)
+    legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
+    legislation_xml_json, error = legislationsxml.validate_node_xml_json(legislation_xml_json, state = ctx)
+    # TODO: Fail on error.
+    _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
+
+    return wsgihelpers.respond_json(ctx, legislation_json, headers = headers)
+
+
+@wsgihelpers.wsgify
 def api1_fields(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
@@ -657,6 +674,7 @@ def make_router():
     """Return a WSGI application that searches requests to controllers """
     global router
     router = urls.make_router(
+        ('GET', '^/api/1/default-legislation/?$', api1_default_legislation),
         ('GET', '^/api/1/fields/?$', api1_fields),
         ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
         ('POST', '^/api/1/simulate/?$', api1_simulate),
