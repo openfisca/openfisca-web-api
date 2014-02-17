@@ -37,7 +37,10 @@ def environment_setter(app):
     def set_environment(environ, start_response):
         req = webob.Request(environ)
         urls.application_url = req.application_url
-        return app(req.environ, start_response)
+        try:
+            return app(req.environ, start_response)
+        except webob.exc.WSGIHTTPException as wsgi_exception:
+            return wsgi_exception(environ, start_response)
 
     return set_environment
 

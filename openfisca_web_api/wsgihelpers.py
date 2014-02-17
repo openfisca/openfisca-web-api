@@ -73,11 +73,13 @@ def handle_cross_origin_resource_sharing(ctx):
         if method is None:
             return headers
         headers_name = environ.get('HTTP_ACCESS_CONTROL_REQUEST_HEADERS') or ''
+        headers.append(('Access-Control-Allow-Credentials', 'true'))
         headers.append(('Access-Control-Allow-Origin', origin))
         headers.append(('Access-Control-Max-Age', '3628800'))
         headers.append(('Access-Control-Allow-Methods', method))
         headers.append(('Access-Control-Allow-Headers', headers_name))
         raise webob.exc.status_map[204](headers = headers)  # No Content
+    headers.append(('Access-Control-Allow-Credentials', 'true'))
     headers.append(('Access-Control-Allow-Origin', origin))
     headers.append(('Access-Control-Expose-Headers', 'WWW-Authenticate'))
     return headers
