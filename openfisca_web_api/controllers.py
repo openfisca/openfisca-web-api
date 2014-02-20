@@ -224,7 +224,8 @@ def api1_simulate(req):
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
                     conv.pipe(
-                        model.Scenario.make_json_to_attributes(cache_dir = conf['cache_dir']),
+                        model.Scenario.make_json_to_attributes(cache_dir = conf['cache_dir'],
+                            legislation_url = urls.get_full_url(ctx, 'api', 1, 'default-legislation')),
                         conv.not_none,
                         ),
                     ),
