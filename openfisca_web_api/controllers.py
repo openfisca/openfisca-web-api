@@ -560,6 +560,7 @@ def api1_simulate_survey(req):
 
 @wsgihelpers.wsgify
 def api1_submit_legislation(req):
+    """Submit, validate and optionally convert a JSON legislation."""
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
@@ -611,7 +612,11 @@ def api1_submit_legislation(req):
 #                conv.not_none,
 #                ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
-            value = conv.pipe(
+            date = conv.pipe(
+                conv.test_isinstance(basestring),
+                conv.iso8601_input_to_date,
+                ),
+            legislation = conv.pipe(
                 legislations.validate_any_legislation_json,
                 conv.not_none,
                 ),
@@ -657,14 +662,26 @@ def api1_submit_legislation(req):
 #            headers = headers,
 #            )
 
+    legislation_json = data['legislation']
+    if legislation_json.get('datesim') is None:
+        datesim = data['date']
+        if datesim is None:
+            dated_legislation_json = None
+        else:
+            dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
+    else:
+        dated_legislation_json = legislation_json
+        legislation_json = None
+
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = '1.0',
             context = data['context'],
+            dated_legislation = dated_legislation_json,
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
-            value = data['value'],
+            legislation = legislation_json,
             ).iteritems())),
         headers = headers,
         )
