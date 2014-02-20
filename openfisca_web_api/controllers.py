@@ -612,7 +612,7 @@ def api1_submit_legislation(req):
 #                ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             value = conv.pipe(
-                legislations.validate_node_json,
+                legislations.validate_any_legislation_json,
                 conv.not_none,
                 ),
             ),
@@ -664,7 +664,7 @@ def api1_submit_legislation(req):
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
-            value = data,
+            value = data['value'],
             ).iteritems())),
         headers = headers,
         )
