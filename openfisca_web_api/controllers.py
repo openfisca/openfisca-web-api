@@ -230,7 +230,8 @@ def api1_simulate(req):
                         ),
                     ),
                 conv.test(lambda scenarios: len(scenarios) >= 1, error = N_(u'At least one scenario is required')),
-                conv.test(lambda scenarios: len(scenarios) <= 2, error = N_(u'There can be no more than 2 scenarios')),
+                conv.test(lambda scenarios: len(scenarios) <= 100,
+                    error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
                 ),
             validate = conv.pipe(
