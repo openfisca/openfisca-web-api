@@ -51,7 +51,7 @@ def api1_default_legislation(req):
 
     legislation_tree = ElementTree.parse(model.PARAM_FILE)
     legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
-    legislation_xml_json, error = legislationsxml.validate_node_xml_json(legislation_xml_json, state = ctx)
+    legislation_xml_json, error = legislationsxml.validate_legislation_xml_json(legislation_xml_json, state = ctx)
     # TODO: Fail on error.
     _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
 
@@ -517,7 +517,7 @@ def api1_simulate_survey(req):
 
     legislation_tree = ElementTree.parse(model.PARAM_FILE)
     legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
-    legislation_xml_json, error = legislationsxml.validate_node_xml_json(legislation_xml_json, state = ctx)
+    legislation_xml_json, error = legislationsxml.validate_legislation_xml_json(legislation_xml_json, state = ctx)
     # TODO: Fail on error.
     _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
 
