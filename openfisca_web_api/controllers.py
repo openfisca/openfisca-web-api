@@ -101,9 +101,11 @@ def api1_fields(req):
             u"name": u"prenom",
             }),
         (u'birth', {
-            u"@type": u"Date",
+            u"@type": u"Integer",
             u"entity": u"ind",
-            u"label": u"Date de naissance",
+            u"label": u"Année de naissance",
+            u"min": 1870,
+            u"max": 2099,  # To be able to simulate future.
             u"name": u"birth",
             }),
         ])
