@@ -29,10 +29,12 @@
 import collections
 import copy
 import datetime
+import operator
 import os
-from xml.etree import ElementTree
+import xml.etree
 
-from openfisca_core import datatables, legislations, legislationsxml, model, taxbenefitsystems
+#from openfisca_core import datatables, legislations, legislationsxml
+from openfisca_core import decompositions, decompositionsxml, legislations, legislationsxml
 
 from . import conf, contexts, conv, urls, wsgihelpers
 
@@ -49,13 +51,8 @@ def api1_default_legislation(req):
 
     assert req.method == 'GET', req.method
 
-    legislation_tree = ElementTree.parse(model.PARAM_FILE)
-    legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
-    legislation_xml_json, error = legislationsxml.validate_legislation_xml_json(legislation_xml_json, state = ctx)
-    # TODO: Fail on error.
-    _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
-
-    return wsgihelpers.respond_json(ctx, legislation_json, headers = headers)
+    tax_benefit_system = ctx.TaxBenefitSystem()
+    return wsgihelpers.respond_json(ctx, tax_benefit_system.legislation_json, headers = headers)
 
 
 @wsgihelpers.wsgify
@@ -111,7 +108,7 @@ def api1_fields(req):
         ])
     columns.update(
         (name, column.to_json())
-        for name, column in model.column_by_name.iteritems()
+        for name, column in ctx.TaxBenefitSystem.column_by_name.iteritems()
         if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
         )
 
@@ -125,7 +122,7 @@ def api1_fields(req):
                 )[entity],
             copy.deepcopy(tree),
             )
-        for entity, tree in model.columns_name_tree_by_entity.iteritems()
+        for entity, tree in ctx.TaxBenefitSystem.columns_name_tree_by_entity.iteritems()
         )
     columns_tree['individus']['children'][0]['children'][0:0] = [
         'prenom',
@@ -142,7 +139,7 @@ def api1_fields(req):
             params = inputs,
             prestations = collections.OrderedDict(
                 (name, column.to_json())
-                for name, column in model.prestation_by_name.iteritems()
+                for name, column in ctx.TaxBenefitSystem.prestation_by_name.iteritems()
                 ),
             url = req.url.decode('utf-8'),
             ).iteritems())),
@@ -217,17 +214,11 @@ def api1_simulate(req):
                 conv.test_greater_or_equal(1),
                 conv.default(1),
                 ),
-            reform = conv.pipe(
-                conv.test_isinstance((bool, int)),
-                conv.anything_to_bool,
-                conv.default(False),
-                ),
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
                     conv.pipe(
-                        model.Scenario.make_json_to_attributes(cache_dir = conf['cache_dir'],
-                            legislation_url = urls.get_full_url(ctx, 'api', 1, 'default-legislation')),
+                        conv.test_isinstance(dict),  # Real conversion is done once tax-benefit system is known.
                         conv.not_none,
                         ),
                     ),
@@ -236,26 +227,30 @@ def api1_simulate(req):
                     error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
                 ),
+            tax_benefit_system = ctx.TaxBenefitSystem.json_to_instance,
             validate = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
-            x_axis = conv.pipe(
-                conv.test_isinstance(basestring),
-                conv.test_in(model.x_axes.keys()),
-                ),
+            x_axis = conv.test_isinstance(basestring),  # Real conversion is done once tax-benefit system is known.
             ),
         )(inputs, state = ctx)
     if errors is None:
+        tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
             dict(
                 maxrev = conv.not_none if data['nmen'] > 1 else conv.test_none(
                     error = u'No value allowed when "nmen" is 1'),
-                reform = conv.test_equals(False, error = u'In reform mode, only a single scenario must be provided')
-                    if len(data['scenarios']) > 1 else conv.noop,
-                x_axis = conv.not_none if data['nmen'] > 1 else conv.test_none(
-                    error = u'No value allowed when "nmen" is 1'),
+                scenarios = conv.uniform_sequence(
+                    tax_benefit_system.Scenario.make_json_to_instance(cache_dir = conf['cache_dir'],
+                        tax_benefit_system = tax_benefit_system),
+                    ),
+                x_axis = conv.pipe(
+                    conv.test_in(tax_benefit_system.x_axes.keys()),
+                    conv.not_none if data['nmen'] > 1 else conv.test_none(
+                        error = u'No value allowed when "nmen" is 1'),
+                    ),
                 ),
             default = conv.noop,
             )(data, state = ctx)
@@ -312,63 +307,35 @@ def api1_simulate(req):
             headers = headers,
             )
 
-    decomp_file = os.path.join(model.DECOMP_DIR, model.DEFAULT_DECOMP_FILE)
-    difference = data['difference']
-    # The aefa prestation can be disabled by uncommenting the following line:
-    disabled_prestations = None  # ['aefa']
-    maxrev = data['maxrev']
-    nmen = data['nmen']
-    num_table = 1
-    reform = data['reform']
-    verbose = False
+    decomposition_tree = xml.etree.ElementTree.parse(os.path.join(tax_benefit_system.DECOMP_DIR,
+        tax_benefit_system.DEFAULT_DECOMP_FILE))
+    decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(decomposition_tree.getroot(),
+        state = ctx)
+    decomposition_xml_json = conv.check(decompositionsxml.make_validate_node_xml_json(tax_benefit_system))(
+        decomposition_xml_json, state = ctx)
+    decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
 
-    scenarios = []
-    for scenario_data in data['scenarios']:
-        datesim = datetime.date(scenario_data.pop('year'), 1, 1)
+    simulations = []
+    for scenario in data['scenarios']:
+        simulation = scenario.new_simulation()
+        for node in decompositions.iter_decomposition_nodes(decomposition_json):
+            if not node.get('children'):
+                simulation.compute(node['code'])
+        simulations.append(simulation)
 
-        scenario = model.Scenario()
-        scenario.nmen = nmen
-        if nmen > 1:
-            scenario.maxrev = maxrev
-            scenario.x_axis = data['x_axis']
-        scenario.same_rev_couple = False
-        scenario.year = datesim.year
-        scenario.__dict__.update(scenario_data)
-        scenarios.append(scenario)
-    if reform:
-        # Keep datesim from the latest scenario (assume there is only one).
-
-        scenario = model.Scenario()
-        scenario.nmen = nmen
-        if nmen > 1:
-            scenario.maxrev = maxrev
-            scenario.x_axis = data['x_axis']
-        scenario.same_rev_couple = False
-        scenario.year = datesim.year
-        scenario.__dict__.update(scenario_data)
-        scenarios.append(scenario)
-
-    output_trees = []
-    for index, scenario in enumerate(scenarios):
-        datesim = scenario.compact_legislation.datesim
-        input_table = datatables.DataTable(model.column_by_name, datesim = datesim, num_table = num_table,
-            print_missing = verbose)
-        input_table.test_case = scenario
-        scenario.populate_datatable(input_table)
-
-        previous_compact_legislation = scenarios[index - 1].compact_legislation if index > 0 \
-            else scenario.compact_legislation
-        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, scenario.compact_legislation,
-            previous_compact_legislation, datesim = datesim, num_table = num_table)
-        output_table.set_inputs(input_table)
-        output_table.disable(disabled_prestations)
-        output_table.decomp_file = decomp_file
-        output_tree = output_table.calculate_test_case()
-
-        if (difference or reform) and index > 0:
-            output_tree.difference(output_trees[0])
-
-        output_trees.append(output_tree)
+    response_json = copy.deepcopy(decomposition_json)
+    for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):
+        children = node.get('children')
+        if children:
+            node['values'] = map(lambda *l: sum(l), *[
+                child['values']
+                for child in children
+                ])
+        else:
+            node['values'] = values = []
+            for simulation in simulations:
+                holder = simulation.get_holder_by_name(node['code'])
+                values.extend(holder.array.tolist())
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
@@ -377,13 +344,70 @@ def api1_simulate(req):
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
-            value = [
-                output_tree.to_json()
-                for output_tree in output_trees
-                ],
+            value = response_json,
             ).iteritems())),
         headers = headers,
         )
+
+#    decomp_file = os.path.join(tax_benefit_system.DECOMP_DIR, tax_benefit_system.DEFAULT_DECOMP_FILE)
+#    difference = data['difference']
+#    # The aefa prestation can be disabled by uncommenting the following line:
+#    disabled_prestations = None  # ['aefa']
+#    maxrev = data['maxrev']
+#    nmen = data['nmen']
+#    num_table = 1
+#    verbose = False
+
+#    scenarios = []
+#    for scenario_data in data['scenarios']:
+#        datesim = datetime.date(scenario_data.pop('year'), 1, 1)
+
+#        scenario = tax_benefit_system.Scenario()
+#        scenario.nmen = nmen
+#        if nmen > 1:
+#            scenario.maxrev = maxrev
+#            scenario.x_axis = data['x_axis']
+#        scenario.same_rev_couple = False
+#        scenario.year = datesim.year
+#        scenario.__dict__.update(scenario_data)
+#        scenarios.append(scenario)
+
+#    output_trees = []
+#    for index, scenario in enumerate(scenarios):
+#        datesim = scenario.compact_legislation.datesim
+#        input_table = datatables.DataTable(tax_benefit_system.column_by_name, datesim = datesim, num_table = num_table,
+#            print_missing = verbose)
+#        input_table.test_case = scenario
+#        scenario.populate_datatable(input_table)
+
+#        previous_compact_legislation = scenarios[index - 1].compact_legislation if index > 0 \
+#            else scenario.compact_legislation
+#        output_table = taxbenefitsystems.TaxBenefitSystem(TaxBenefitSystem.prestation_by_name,
+#            scenario.compact_legislation, previous_compact_legislation, datesim = datesim, num_table = num_table)
+#        output_table.set_inputs(input_table)
+#        output_table.disable(disabled_prestations)
+#        output_table.decomp_file = decomp_file
+#        output_tree = output_table.calculate_test_case()
+
+#        if (difference or reform) and index > 0:
+#            output_tree.difference(output_trees[0])
+
+#        output_trees.append(output_tree)
+
+#    return wsgihelpers.respond_json(ctx,
+#        collections.OrderedDict(sorted(dict(
+#            apiVersion = '1.0',
+#            context = data['context'],
+#            method = req.script_name,
+#            params = inputs,
+#            url = req.url.decode('utf-8'),
+#            value = [
+#                output_tree.to_json()
+#                for output_tree in output_trees
+#                ],
+#            ).iteritems())),
+#        headers = headers,
+#        )
 
 
 @wsgihelpers.wsgify
@@ -462,6 +486,7 @@ def api1_simulate_survey(req):
             ),
         )(inputs, state = ctx)
     if errors is None:
+        tax_benefit_system = data['tax_benefit_system']
         if data['reform'] and len(data['scenarios']) > 1:
             errors = dict(reform = ctx._(u'In reform mode, a single scenario must be provided'))
     if errors is not None:
@@ -514,33 +539,28 @@ def api1_simulate_survey(req):
         1: 'survey.h5',
         3: 'survey3.h5',
         }[num_table]
-    survey_file_path = os.path.join(model.DATA_DIR, survey_filename)
+    survey_file_path = os.path.join(TaxBenefitSystem.DATA_DIR, survey_filename)
     verbose = False
 
-    legislation_tree = ElementTree.parse(model.PARAM_FILE)
-    legislation_xml_json = conv.check(legislationsxml.xml_legislation_to_json)(legislation_tree.getroot(), state = ctx)
-    legislation_xml_json, error = legislationsxml.validate_legislation_xml_json(legislation_xml_json, state = ctx)
-    # TODO: Fail on error.
-    _, legislation_json = legislationsxml.transform_node_xml_json_to_json(legislation_xml_json)
-
     compact_legislations = []
-    dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
-    compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
+    compact_legislation = tax_benefit_system.get_compact_legislation(datesim)
     compact_legislations.append(compact_legislation)
     if reform:
         # TODO: Use variant legislation instead of the default one.
         dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
         compact_legislation = legislations.compact_dated_node_json(dated_legislation_json)
+        if tax_benefit_system.preprocess_legislation_parameters is not None:
+            tax_benefit_system.preprocess_legislation_parameters(compact_legislation)
         compact_legislations.append(compact_legislation)
 
     for index, compact_legislation in enumerate(compact_legislations):
         datesim = compact_legislation.datesim
-        input_table = datatables.DataTable(model.column_by_name, datesim = datesim, num_table = num_table,
+        input_table = datatables.DataTable(TaxBenefitSystem.column_by_name, datesim = datesim, num_table = num_table,
             print_missing = verbose)
         input_table.load_data_from_survey(survey_file_path, num_table = num_table, print_missing = verbose)
 
         previous_compact_legislation = compact_legislations[index - 1] if index > 0 else compact_legislation
-        output_table = taxbenefitsystems.TaxBenefitSystem(model.prestation_by_name, compact_legislation,
+        output_table = taxbenefitsystems.TaxBenefitSystem(TaxBenefitSystem.prestation_by_name, compact_legislation,
             previous_compact_legislation, datesim = datesim, num_table = num_table)
         output_table.set_inputs(input_table)
         output_table.disable(disabled_prestations)

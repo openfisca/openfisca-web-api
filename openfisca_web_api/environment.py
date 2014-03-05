@@ -90,4 +90,4 @@ def load_environment(global_conf, app_conf):
         errorware['smtp_server'] = conf.get('smtp_server', 'localhost')
 
     country_package = importlib.import_module(conf['country_package'])
-    country_package.init_country()
+    conv.State.TaxBenefitSystem = country_package.init_country()

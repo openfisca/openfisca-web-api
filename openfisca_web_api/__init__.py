@@ -24,4 +24,3 @@
 
 
 conf = {}  # Dictionary updated by environment.load_environment
-model = None  # Country-specific model, inited by environment.load_environment
