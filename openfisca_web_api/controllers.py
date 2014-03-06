@@ -29,7 +29,7 @@
 import collections
 import copy
 import datetime
-import operator
+import itertools
 import os
 import xml.etree
 
@@ -205,15 +205,6 @@ def api1_simulate(req):
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
-            maxrev = conv.pipe(
-                conv.test_isinstance((float, int)),
-                conv.anything_to_float,
-                ),
-            nmen = conv.pipe(
-                conv.test_isinstance(int),
-                conv.test_greater_or_equal(1),
-                conv.default(1),
-                ),
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
@@ -233,23 +224,15 @@ def api1_simulate(req):
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
-            x_axis = conv.test_isinstance(basestring),  # Real conversion is done once tax-benefit system is known.
             ),
         )(inputs, state = ctx)
     if errors is None:
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
             dict(
-                maxrev = conv.not_none if data['nmen'] > 1 else conv.test_none(
-                    error = u'No value allowed when "nmen" is 1'),
                 scenarios = conv.uniform_sequence(
                     tax_benefit_system.Scenario.make_json_to_instance(cache_dir = conf['cache_dir'],
                         tax_benefit_system = tax_benefit_system),
-                    ),
-                x_axis = conv.pipe(
-                    conv.test_in(tax_benefit_system.x_axes.keys()),
-                    conv.not_none if data['nmen'] > 1 else conv.test_none(
-                        error = u'No value allowed when "nmen" is 1'),
                     ),
                 ),
             default = conv.noop,
@@ -327,14 +310,14 @@ def api1_simulate(req):
     for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):
         children = node.get('children')
         if children:
-            node['values'] = map(lambda *l: sum(l), *[
+            node['values'] = map(lambda *l: sum(l), *(
                 child['values']
                 for child in children
-                ])
+                ))
         else:
             node['values'] = values = []
             for simulation in simulations:
-                holder = simulation.get_holder_by_name(node['code'])
+                holder = simulation.get_holder(node['code'])
                 values.extend(holder.array.tolist())
 
     return wsgihelpers.respond_json(ctx,
