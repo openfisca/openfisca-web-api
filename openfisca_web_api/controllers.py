@@ -318,7 +318,7 @@ def api1_simulate(req):
             node['values'] = values = []
             for simulation in simulations:
                 holder = simulation.get_holder(node['code'])
-                values.extend(holder.array.reshape([simulation.steps_count, holder.entity.step_size]).sum(1).tolist())
+                values.extend(holder.new_test_case_array().tolist())
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
