@@ -303,7 +303,7 @@ def api1_simulate(req):
         simulation = scenario.new_simulation()
         for node in decompositions.iter_decomposition_nodes(decomposition_json):
             if not node.get('children'):
-                simulation.compute(node['code'])
+                simulation.calculate(node['code'])
         simulations.append(simulation)
 
     response_json = copy.deepcopy(decomposition_json)
@@ -318,7 +318,7 @@ def api1_simulate(req):
             node['values'] = values = []
             for simulation in simulations:
                 holder = simulation.get_holder(node['code'])
-                values.extend(holder.array.tolist())
+                values.extend(holder.array.reshape([simulation.steps_count, holder.entity.step_size]).sum(1).tolist())
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
