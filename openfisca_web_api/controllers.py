@@ -200,18 +200,11 @@ def api1_simulate(req):
 #                conv.not_none,
 #                ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
-            difference = conv.pipe(
-                conv.test_isinstance((bool, int)),
-                conv.anything_to_bool,
-                conv.default(False),
-                ),
+            decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
-                    conv.pipe(
-                        conv.test_isinstance(dict),  # Real conversion is done once tax-benefit system is known.
-                        conv.not_none,
-                        ),
+                    conv.not_none,  # Real conversion is done once tax-benefit system is known.
                     ),
                 conv.test(lambda scenarios: len(scenarios) >= 1, error = N_(u'At least one scenario is required')),
                 conv.test(lambda scenarios: len(scenarios) <= 100,
@@ -230,6 +223,7 @@ def api1_simulate(req):
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
             dict(
+                decomposition = decompositions.make_validate_node_json(tax_benefit_system),
                 scenarios = conv.uniform_sequence(
                     tax_benefit_system.Scenario.make_json_to_instance(cache_dir = conf['cache_dir'],
                         tax_benefit_system = tax_benefit_system),
@@ -290,13 +284,16 @@ def api1_simulate(req):
             headers = headers,
             )
 
-    decomposition_tree = xml.etree.ElementTree.parse(os.path.join(tax_benefit_system.DECOMP_DIR,
-        tax_benefit_system.DEFAULT_DECOMP_FILE))
-    decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(decomposition_tree.getroot(),
-        state = ctx)
-    decomposition_xml_json = conv.check(decompositionsxml.make_validate_node_xml_json(tax_benefit_system))(
-        decomposition_xml_json, state = ctx)
-    decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
+    decomposition_json = data['decomposition']
+    if decomposition_json is None:
+        # TODO: Cache decomposition_json.
+        decomposition_tree = xml.etree.ElementTree.parse(os.path.join(tax_benefit_system.DECOMP_DIR,
+            tax_benefit_system.DEFAULT_DECOMP_FILE))
+        decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(decomposition_tree.getroot(),
+            state = ctx)
+        decomposition_xml_json = conv.check(decompositionsxml.make_validate_node_xml_json(tax_benefit_system))(
+            decomposition_xml_json, state = ctx)
+        decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
 
     simulations = []
     for scenario in data['scenarios']:
