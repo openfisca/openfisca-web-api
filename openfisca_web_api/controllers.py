@@ -110,7 +110,7 @@ def api1_fields(req):
         (name, column.to_json())
         for name, column in ctx.TaxBenefitSystem.column_by_name.iteritems()
         if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
-        if column.formula_constructor is not None
+        if column.formula_constructor is None
         )
 
     columns_tree = collections.OrderedDict(
