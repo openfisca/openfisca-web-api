@@ -110,6 +110,7 @@ def api1_fields(req):
         (name, column.to_json())
         for name, column in ctx.TaxBenefitSystem.column_by_name.iteritems()
         if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
+        if column.formula_constructor is not None
         )
 
     columns_tree = collections.OrderedDict(
@@ -139,7 +140,8 @@ def api1_fields(req):
             params = inputs,
             prestations = collections.OrderedDict(
                 (name, column.to_json())
-                for name, column in ctx.TaxBenefitSystem.prestation_by_name.iteritems()
+                for name, column in ctx.TaxBenefitSystem.column_by_name.iteritems()
+                if column.formula_constructor is not None
                 ),
             url = req.url.decode('utf-8'),
             ).iteritems())),
