@@ -339,66 +339,6 @@ def api1_simulate(req):
         headers = headers,
         )
 
-#    decomp_file = os.path.join(tax_benefit_system.DECOMP_DIR, tax_benefit_system.DEFAULT_DECOMP_FILE)
-#    difference = data['difference']
-#    # The aefa prestation can be disabled by uncommenting the following line:
-#    disabled_prestations = None  # ['aefa']
-#    maxrev = data['maxrev']
-#    nmen = data['nmen']
-#    num_table = 1
-#    verbose = False
-
-#    scenarios = []
-#    for scenario_data in data['scenarios']:
-#        datesim = datetime.date(scenario_data.pop('year'), 1, 1)
-
-#        scenario = tax_benefit_system.Scenario()
-#        scenario.nmen = nmen
-#        if nmen > 1:
-#            scenario.maxrev = maxrev
-#            scenario.x_axis = data['x_axis']
-#        scenario.same_rev_couple = False
-#        scenario.year = datesim.year
-#        scenario.__dict__.update(scenario_data)
-#        scenarios.append(scenario)
-
-#    output_trees = []
-#    for index, scenario in enumerate(scenarios):
-#        datesim = scenario.compact_legislation.datesim
-#        input_table = datatables.DataTable(tax_benefit_system.column_by_name, datesim = datesim, num_table = num_table,
-#            print_missing = verbose)
-#        input_table.test_case = scenario
-#        scenario.populate_datatable(input_table)
-
-#        previous_compact_legislation = scenarios[index - 1].compact_legislation if index > 0 \
-#            else scenario.compact_legislation
-#        output_table = taxbenefitsystems.TaxBenefitSystem(TaxBenefitSystem.prestation_by_name,
-#            scenario.compact_legislation, previous_compact_legislation, datesim = datesim, num_table = num_table)
-#        output_table.set_inputs(input_table)
-#        output_table.disable(disabled_prestations)
-#        output_table.decomp_file = decomp_file
-#        output_tree = output_table.calculate_test_case()
-
-#        if (difference or reform) and index > 0:
-#            output_tree.difference(output_trees[0])
-
-#        output_trees.append(output_tree)
-
-#    return wsgihelpers.respond_json(ctx,
-#        collections.OrderedDict(sorted(dict(
-#            apiVersion = '1.0',
-#            context = data['context'],
-#            method = req.script_name,
-#            params = inputs,
-#            url = req.url.decode('utf-8'),
-#            value = [
-#                output_tree.to_json()
-#                for output_tree in output_trees
-#                ],
-#            ).iteritems())),
-#        headers = headers,
-#        )
-
 
 @wsgihelpers.wsgify
 def api1_simulate_survey(req):
