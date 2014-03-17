@@ -259,7 +259,7 @@ def api1_graph(req):
     edges = []
     nodes = []
     visited = set()
-    simulation.graph(data['variable'], edges, 0, nodes, visited)
+    simulation.graph(data['variable'], edges, nodes, visited)
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
