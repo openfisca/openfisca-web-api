@@ -56,6 +56,67 @@ def api1_default_legislation(req):
 
 
 @wsgihelpers.wsgify
+def api1_field(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'GET', req.method
+    params = req.GET
+    inputs = dict(
+        context = params.get('context'),
+        variable = params.get('variable'),
+        )
+    tax_benefit_system = ctx.TaxBenefitSystem()
+    data, errors = conv.pipe(
+        conv.struct(
+            dict(
+                context = conv.noop,  # For asynchronous calls
+                variable = conv.pipe(
+                    conv.cleanup_line,
+                    conv.default(u'revdisp'),
+                    conv.test_in(tax_benefit_system.column_by_name),
+                    ),
+                ),
+            default = 'drop',
+            ),
+        )(inputs, state = ctx)
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [errors],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    simulation = simulations.Simulation(
+        date = datetime.date(datetime.date.today().year, 1, 1),
+        tax_benefit_system = tax_benefit_system,
+        )
+    holder = simulation.get_or_new_holder(data['variable'])
+
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            context = data['context'],
+            method = req.script_name,
+            params = inputs,
+            url = req.url.decode('utf-8'),
+            value = holder.to_json(with_array = False),
+            ).iteritems())),
+        headers = headers,
+        )
+
+
+@wsgihelpers.wsgify
 def api1_fields(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
@@ -711,6 +772,7 @@ def make_router():
     global router
     router = urls.make_router(
         ('GET', '^/api/1/default-legislation/?$', api1_default_legislation),
+        ('GET', '^/api/1/field/?$', api1_field),
         ('GET', '^/api/1/fields/?$', api1_fields),
         ('GET', '^/api/1/graph/?$', api1_graph),
         ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
