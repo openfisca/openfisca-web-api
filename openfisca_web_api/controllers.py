@@ -406,6 +406,14 @@ def api1_simulate(req):
 #            headers = headers,
 #            )
 
+    suggestions = {}
+    for scenario_index, scenario in enumerate(data['scenarios']):
+        suggestion = scenario.suggest(ctx)
+        if suggestion is not None:
+            suggestions.setdefault('scenarios', {})[scenario_index] = suggestion
+    if not suggestions:
+        suggestions = None
+
     if data['validate']:
         # Only a validation is requested. Don't launch simulation
         return wsgihelpers.respond_json(ctx,
@@ -414,6 +422,7 @@ def api1_simulate(req):
                 context = inputs.get('context'),
                 method = req.script_name,
                 params = inputs,
+                suggestions = suggestions,
                 url = req.url.decode('utf-8'),
                 ).iteritems())),
             headers = headers,
@@ -459,6 +468,7 @@ def api1_simulate(req):
             context = data['context'],
             method = req.script_name,
             params = inputs,
+            suggestions = suggestions,
             url = req.url.decode('utf-8'),
             value = response_json,
             ).iteritems())),
