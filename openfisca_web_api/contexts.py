@@ -27,6 +27,8 @@
 
 
 import gettext
+import os
+import pkg_resources
 
 import webob
 
@@ -168,7 +170,7 @@ class Ctx(conv.State):
                 languages = [languages]
             translator = gettext.NullTranslations()
             for name, i18n_dir in [
-                    ('biryani1', conf['biryani1_i18n_dir']),
+                    ('biryani1', os.path.join(pkg_resources.get_distribution('biryani1').location, 'biryani1', 'i18n')),
                     ]:
                 if i18n_dir is not None:
                     translator = new_translator(name, i18n_dir, languages, fallback = translator)
