@@ -29,12 +29,11 @@
 import collections
 import copy
 import datetime
-import itertools
 import os
 import xml.etree
 
 #from openfisca_core import datatables, legislations, legislationsxml
-from openfisca_core import decompositions, decompositionsxml, legislations, legislationsxml, simulations
+from openfisca_core import decompositions, decompositionsxml, legislations, simulations
 
 from . import conf, contexts, conv, urls, wsgihelpers
 
