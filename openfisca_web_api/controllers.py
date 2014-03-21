@@ -407,7 +407,7 @@ def api1_simulate(req):
 
     suggestions = {}
     for scenario_index, scenario in enumerate(data['scenarios']):
-        suggestion = scenario.suggest(ctx)
+        suggestion = scenario.suggest()
         if suggestion is not None:
             suggestions.setdefault('scenarios', {})[scenario_index] = suggestion
     if not suggestions:
