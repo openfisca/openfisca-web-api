@@ -150,23 +150,7 @@ def api1_fields(req):
             headers = headers,
             )
 
-    columns = collections.OrderedDict([
-        (u'prenom', {
-            u"@type": u"String",
-            u"entity": u"ind",
-            u"label": u"Prénom",
-            u"name": u"prenom",
-            }),
-        (u'birth', {
-            u"@type": u"Integer",
-            u"entity": u"ind",
-            u"label": u"Année de naissance",
-            u"min": 1870,
-            u"max": 2099,  # To be able to simulate future.
-            u"name": u"birth",
-            }),
-        ])
-    columns.update(
+    columns = collections.OrderedDict(
         (name, column.to_json())
         for name, column in ctx.TaxBenefitSystem.column_by_name.iteritems()
         if name not in ('age', 'agem', 'idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
@@ -185,10 +169,6 @@ def api1_fields(req):
             )
         for entity, tree in ctx.TaxBenefitSystem.columns_name_tree_by_entity.iteritems()
         )
-    columns_tree['individus']['children'][0]['children'][0:0] = [
-        'prenom',
-        'birth',
-        ]
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
