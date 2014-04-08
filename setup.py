@@ -75,7 +75,5 @@ setup(
         ]},
 #    package_data = {'openfisca_web_api': ['i18n/*/LC_MESSAGES/*.mo']},
     packages = find_packages(),
-    paster_plugins = ['PasteScript'],
-    setup_requires = ['PasteScript >= 1.6.3'],
     zip_safe = False,
     )
