@@ -319,6 +319,11 @@ def api1_simulate(req):
                 conv.not_none,
                 ),
             tax_benefit_system = ctx.TaxBenefitSystem.json_to_instance,
+            trace = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
             validate = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
@@ -421,7 +426,7 @@ def api1_simulate(req):
 
     simulations = []
     for scenario in data['scenarios']:
-        simulation = scenario.new_simulation()
+        simulation = scenario.new_simulation(trace = data['trace'])
         for node in decompositions.iter_decomposition_nodes(decomposition_json):
             if not node.get('children'):
                 simulation.calculate(node['code'])
@@ -441,6 +446,23 @@ def api1_simulate(req):
                 holder = simulation.get_holder(node['code'])
                 values.extend(holder.new_test_case_array().tolist())
 
+    if data['trace']:
+        tracebacks = []
+        for simulation in simulations:
+            traceback_json = collections.OrderedDict()
+            for step in simulation.traceback:
+                holder = step['holder']
+                column = holder.column
+                traceback_json[column.name] = dict(
+                    array = holder.array.tolist() if holder.array is not None else None,
+                    default_arguments = step['default_arguments'],
+                    entity = column.entity,
+                    label = column.label,
+                    )
+            tracebacks.append(traceback_json)
+    else:
+        tracebacks = None
+
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = '1.0',
@@ -448,6 +470,7 @@ def api1_simulate(req):
             method = req.script_name,
             params = inputs,
             suggestions = suggestions,
+            tracebacks = tracebacks,
             url = req.url.decode('utf-8'),
             value = response_json,
             ).iteritems())),
