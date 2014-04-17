@@ -60,6 +60,7 @@ def api1_field(req):
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
+
     params = req.GET
     inputs = dict(
         context = params.get('context'),
@@ -445,6 +446,9 @@ def api1_simulate(req):
             for simulation in simulations:
                 holder = simulation.get_holder(node['code'])
                 values.extend(holder.new_test_case_array().tolist())
+        column = tax_benefit_system.column_by_name.get(node['code'])
+        if column is not None and column.url is not None:
+            node['url'] = column.url
 
     if data['trace']:
         tracebacks = []
