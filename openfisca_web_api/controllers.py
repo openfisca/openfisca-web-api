@@ -366,7 +366,7 @@ def api1_simulate(req):
                     ),
                 scenarios = conv.uniform_sequence(
                     tax_benefit_system.Scenario.make_json_to_instance(cache_dir = conf['cache_dir'],
-                        tax_benefit_system = tax_benefit_system),
+                        repair = data['validate'], tax_benefit_system = tax_benefit_system),
                     ),
                 ),
             default = conv.noop,
@@ -427,6 +427,7 @@ def api1_simulate(req):
                 context = inputs.get('context'),
                 method = req.script_name,
                 params = inputs,
+                repaired_scenarios = data['scenarios'],
                 suggestions = suggestions,
                 url = req.url.decode('utf-8'),
                 ).iteritems())),
