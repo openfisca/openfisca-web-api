@@ -479,6 +479,7 @@ def api1_simulate(req):
                 column = holder.column
                 traceback_json[column.name] = dict(
                     array = holder.array.tolist() if holder.array is not None else None,
+                    cell_type = column.val_type,
                     default_arguments = step['default_arguments'],
                     entity = column.entity,
                     label = column.label,
