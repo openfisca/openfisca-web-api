@@ -427,7 +427,10 @@ def api1_simulate(req):
                 context = inputs.get('context'),
                 method = req.script_name,
                 params = inputs,
-                repaired_scenarios = data['scenarios'],
+                repaired_test_cases = [
+                    scenario['test_case']
+                    for scenario in data['scenarios']
+                    ],
                 suggestions = suggestions,
                 url = req.url.decode('utf-8'),
                 ).iteritems())),
