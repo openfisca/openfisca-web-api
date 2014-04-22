@@ -428,7 +428,7 @@ def api1_simulate(req):
                 method = req.script_name,
                 params = inputs,
                 repaired_test_cases = [
-                    scenario['test_case']
+                    scenario.test_case
                     for scenario in data['scenarios']
                     ],
                 suggestions = suggestions,
