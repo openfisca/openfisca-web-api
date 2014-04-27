@@ -469,7 +469,11 @@ def api1_simulate(req):
             node['values'] = values = []
             for simulation in simulations:
                 holder = simulation.get_holder(node['code'])
-                values.extend(holder.new_test_case_array().tolist())
+                column = holder.column
+                values.extend(
+                    column.transform_value_to_json(value)
+                    for value in holder.new_test_case_array().tolist()
+                    )
         column = tax_benefit_system.column_by_name.get(node['code'])
         if column is not None and column.url is not None:
             node['url'] = column.url
@@ -478,14 +482,18 @@ def api1_simulate(req):
         tracebacks = []
         for simulation in simulations:
             traceback_json = collections.OrderedDict()
-            for step in simulation.traceback:
+            for name, step in simulation.traceback.iteritems():
                 holder = step['holder']
                 column = holder.column
-                traceback_json[column.name] = dict(
-                    array = holder.array.tolist() if holder.array is not None else None,
+                traceback_json[name] = dict(
+                    array = [
+                        column.transform_value_to_json(value)
+                        for value in holder.array.tolist()
+                        ] if holder.array is not None else None,
                     cell_type = column.val_type,
-                    default_arguments = step['default_arguments'],
+                    default_arguments = step.get('default_arguments', False),
                     entity = column.entity,
+                    is_computed = step.get('is_computed', False),
                     label = column.label,
                     )
             tracebacks.append(traceback_json)
