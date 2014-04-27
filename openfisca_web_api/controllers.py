@@ -300,7 +300,7 @@ def api1_simulate(req):
             )
 
     inputs, error = conv.pipe(
-        conv.make_input_to_json(),
+        conv.make_input_to_json(object_pairs_hook = collections.OrderedDict),
         conv.test_isinstance(dict),
         conv.not_none,
         )(req.body, state = ctx)
@@ -541,7 +541,7 @@ def api1_submit_legislation(req):
             )
 
     inputs, error = conv.pipe(
-        conv.make_input_to_json(),
+        conv.make_input_to_json(object_pairs_hook = collections.OrderedDict),
         conv.test_isinstance(dict),
         conv.not_none,
         )(req.body, state = ctx)
