@@ -427,8 +427,8 @@ def api1_simulate(req):
                 context = inputs.get('context'),
                 method = req.script_name,
                 params = inputs,
-                repaired_test_cases = [
-                    scenario.test_case
+                repaired_scenarios = [
+                    scenario.to_json()
                     for scenario in data['scenarios']
                     ],
                 suggestions = suggestions,
@@ -614,6 +614,10 @@ def api1_submit_legislation(req):
 #                    ).iteritems())),
 #                method = req.script_name,
 #                params = inputs,
+#                repaired_scenarios = [
+#                    scenario.to_json()
+#                    for scenario in data['scenarios']
+#                    ] if data['validate'] else None,
 #                url = req.url.decode('utf-8'),
 #                ).iteritems())),
 #            headers = headers,
