@@ -272,7 +272,7 @@ def api1_simulate(req):
         # When load average is not available, always accept request.
         pass
     else:
-        if load_average[0] / cpu_count > 0.75:
+        if load_average[0] / cpu_count > 1:
             return wsgihelpers.respond_json(ctx,
                 collections.OrderedDict(sorted(dict(
                     apiVersion = '1.0',
