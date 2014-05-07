@@ -421,7 +421,12 @@ def api1_simulate(req):
 
     suggestions = {}
     for scenario_index, scenario in enumerate(data['scenarios']):
-        suggestion = scenario.suggest(preserve_scenario = data['validate'])
+        if data['validate']:
+            original_test_case = scenario.test_case
+            scenario.test_case = copy.deepcopy(original_test_case)
+        suggestion = scenario.suggest()
+        if data['validate']:
+            scenario.test_case = original_test_case
         if suggestion is not None:
             suggestions.setdefault('scenarios', {})[scenario_index] = suggestion
     if not suggestions:
