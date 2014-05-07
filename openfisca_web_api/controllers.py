@@ -26,9 +26,12 @@
 """Root controllers"""
 
 
+from __future__ import division
+
 import collections
 import copy
 import datetime
+import multiprocessing
 import os
 import xml.etree
 
@@ -38,6 +41,7 @@ from openfisca_core import decompositions, decompositionsxml, legislations, simu
 from . import conf, contexts, conv, urls, wsgihelpers
 
 
+cpu_count = multiprocessing.cpu_count()
 N_ = lambda message: message
 router = None
 
@@ -268,7 +272,7 @@ def api1_simulate(req):
         # When load average is not available, always accept request.
         pass
     else:
-        if load_average[0] > 0.75:
+        if load_average[0] / cpu_count > 0.75:
             return wsgihelpers.respond_json(ctx,
                 collections.OrderedDict(sorted(dict(
                     apiVersion = '1.0',
