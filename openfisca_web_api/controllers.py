@@ -410,10 +410,6 @@ def api1_simulate(req):
 #                    ).iteritems())),
 #                method = req.script_name,
 #                params = inputs,
-#                repaired_scenarios = [
-#                    scenario.to_json()
-#                    for scenario in data['scenarios']
-#                    ] if data['validate'] else None,
 #                url = req.url.decode('utf-8'),
 #                ).iteritems())),
 #            headers = headers,
