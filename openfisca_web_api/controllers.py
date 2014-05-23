@@ -31,6 +31,7 @@ from __future__ import division
 import collections
 import copy
 import datetime
+import itertools
 import multiprocessing
 import os
 import xml.etree
@@ -44,6 +45,272 @@ from . import conf, contexts, conv, urls, wsgihelpers
 cpu_count = multiprocessing.cpu_count()
 N_ = lambda message: message
 router = None
+
+
+@wsgihelpers.wsgify
+def api1_calculate(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'POST', req.method
+
+    if conf['load_alert']:
+        try:
+            load_average = os.getloadavg()
+        except (AttributeError, OSError):
+            # When load average is not available, always accept request.
+            pass
+        else:
+            if load_average[0] / cpu_count > 1:
+                return wsgihelpers.respond_json(ctx,
+                    collections.OrderedDict(sorted(dict(
+                        apiVersion = '1.0',
+                        error = collections.OrderedDict(sorted(dict(
+                            code = 503,  # Service Unavailable
+                            message = ctx._(u'Server is overloaded: {} {} {}').format(*load_average),
+                            ).iteritems())),
+                        method = req.script_name,
+                        url = req.url.decode('utf-8'),
+                        ).iteritems())),
+                    headers = headers,
+                    )
+
+    content_type = req.content_type
+    if content_type is not None:
+        content_type = content_type.split(';', 1)[0].strip()
+    if content_type != 'application/json':
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    message = ctx._(u'Bad content-type: {}').format(content_type),
+                    ).iteritems())),
+                method = req.script_name,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    inputs, error = conv.pipe(
+        conv.make_input_to_json(object_pairs_hook = collections.OrderedDict),
+        conv.test_isinstance(dict),
+        conv.not_none,
+        )(req.body, state = ctx)
+    if error is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [error],
+                    message = ctx._(u'Invalid JSON in request POST body'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = req.body,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    data, errors = conv.struct(
+        dict(
+#            api_key = conv.pipe(  # Shared secret between client and server
+#                conv.test_isinstance(basestring),
+#                conv.input_to_uuid,
+#                conv.not_none,
+#                ),
+            context = conv.test_isinstance(basestring),  # For asynchronous calls
+            intermediate_variables = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            scenarios = conv.pipe(
+                conv.test_isinstance(list),
+                conv.uniform_sequence(
+                    conv.not_none,  # Real conversion is done once tax-benefit system is known.
+                    ),
+                conv.test(lambda scenarios: len(scenarios) >= 1, error = N_(u'At least one scenario is required')),
+                conv.test(lambda scenarios: len(scenarios) <= 100,
+                    error = N_(u"There can't be more than 100 scenarios")),
+                conv.not_none,
+                ),
+            tax_benefit_system = ctx.TaxBenefitSystem.json_to_instance,
+            trace = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            validate = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            variables = conv.pipe(
+                conv.test_isinstance(list),
+                conv.uniform_sequence(
+                    conv.pipe(
+                        conv.test_isinstance(basestring),
+                        conv.cleanup_line,
+                        # Remaining of conversion is done once tax-benefit system is known.
+                        conv.not_none,
+                        ),
+                    constructor = set,
+                    ),
+                conv.test(lambda variables: len(variables) >= 1, error = N_(u'At least one variable is required')),
+                conv.not_none,
+                ),
+            ),
+        )(inputs, state = ctx)
+    if errors is None:
+        tax_benefit_system = data['tax_benefit_system']
+        data, errors = conv.struct(
+            dict(
+                variables = conv.uniform_sequence(
+                    conv.test_in(tax_benefit_system.column_by_name),
+                    ),
+                scenarios = conv.uniform_sequence(
+                    tax_benefit_system.Scenario.make_json_to_instance(cache_dir = conf['cache_dir'],
+                        repair = data['validate'], tax_benefit_system = tax_benefit_system),
+                    ),
+                ),
+            default = conv.noop,
+            )(data, state = ctx)
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [errors],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+#    api_key = data['api_key']
+#    account = model.Account.find_one(
+#        dict(
+#            api_key = api_key,
+#            ),
+#        as_class = collections.OrderedDict,
+#        )
+#    if account is None:
+#        return wsgihelpers.respond_json(ctx,
+#            collections.OrderedDict(sorted(dict(
+#                apiVersion = '1.0',
+#                context = data['context'],
+#                error = collections.OrderedDict(sorted(dict(
+#                    code = 401,  # Unauthorized
+#                    message = ctx._('Unknown API Key: {}').format(api_key),
+#                    ).iteritems())),
+#                method = req.script_name,
+#                params = inputs,
+#                url = req.url.decode('utf-8'),
+#                ).iteritems())),
+#            headers = headers,
+#            )
+
+    suggestions = {}
+    for scenario_index, scenario in enumerate(data['scenarios']):
+        if data['validate']:
+            original_test_case = scenario.test_case
+            scenario.test_case = copy.deepcopy(original_test_case)
+        suggestion = scenario.suggest()
+        if data['validate']:
+            scenario.test_case = original_test_case
+        if suggestion is not None:
+            suggestions.setdefault('scenarios', {})[scenario_index] = suggestion
+    if not suggestions:
+        suggestions = None
+
+    if data['validate']:
+        # Only a validation is requested. Don't launch simulation
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                method = req.script_name,
+                params = inputs,
+                repaired_scenarios = [
+                    scenario.to_json()
+                    for scenario in data['scenarios']
+                    ],
+                suggestions = suggestions,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    simulations = []
+    for scenario in data['scenarios']:
+        simulation = scenario.new_simulation(trace = data['trace'] or data['intermediate_variables'])
+        for variable in data['variables']:
+            simulation.calculate(variable)
+        simulations.append(simulation)
+
+    output_test_cases = []
+    for scenario, simulation in itertools.izip(data['scenarios'], simulations):
+        test_case = scenario.to_json()['test_case']
+        if data['intermediate_variables']:
+            holders_iter = (
+                step['holder']
+                for step in simulation.traceback.itervalues()
+                )
+        else:
+            holders_iter = (
+                simulation.get_holder(variable)
+                for variable in data['variables']
+                )
+        for holder in holders_iter:
+            if holder.array is not None:
+                column = holder.column
+                for test_case_entity, value in itertools.izip(test_case[holder.entity.key_plural].itervalues(),
+                        holder.array.tolist()):
+                    test_case_entity[column.name] = column.transform_value_to_json(value)
+        output_test_cases.append(test_case)
+
+    if data['trace']:
+        tracebacks = []
+        for simulation in simulations:
+            traceback_json = collections.OrderedDict()
+            for name, step in simulation.traceback.iteritems():
+                holder = step['holder']
+                column = holder.column
+                traceback_json[name] = dict(
+                    array = [
+                        column.transform_value_to_json(value)
+                        for value in holder.array.tolist()
+                        ] if holder.array is not None else None,
+                    cell_type = column.val_type,
+                    default_arguments = step.get('default_arguments', False),
+                    entity = column.entity,
+                    is_computed = step.get('is_computed', False),
+                    label = column.label,
+                    )
+            tracebacks.append(traceback_json)
+    else:
+        tracebacks = None
+
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            context = data['context'],
+            method = req.script_name,
+            params = inputs,
+            suggestions = suggestions,
+            tracebacks = tracebacks,
+            url = req.url.decode('utf-8'),
+            value = output_test_cases,
+            ).iteritems())),
+        headers = headers,
+        )
 
 
 @wsgihelpers.wsgify
@@ -658,6 +925,7 @@ def make_router():
     """Return a WSGI application that searches requests to controllers """
     global router
     router = urls.make_router(
+        ('POST', '^/api/1/calculate/?$', api1_calculate),
         ('GET', '^/api/1/default-legislation/?$', api1_default_legislation),
         ('GET', '^/api/1/field/?$', api1_field),
         ('GET', '^/api/1/fields/?$', api1_fields),
