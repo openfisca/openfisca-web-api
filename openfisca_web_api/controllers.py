@@ -266,25 +266,26 @@ def api1_simulate(req):
 
     assert req.method == 'POST', req.method
 
-    try:
-        load_average = os.getloadavg()
-    except (AttributeError, OSError):
-        # When load average is not available, always accept request.
-        pass
-    else:
-        if load_average[0] / cpu_count > 1:
-            return wsgihelpers.respond_json(ctx,
-                collections.OrderedDict(sorted(dict(
-                    apiVersion = '1.0',
-                    error = collections.OrderedDict(sorted(dict(
-                        code = 503,  # Service Unavailable
-                        message = ctx._(u'Server is overloaded: {} {} {}').format(*load_average),
+    if conf['load_alert']:
+        try:
+            load_average = os.getloadavg()
+        except (AttributeError, OSError):
+            # When load average is not available, always accept request.
+            pass
+        else:
+            if load_average[0] / cpu_count > 1:
+                return wsgihelpers.respond_json(ctx,
+                    collections.OrderedDict(sorted(dict(
+                        apiVersion = '1.0',
+                        error = collections.OrderedDict(sorted(dict(
+                            code = 503,  # Service Unavailable
+                            message = ctx._(u'Server is overloaded: {} {} {}').format(*load_average),
+                            ).iteritems())),
+                        method = req.script_name,
+                        url = req.url.decode('utf-8'),
                         ).iteritems())),
-                    method = req.script_name,
-                    url = req.url.decode('utf-8'),
-                    ).iteritems())),
-                headers = headers,
-                )
+                    headers = headers,
+                    )
 
     content_type = req.content_type
     if content_type is not None:

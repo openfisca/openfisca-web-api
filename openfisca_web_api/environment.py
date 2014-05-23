@@ -62,6 +62,7 @@ def load_environment(global_conf, app_conf):
             'debug': conv.pipe(conv.guess_bool, conv.default(False)),
             'global_conf': conv.set_value(global_conf),
             'i18n_dir': conv.default(os.path.join(app_dir, 'i18n')),
+            'load_alert': conv.pipe(conv.guess_bool, conv.default(False)),
             'log_level': conv.pipe(
                 conv.default('WARNING'),
                 conv.function(lambda log_level: getattr(logging, log_level.upper())),
