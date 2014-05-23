@@ -170,7 +170,15 @@ class Ctx(conv.State):
                 languages = [languages]
             translator = gettext.NullTranslations()
             for name, i18n_dir in [
-                    ('biryani1', os.path.join(pkg_resources.get_distribution('biryani1').location, 'biryani1', 'i18n')),
+                    (
+                        'biryani1',
+                        os.path.join(pkg_resources.get_distribution('biryani1').location, 'biryani1', 'i18n'),
+                        ),
+                    (
+                        conf['country_package'].replace('_', '-'),
+                        os.path.join(pkg_resources.get_distribution(conf['country_package']).location,
+                            conf['country_package'], 'i18n'),
+                        ),
                     ]:
                 if i18n_dir is not None:
                     translator = new_translator(name, i18n_dir, languages, fallback = translator)
