@@ -88,3 +88,5 @@ def load_environment(global_conf, app_conf):
 
     country_package = importlib.import_module(conf['country_package'])
     conv.State.TaxBenefitSystem = country_package.init_country()
+    conv.State.tax_benefit_system_instances_by_json = {}
+    conv.State.tax_benefit_system_instances_by_json[None] = conv.State.TaxBenefitSystem()

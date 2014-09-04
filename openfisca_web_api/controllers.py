@@ -39,7 +39,7 @@ import xml.etree
 #from openfisca_core import datatables, legislations, legislationsxml
 from openfisca_core import decompositions, decompositionsxml, legislations, simulations
 
-from . import conf, contexts, conv, urls, wsgihelpers
+from . import conf, contexts, conv, model, urls, wsgihelpers
 
 
 cpu_count = multiprocessing.cpu_count()
@@ -611,7 +611,7 @@ def api1_simulate(req):
                     error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
                 ),
-            tax_benefit_system = ctx.TaxBenefitSystem.json_to_instance,
+            tax_benefit_system = model.json_to_cached_instance,
             trace = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
