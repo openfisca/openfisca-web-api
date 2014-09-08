@@ -34,10 +34,9 @@ import datetime
 import itertools
 import multiprocessing
 import os
-import xml.etree
 
 #from openfisca_core import datatables, legislations, legislationsxml
-from openfisca_core import decompositions, decompositionsxml, legislations, simulations
+from openfisca_core import decompositions, legislations, simulations
 
 from . import conf, contexts, conv, model, urls, wsgihelpers
 
@@ -715,14 +714,12 @@ def api1_simulate(req):
             )
 
     if isinstance(data['decomposition'], basestring):
-        # TODO: Cache decomposition_json.
-        decomposition_tree = xml.etree.ElementTree.parse(os.path.join(tax_benefit_system.DECOMP_DIR,
-            data['decomposition']))
-        decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(decomposition_tree.getroot(),
-            state = ctx)
-        decomposition_xml_json = conv.check(decompositionsxml.make_validate_node_xml_json(tax_benefit_system))(
-            decomposition_xml_json, state = ctx)
-        decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
+        if data['decomposition'] in ctx.decomposition_json_by_file_path:
+          decomposition_json = ctx.decomposition_json_by_file_path[data['decomposition']]
+        else:
+          decomposition_file_path = os.path.join(tax_benefit_system.DECOMP_DIR, data['decomposition'])
+          decomposition_json = model.get_decomposition_json(decomposition_file_path, tax_benefit_system)
+          ctx.decomposition_json_by_file_path[data['decomposition']] = decomposition_json
     else:
         decomposition_json = data['decomposition']
 
@@ -734,7 +731,7 @@ def api1_simulate(req):
                 simulation.calculate(node['code'])
         simulations.append(simulation)
 
-    response_json = copy.deepcopy(decomposition_json)
+    response_json = copy.deepcopy(decomposition_json)  # Use decomposition as a skeleton for response.
     for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):
         children = node.get('children')
         if children:

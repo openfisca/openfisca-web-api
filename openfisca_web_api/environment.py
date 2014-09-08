@@ -33,8 +33,9 @@ import sys
 
 from biryani1 import strings
 
+import openfisca_france.decompositions
 import openfisca_web_api
-from . import conv
+from . import conv, model
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
@@ -86,7 +87,17 @@ def load_environment(global_conf, app_conf):
         errorware['from_address'] = conf['from_address']
         errorware['smtp_server'] = conf.get('smtp_server', 'localhost')
 
+    # Initializa tax-benefit system.
     country_package = importlib.import_module(conf['country_package'])
     conv.State.TaxBenefitSystem = country_package.init_country()
-    conv.State.tax_benefit_system_instances_by_json = {}
-    conv.State.tax_benefit_system_instances_by_json[None] = conv.State.TaxBenefitSystem()
+
+    # Initialize caches, pre-fill with default values.
+    default_tax_benefit_system = conv.State.TaxBenefitSystem()
+    conv.State.decomposition_json_by_file_path = {}
+    decomposition_file_path = os.path.join(default_tax_benefit_system.DECOMP_DIR,
+        openfisca_france.decompositions.DEFAULT_DECOMP_FILE)
+    conv.State.decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
+        decomposition_file_path, default_tax_benefit_system)
+    conv.State.tax_benefit_system_instances_by_json = {} # TODO Rename: tax_benefit_system_instance_by_json
+    # None key means that there are no attributes.
+    conv.State.tax_benefit_system_instances_by_json[None] = default_tax_benefit_system
