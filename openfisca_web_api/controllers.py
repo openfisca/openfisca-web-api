@@ -162,6 +162,7 @@ def api1_calculate(req):
                 ),
             ),
         )(inputs, state = ctx)
+
     if errors is None:
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
@@ -642,6 +643,7 @@ def api1_simulate(req):
                 ),
             default = conv.noop,
             )(data, state = ctx)
+
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
@@ -724,6 +726,7 @@ def api1_simulate(req):
         decomposition_json = data['decomposition']
 
     simulations = []
+
     for scenario in data['scenarios']:
         simulation = scenario.new_simulation(trace = data['trace'])
         for node in decompositions.iter_decomposition_nodes(decomposition_json):
