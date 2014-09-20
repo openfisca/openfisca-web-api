@@ -50,17 +50,6 @@ errors_title = {
 wsgify = webob.dec.wsgify
 
 
-def discard_empty_items(data):
-    if isinstance(data, collections.Mapping):
-        # Use type(data) to keep OrderedDicts.
-        data = type(data)(
-            (name, discard_empty_items(value))
-            for name, value in data.iteritems()
-            if value is not None
-            )
-    return data
-
-
 def handle_cross_origin_resource_sharing(ctx):
     # Cf http://www.w3.org/TR/cors/#resource-processing-model
     environ = ctx.req.environ
@@ -94,8 +83,18 @@ def respond_json(ctx, data, code = None, headers = None, jsonp = None):
     """
     if isinstance(data, collections.Mapping):
         # Remove null properties as recommended by Google JSON Style Guide.
-        data = discard_empty_items(data)
+        data = type(data)(
+            (name, value)
+            for name, value in data.iteritems()
+            if value is not None
+            )
         error = data.get('error')
+        if isinstance(error, collections.Mapping):
+            error = data['error'] = type(error)(
+                (name, value)
+                for name, value in error.iteritems()
+                if value is not None
+                )
     else:
         error = None
     if headers is None:
