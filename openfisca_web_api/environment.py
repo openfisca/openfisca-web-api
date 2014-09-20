@@ -33,7 +33,6 @@ import sys
 
 from biryani1 import strings
 
-import openfisca_france.decompositions
 import openfisca_web_api
 from . import conv, model
 
@@ -92,10 +91,11 @@ def load_environment(global_conf, app_conf):
     conv.State.TaxBenefitSystem = country_package.init_country()
 
     # Initialize caches, pre-fill with default values.
+    country_decompositions = importlib.import_module('{}.decompositions'.format(conf['country_package']))
     default_tax_benefit_system = conv.State.TaxBenefitSystem()
     conv.State.decomposition_json_by_file_path = {}
     decomposition_file_path = os.path.join(default_tax_benefit_system.DECOMP_DIR,
-        openfisca_france.decompositions.DEFAULT_DECOMP_FILE)
+        country_decompositions.DEFAULT_DECOMP_FILE)
     conv.State.decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
         decomposition_file_path, default_tax_benefit_system)
     conv.State.tax_benefit_system_instances_by_json = {} # TODO Rename: tax_benefit_system_instance_by_json
