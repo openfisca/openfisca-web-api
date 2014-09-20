@@ -116,7 +116,7 @@ def api1_calculate(req):
         dict(
 #            api_key = conv.pipe(  # Shared secret between client and server
 #                conv.test_isinstance(basestring),
-#                conv.input_to_uuid,
+#                conv.input_to_uuid_str,
 #                conv.not_none,
 #                ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
@@ -596,7 +596,7 @@ def api1_simulate(req):
         dict(
 #            api_key = conv.pipe(  # Shared secret between client and server
 #                conv.test_isinstance(basestring),
-#                conv.input_to_uuid,
+#                conv.input_to_uuid_str,
 #                conv.not_none,
 #                ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
@@ -842,7 +842,7 @@ def api1_submit_legislation(req):
         dict(
 #            api_key = conv.pipe(  # Shared secret between client and server
 #                conv.test_isinstance(basestring),
-#                conv.input_to_uuid,
+#                conv.input_to_uuid_str,
 #                conv.not_none,
 #                ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
