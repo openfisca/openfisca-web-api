@@ -8,6 +8,6 @@ RUN pip install -e git+https://github.com/openfisca/openfisca-france.git#egg=Ope
 RUN pip install -e git+https://github.com/openfisca/openfisca-web-api.git#egg=OpenFisca-Web-API
 
 RUN apt-get install --no-install-recommends -y python-pastescript
-RUN sed "s/host = 127.0.0.1/host = 0.0.0.0/" /src/openfisca-web-api/development.ini > /src/openfisca-web-api/development-local.ini
-CMD paster serve /src/openfisca-web-api/development-local.ini
+RUN sed -e "s/host = 127.0.0.1/host = 0.0.0.0/" /src/openfisca-web-api/development.ini > /src/openfisca-web-api/development-local.ini
+CMD paster serve --reload /src/openfisca-web-api/development-local.ini
 EXPOSE 2014
