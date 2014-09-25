@@ -35,7 +35,6 @@ import itertools
 import multiprocessing
 import os
 
-#from openfisca_core import datatables, legislations, legislationsxml
 from openfisca_core import decompositions, legislations, simulations
 
 from . import conf, contexts, conv, model, urls, wsgihelpers
@@ -717,11 +716,11 @@ def api1_simulate(req):
 
     if isinstance(data['decomposition'], basestring):
         if data['decomposition'] in ctx.decomposition_json_by_file_path:
-          decomposition_json = ctx.decomposition_json_by_file_path[data['decomposition']]
+            decomposition_json = ctx.decomposition_json_by_file_path[data['decomposition']]
         else:
-          decomposition_file_path = os.path.join(tax_benefit_system.DECOMP_DIR, data['decomposition'])
-          decomposition_json = model.get_decomposition_json(decomposition_file_path, tax_benefit_system)
-          ctx.decomposition_json_by_file_path[data['decomposition']] = decomposition_json
+            decomposition_file_path = os.path.join(tax_benefit_system.DECOMP_DIR, data['decomposition'])
+            decomposition_json = model.get_decomposition_json(decomposition_file_path, tax_benefit_system)
+            ctx.decomposition_json_by_file_path[data['decomposition']] = decomposition_json
     else:
         decomposition_json = data['decomposition']
 
