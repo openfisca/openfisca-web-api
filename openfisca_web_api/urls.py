@@ -36,6 +36,9 @@ import webob
 from . import contexts, wsgihelpers
 
 
+import cProfile, pstats, StringIO
+
+
 application_url = None  # Set to req.application_url as soon as application is called.
 
 
@@ -144,7 +147,17 @@ def make_router(*routings):
                     req.urlvars.update(vars)
                     req.script_name += req.path_info[:match.end()]
                     req.path_info = req.path_info[match.end():]
-                    return app(req.environ, start_response)
+                    # return app(req.environ, start_response)
+                    profiler = cProfile.Profile()
+                    profiler.enable()
+                    response = app(req.environ, start_response)
+                    profiler.disable()
+                    profiler.dump_stats('dump.prof')
+                    for sortby in ('cumtime', 'tottime'):
+                        with open('stats.{}.txt'.format(sortby), 'w') as profile_file:
+                            stats = pstats.Stats(profiler, stream=profile_file).sort_stats(sortby)
+                            stats.print_stats()
+                    return response
         ctx = contexts.Ctx(req)
         headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
         return wsgihelpers.respond_json(ctx,
