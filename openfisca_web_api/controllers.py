@@ -325,6 +325,35 @@ def api1_default_legislation(req):
 
 
 @wsgihelpers.wsgify
+def api1_entities(req):
+    def build_entity_data(entity_class):
+        entity_data = {
+            'isPersonsEntity': entity_class.is_persons_entity,
+            'label': entity_class.label,
+            'nameKey': entity_class.name_key,
+            }
+        if hasattr(entity_class, 'roles_key'):
+            entity_data.update({
+                'maxCardinalityByRoleKey': entity_class.max_cardinality_by_role_key,
+                'roles': entity_class.roles_key,
+                'labelByRoleKey': entity_class.label_by_role_key,
+                })
+        return entity_data
+
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'GET', req.method
+
+    entities_class = ctx.TaxBenefitSystem.entity_class_by_key_plural.itervalues()
+    data = collections.OrderedDict(sorted({
+        entity_class.key_plural: build_entity_data(entity_class)
+        for entity_class in entities_class
+        }.iteritems()))
+    return wsgihelpers.respond_json(ctx, data, headers = headers)
+
+
+@wsgihelpers.wsgify
 def api1_field(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
@@ -926,6 +955,7 @@ def make_router():
     router = urls.make_router(
         ('POST', '^/api/1/calculate/?$', api1_calculate),
         ('GET', '^/api/1/default-legislation/?$', api1_default_legislation),
+        ('GET', '^/api/1/entities/?$', api1_entities),
         ('GET', '^/api/1/field/?$', api1_field),
         ('GET', '^/api/1/fields/?$', api1_fields),
         ('GET', '^/api/1/graph/?$', api1_graph),
