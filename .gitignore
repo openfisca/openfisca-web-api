@@ -4,11 +4,10 @@
 build/
 cache/
 config-*.ini
-development-*.ini
+development-*local.ini
 dist/
 *.egg-info
 *.mo
 *.pyc
 *.pyo
 *~
-
