@@ -99,6 +99,6 @@ def load_environment(global_conf, app_conf):
         country_decompositions.DEFAULT_DECOMP_FILE)
     conv.State.decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
         decomposition_file_path, default_tax_benefit_system)
-    conv.State.tax_benefit_system_instances_by_json = {} # TODO Rename: tax_benefit_system_instance_by_json
+    conv.State.tax_benefit_system_instances_by_json = {}  # TODO Rename: tax_benefit_system_instance_by_json
     # None key means that there are no attributes.
     conv.State.tax_benefit_system_instances_by_json[None] = default_tax_benefit_system
