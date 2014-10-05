@@ -35,7 +35,7 @@ import itertools
 import multiprocessing
 import os
 
-from openfisca_core import decompositions, legislations, simulations
+from openfisca_core import decompositions, legislations, periods, simulations
 
 from . import conf, contexts, conv, model, urls, wsgihelpers
 
@@ -396,8 +396,9 @@ def api1_field(req):
             headers = headers,
             )
 
+    year = datetime.date.today().year
     simulation = simulations.Simulation(
-        date = datetime.date(datetime.date.today().year, 1, 1),
+        date = datetime.date(year, 1, 1),
         tax_benefit_system = tax_benefit_system,
         )
     holder = simulation.get_or_new_holder(data['variable'])
@@ -531,8 +532,9 @@ def api1_graph(req):
             headers = headers,
             )
 
+    year = datetime.date.today().year
     simulation = simulations.Simulation(
-        date = datetime.date(datetime.date.today().year, 1, 1),
+        date = datetime.date(year, 1, 1),
         tax_benefit_system = tax_benefit_system,
         )
     edges = []
@@ -930,7 +932,8 @@ def api1_submit_legislation(req):
         if datesim is None:
             dated_legislation_json = None
         else:
-            dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
+            dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json,
+                periods.period_from_anything('year', datesim))
     else:
         dated_legislation_json = legislation_json
         legislation_json = None
