@@ -410,7 +410,7 @@ def api1_field(req):
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
-            value = holder.to_json(with_array = False),
+            value = holder.to_field_json(),
             ).iteritems())),
         headers = headers,
         )
@@ -779,7 +779,7 @@ def api1_simulate(req):
                 column = holder.column
                 values.extend(
                     column.transform_value_to_json(value)
-                    for value in holder.new_test_case_array().tolist()
+                    for value in holder.new_test_case_array(simulation.period).tolist()
                     )
         column = tax_benefit_system.column_by_name.get(node['code'])
         if column is not None and column.url is not None:
@@ -933,7 +933,7 @@ def api1_submit_legislation(req):
             dated_legislation_json = None
         else:
             dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json,
-                periods.period_from_anything('year', datesim))
+                periods.period('year', datesim))
     else:
         dated_legislation_json = legislation_json
         legislation_json = None
