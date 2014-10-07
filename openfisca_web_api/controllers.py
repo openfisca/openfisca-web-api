@@ -398,7 +398,7 @@ def api1_field(req):
 
     year = datetime.date.today().year
     simulation = simulations.Simulation(
-        date = datetime.date(year, 1, 1),
+        period = periods.period('year', year),
         tax_benefit_system = tax_benefit_system,
         )
     holder = simulation.get_or_new_holder(data['variable'])
@@ -534,7 +534,7 @@ def api1_graph(req):
 
     year = datetime.date.today().year
     simulation = simulations.Simulation(
-        date = datetime.date(year, 1, 1),
+        period = periods.period('year', year),
         tax_benefit_system = tax_benefit_system,
         )
     edges = []
