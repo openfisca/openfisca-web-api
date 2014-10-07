@@ -113,11 +113,11 @@ def api1_calculate(req):
 
     data, errors = conv.struct(
         dict(
-#            api_key = conv.pipe(  # Shared secret between client and server
-#                conv.test_isinstance(basestring),
-#                conv.input_to_uuid_str,
-#                conv.not_none,
-#                ),
+            # api_key = conv.pipe(  # Shared secret between client and server
+            #     conv.test_isinstance(basestring),
+            #     conv.input_to_uuid_str,
+            #     conv.not_none,
+            #     ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             intermediate_variables = conv.pipe(
                 conv.test_isinstance((bool, int)),
@@ -624,11 +624,11 @@ def api1_simulate(req):
 
     data, errors = conv.struct(
         dict(
-#            api_key = conv.pipe(  # Shared secret between client and server
-#                conv.test_isinstance(basestring),
-#                conv.input_to_uuid_str,
-#                conv.not_none,
-#                ),
+            # api_key = conv.pipe(  # Shared secret between client and server
+            #     conv.test_isinstance(basestring),
+            #     conv.input_to_uuid_str,
+            #     conv.not_none,
+            #     ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
             scenarios = conv.pipe(
@@ -870,11 +870,11 @@ def api1_submit_legislation(req):
 
     data, errors = conv.struct(
         dict(
-#            api_key = conv.pipe(  # Shared secret between client and server
-#                conv.test_isinstance(basestring),
-#                conv.input_to_uuid_str,
-#                conv.not_none,
-#                ),
+            # api_key = conv.pipe(  # Shared secret between client and server
+            #     conv.test_isinstance(basestring),
+            #     conv.input_to_uuid_str,
+            #     conv.not_none,
+            #     ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             date = conv.pipe(
                 conv.test_isinstance(basestring),
