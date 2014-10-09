@@ -43,9 +43,8 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 def load_environment(global_conf, app_conf):
     """Configure the application environment."""
     conf = openfisca_web_api.conf  # Empty dictionary
-    encoding = sys.stdout.encoding
-    conf.update(strings.deep_decode(global_conf, encoding))
-    conf.update(strings.deep_decode(app_conf, encoding))
+    conf.update(strings.deep_decode(global_conf))
+    conf.update(strings.deep_decode(app_conf))
     conf.update(conv.check(conv.struct(
         {
             'app_conf': conv.set_value(app_conf),
