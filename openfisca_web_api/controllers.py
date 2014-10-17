@@ -932,8 +932,7 @@ def api1_submit_legislation(req):
         if datesim is None:
             dated_legislation_json = None
         else:
-            dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json,
-                periods.period('year', datesim))
+            dated_legislation_json = legislations.generate_dated_legislation_json(legislation_json, datesim)
     else:
         dated_legislation_json = legislation_json
         legislation_json = None
