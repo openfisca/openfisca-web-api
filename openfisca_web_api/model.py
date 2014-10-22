@@ -41,7 +41,7 @@ def get_decomposition_json(xml_file_path, tax_benefit_system):
 
 
 def json_to_cached_instance(value, state = None):
-    cache = conv.State.tax_benefit_system_instances_by_json
+    cache = conv.State.tax_benefit_system_instance_by_json
     if value in cache:
         instance = cache[value]
     else:
