@@ -101,3 +101,7 @@ def load_environment(global_conf, app_conf):
     conv.State.tax_benefit_system_instance_by_json = {
         None: default_tax_benefit_system,  # None key means that there are no attributes.
         }
+    conv.State.reform_by_name_by_tax_benefit_system_instance = {}
+    if hasattr(country_package, 'init_reforms'):
+        reform_by_name = country_package.init_reforms(default_tax_benefit_system)
+        conv.State.reform_by_name_by_tax_benefit_system_instance[default_tax_benefit_system] = reform_by_name

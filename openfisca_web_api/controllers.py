@@ -631,6 +631,7 @@ def api1_simulate(req):
             #     ),
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
+            reform_names = conv.noop,  # Real conversion is done once tax-benefit system is known.
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
@@ -665,6 +666,15 @@ def api1_simulate(req):
                         decompositions.make_validate_node_json(tax_benefit_system),
                         ),
                     conv.default(os.path.join(tax_benefit_system.DECOMP_DIR, tax_benefit_system.DEFAULT_DECOMP_FILE)),
+                    ),
+                reform_names = conv.pipe(
+                    conv.uniform_sequence(
+                        conv.pipe(
+                            conv.cleanup_line,
+                            conv.test_in(ctx.reform_by_name_by_tax_benefit_system_instance[tax_benefit_system].keys()),
+                            ),
+                        ),
+                    conv.test(lambda values: len(values) == 1, error = u'Only one reform name is accepted for now'),
                     ),
                 scenarios = conv.uniform_sequence(
                     tax_benefit_system.Scenario.make_json_to_instance(cache_dir = conf['cache_dir'],
@@ -763,6 +773,14 @@ def api1_simulate(req):
             if not node.get('children'):
                 simulation.calculate(node['code'])
         simulations.append(simulation)
+        if data['reform_names'] is not None:
+            reform_name = data['reform_names'][0]
+            reform = ctx.reform_by_name_by_tax_benefit_system_instance[data['tax_benefit_system']][reform_name]
+            reform_simulation = reform.new_simulation(scenario = scenario, trace = data['trace'])
+            for node in decompositions.iter_decomposition_nodes(decomposition_json):
+                if not node.get('children'):
+                    reform_simulation.calculate(node['code'])
+            simulations.append(reform_simulation)
 
     response_json = copy.deepcopy(decomposition_json)  # Use decomposition as a skeleton for response.
     for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):
