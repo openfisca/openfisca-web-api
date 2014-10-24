@@ -87,21 +87,28 @@ def load_environment(global_conf, app_conf):
         errorware['smtp_server'] = conf.get('smtp_server', 'localhost')
 
     # Initialize tax-benefit system.
+
     country_package = importlib.import_module(conf['country_package'])
-    conv.State.TaxBenefitSystem = country_package.init_country()
+    TaxBenefitSystem = model.TaxBenefitSystem = country_package.init_country()
 
     # Initialize caches, pre-fill with default values.
+
     country_decompositions = importlib.import_module('{}.decompositions'.format(conf['country_package']))
-    default_tax_benefit_system = conv.State.TaxBenefitSystem()
-    conv.State.decomposition_json_by_file_path = {}
+    default_tax_benefit_system = TaxBenefitSystem()
+
+    decomposition_json_by_file_path = {}
     decomposition_file_path = os.path.join(default_tax_benefit_system.DECOMP_DIR,
         country_decompositions.DEFAULT_DECOMP_FILE)
-    conv.State.decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
+    decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
         decomposition_file_path, default_tax_benefit_system)
-    conv.State.tax_benefit_system_instance_by_json = {
+    model.decomposition_json_by_file_path = decomposition_json_by_file_path
+
+    model.tax_benefit_system_instance_by_json = {
         None: default_tax_benefit_system,  # None key means that there are no attributes.
         }
-    conv.State.reform_by_name_by_tax_benefit_system_instance = {}
+
+    reform_by_name_by_tax_benefit_system_instance = {}
     if hasattr(country_package, 'init_reforms'):
         reform_by_name = country_package.init_reforms(default_tax_benefit_system)
-        conv.State.reform_by_name_by_tax_benefit_system_instance[default_tax_benefit_system] = reform_by_name
+        reform_by_name_by_tax_benefit_system_instance[default_tax_benefit_system] = reform_by_name
+    model.reform_by_name_by_tax_benefit_system_instance = reform_by_name_by_tax_benefit_system_instance

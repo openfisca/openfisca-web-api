@@ -26,4 +26,29 @@
 """Conversion functions"""
 
 
+import json
+
 from openfisca_core.conv import *  # noqa
+
+from . import model
+
+
+def json_to_cached_tax_benefit_system_instance(value, state = None):
+    instance = model.tax_benefit_system_instance_by_json.get(value)
+    if instance is None:
+        instance = check(model.TaxBenefitSystem.json_to_instance)(value)
+        model.tax_benefit_system_instance_by_json[value] = instance
+    return instance, None
+
+
+def make_json_to_cached_scenario(cache_dir, repair, tax_benefit_system):
+    def json_to_cached_scenario_instance(value, state):
+        json_str = json.dumps(value, separators=(',', ':'))
+        scenario_instance = model.scenario_by_json_str.get(json_str)
+        if scenario_instance is None:
+            scenario_instance = check(
+                tax_benefit_system.Scenario.make_json_to_instance(cache_dir, repair, tax_benefit_system),
+                )(value)
+            model.scenario_by_json_str[json_str] = scenario_instance
+        return scenario_instance, None
+    return json_to_cached_scenario_instance

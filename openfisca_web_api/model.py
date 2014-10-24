@@ -23,14 +23,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import weakref
 import xml.etree
 
 from openfisca_core import decompositionsxml
 
-from . import conv
+
+# Declaration of caches, initialized in environment module
+
+decomposition_json_by_file_path = None
+reform_by_name_by_tax_benefit_system_instance = None
+scenario_by_json_str = weakref.WeakValueDictionary()
+tax_benefit_system_instance_by_json = None
+TaxBenefitSystem = None
 
 
 def get_decomposition_json(xml_file_path, tax_benefit_system):
+    from . import conv
     decomposition_tree = xml.etree.ElementTree.parse(xml_file_path)
     decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(decomposition_tree.getroot(),
         state = conv.State)
@@ -38,13 +47,3 @@ def get_decomposition_json(xml_file_path, tax_benefit_system):
         decomposition_xml_json, state = conv.State)
     decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
     return decomposition_json
-
-
-def json_to_cached_instance(value, state = None):
-    cache = conv.State.tax_benefit_system_instance_by_json
-    if value in cache:
-        instance = cache[value]
-    else:
-        instance = conv.State.TaxBenefitSystem.json_to_instance(value)
-        cache[value] = instance
-    return instance, None
