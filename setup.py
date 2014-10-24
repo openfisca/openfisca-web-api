@@ -45,7 +45,7 @@ doc_lines = __doc__.split('\n')
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '0.3dev',
+    version = '0.4dev',
 
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
@@ -66,14 +66,14 @@ setup(
     install_requires = [
         'Babel >= 0.9.4',
         'Biryani1 >= 0.9dev',
-        'OpenFisca-Core >= 0.3dev',
+        'OpenFisca-Core >= 0.4dev',
         'WebError >= 0.10',
         'WebOb >= 1.1',
         ],
     message_extractors = {'openfisca_web_api': [
         ('**.py', 'python', None),
         ]},
-#    package_data = {'openfisca_web_api': ['i18n/*/LC_MESSAGES/*.mo']},
+    # package_data = {'openfisca_web_api': ['i18n/*/LC_MESSAGES/*.mo']},
     packages = find_packages(),
     zip_safe = False,
     )

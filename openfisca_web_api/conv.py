@@ -26,4 +26,4 @@
 """Conversion functions"""
 
 
-from openfisca_core.conv import *
+from openfisca_core.conv import *  # noqa
