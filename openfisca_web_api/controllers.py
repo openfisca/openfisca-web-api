@@ -134,7 +134,7 @@ def api1_calculate(req):
                     error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
                 ),
-            tax_benefit_system = model.TaxBenefitSystem.json_to_instance,
+            tax_benefit_system = model.TaxBenefitSystem.json_to_cached_or_new_instance,
             trace = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
@@ -170,7 +170,7 @@ def api1_calculate(req):
                     conv.test_in(tax_benefit_system.column_by_name),
                     ),
                 scenarios = conv.uniform_sequence(
-                    conv.make_json_to_cached_scenario(
+                    tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
                         cache_dir = conf['cache_dir'],
                         repair = data['validate'],
                         tax_benefit_system = tax_benefit_system,
@@ -323,8 +323,7 @@ def api1_default_legislation(req):
 
     assert req.method == 'GET', req.method
 
-    tax_benefit_system = model.TaxBenefitSystem()
-    return wsgihelpers.respond_json(ctx, tax_benefit_system.legislation_json, headers = headers)
+    return wsgihelpers.respond_json(ctx, model.tax_benefit_system.legislation_json, headers = headers)
 
 
 @wsgihelpers.wsgify
@@ -348,7 +347,7 @@ def api1_entities(req):
 
     assert req.method == 'GET', req.method
 
-    entities_class = model.TaxBenefitSystem.entity_class_by_key_plural.itervalues()
+    entities_class = model.tax_benefit_system.entity_class_by_key_plural.itervalues()
     data = collections.OrderedDict(sorted({
         entity_class.key_plural: build_entity_data(entity_class)
         for entity_class in entities_class
@@ -368,7 +367,6 @@ def api1_field(req):
         context = params.get('context'),
         variable = params.get('variable'),
         )
-    tax_benefit_system = model.TaxBenefitSystem()
     data, errors = conv.pipe(
         conv.struct(
             dict(
@@ -376,7 +374,7 @@ def api1_field(req):
                 variable = conv.pipe(
                     conv.cleanup_line,
                     conv.default(u'revdisp'),
-                    conv.test_in(tax_benefit_system.column_by_name),
+                    conv.test_in(model.tax_benefit_system.column_by_name),
                     ),
                 ),
             default = 'drop',
@@ -401,7 +399,7 @@ def api1_field(req):
 
     simulation = simulations.Simulation(
         period = periods.period(datetime.date.today().year),
-        tax_benefit_system = tax_benefit_system,
+        tax_benefit_system = model.tax_benefit_system,
         )
     holder = simulation.get_or_new_holder(data['variable'])
 
@@ -455,9 +453,9 @@ def api1_fields(req):
 
     columns = collections.OrderedDict(
         (name, column.to_json())
-        for name, column in model.TaxBenefitSystem.column_by_name.iteritems()
+        for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
-        if column.formula_constructor is None
+        if column.formula_class is None
         )
 
     columns_tree = collections.OrderedDict(
@@ -470,7 +468,7 @@ def api1_fields(req):
                 )[entity],
             copy.deepcopy(tree),
             )
-        for entity, tree in model.TaxBenefitSystem.columns_name_tree_by_entity.iteritems()
+        for entity, tree in model.tax_benefit_system.columns_name_tree_by_entity.iteritems()
         )
 
     return wsgihelpers.respond_json(ctx,
@@ -483,8 +481,8 @@ def api1_fields(req):
             params = inputs,
             prestations = collections.OrderedDict(
                 (name, column.to_json())
-                for name, column in model.TaxBenefitSystem.prestation_by_name.iteritems()
-                if column.formula_constructor is not None
+                for name, column in model.tax_benefit_system.column_by_name.iteritems()
+                if column.formula_class is not None
                 ),
             url = req.url.decode('utf-8'),
             ).iteritems())),
@@ -503,7 +501,7 @@ def api1_graph(req):
         context = params.get('context'),
         variable = params.get('variable'),
         )
-    tax_benefit_system = model.TaxBenefitSystem()
+    tax_benefit_system = model.tax_benefit_system
     data, errors = conv.pipe(
         conv.struct(
             dict(
@@ -643,7 +641,7 @@ def api1_simulate(req):
                     error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
                 ),
-            tax_benefit_system = conv.json_to_cached_tax_benefit_system_instance,
+            tax_benefit_system = model.TaxBenefitSystem.json_to_cached_or_new_instance,
             trace = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
@@ -660,33 +658,51 @@ def api1_simulate(req):
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
             dict(
-                decomposition = conv.pipe(
-                    conv.condition(
-                        conv.test_isinstance(basestring),
-                        conv.test(lambda filename: filename in os.listdir(tax_benefit_system.DECOMP_DIR)),
-                        decompositions.make_validate_node_json(tax_benefit_system),
-                        ),
-                    conv.default(os.path.join(tax_benefit_system.DECOMP_DIR, tax_benefit_system.DEFAULT_DECOMP_FILE)),
-                    ),
                 reform_names = conv.pipe(
+                    conv.test_isinstance(list),
                     conv.uniform_sequence(
                         conv.pipe(
+                            conv.test_isinstance(basestring),
                             conv.cleanup_line,
-                            conv.test_in(model.reform_by_name_by_tax_benefit_system_instance[tax_benefit_system].keys()),
+                            conv.test_in((tax_benefit_system.reform_by_name or {}).keys()),
                             ),
+                        drop_none_items = True,
                         ),
+                    conv.empty_to_none,
                     conv.test(lambda values: len(values) == 1, error = u'Only one reform name is accepted for now'),
-                    ),
-                scenarios = conv.uniform_sequence(
-                    conv.make_json_to_cached_scenario(
-                        cache_dir = conf['cache_dir'],
-                        repair = data['validate'],
-                        tax_benefit_system = tax_benefit_system,
-                        )
                     ),
                 ),
             default = conv.noop,
             )(data, state = ctx)
+
+        if errors is None:
+            if data['reform_names'] is None:
+                with_reform = False
+            else:
+                with_reform = True
+                reform_name = data['reform_names'][0]
+                tax_benefit_system = tax_benefit_system.reform_by_name[reform_name]
+            data, errors = conv.struct(
+                dict(
+                    decomposition = conv.pipe(
+                        conv.condition(
+                            conv.test_isinstance(basestring),
+                            conv.test(lambda filename: filename in os.listdir(tax_benefit_system.DECOMP_DIR)),
+                            decompositions.make_validate_node_json(tax_benefit_system),
+                            ),
+                        conv.default(os.path.join(tax_benefit_system.DECOMP_DIR,
+                            tax_benefit_system.DEFAULT_DECOMP_FILE)),
+                        ),
+                    scenarios = conv.uniform_sequence(
+                        tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                            cache_dir = conf['cache_dir'],
+                            repair = data['validate'],
+                            tax_benefit_system = tax_benefit_system,
+                            )
+                        ),
+                    ),
+                default = conv.noop,
+                )(data, state = ctx)
 
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
@@ -772,19 +788,18 @@ def api1_simulate(req):
     simulations = []
 
     for scenario in data['scenarios']:
+        if with_reform:
+            # First compute the reference simulation (ie without reform).
+            simulation = scenario.new_simulation(trace = data['trace'], reference = True)
+            for node in decompositions.iter_decomposition_nodes(decomposition_json):
+                if not node.get('children'):
+                    simulation.calculate(node['code'])
+            simulations.append(simulation)
         simulation = scenario.new_simulation(trace = data['trace'])
         for node in decompositions.iter_decomposition_nodes(decomposition_json):
             if not node.get('children'):
                 simulation.calculate(node['code'])
         simulations.append(simulation)
-        if data['reform_names'] is not None:
-            reform_name = data['reform_names'][0]
-            reform = model.reform_by_name_by_tax_benefit_system_instance[data['tax_benefit_system']][reform_name]
-            reform_simulation = reform.new_simulation(scenario = scenario, trace = data['trace'])
-            for node in decompositions.iter_decomposition_nodes(decomposition_json):
-                if not node.get('children'):
-                    reform_simulation.calculate(node['code'])
-            simulations.append(reform_simulation)
 
     response_json = copy.deepcopy(decomposition_json)  # Use decomposition as a skeleton for response.
     for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):

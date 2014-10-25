@@ -27,9 +27,11 @@
 
 
 import importlib
+import json
 import logging
 import os
 import sys
+import weakref
 
 from biryani1 import strings
 
@@ -38,6 +40,10 @@ from . import conv, model
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.
+    pass
 
 
 def load_environment(global_conf, app_conf):
@@ -89,26 +95,62 @@ def load_environment(global_conf, app_conf):
     # Initialize tax-benefit system.
 
     country_package = importlib.import_module(conf['country_package'])
-    TaxBenefitSystem = model.TaxBenefitSystem = country_package.init_country()
+    TaxBenefitSystem = country_package.init_country()
+
+    class WebApiScenario(TaxBenefitSystem.Scenario):
+        instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
+
+        @classmethod
+        def cached_or_new(cls):
+            return conv.check(cls.json_to_cached_instance)(None)
+
+        @classmethod
+        def make_json_to_cached_or_new_instance(cls, cache_dir, repair, tax_benefit_system):
+            def json_to_cached_or_new_instance(value, state = None):
+                json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
+                instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
+                if instance_and_error_couple is None:
+                    instance_and_error_couple = cls.make_json_to_instance(cache_dir, repair, tax_benefit_system)(value,
+                        state = state or conv.default_state)
+                    # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create weak
+                    # reference to 'tuple' object.
+                    cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(instance_and_error_couple)
+                return instance_and_error_couple
+
+            return json_to_cached_or_new_instance
+
+    class WebApiTaxBenefitSystem(TaxBenefitSystem):
+        instance_and_error_couple_by_json_str_cache = {}  # class attribute
+        Scenario = WebApiScenario  # class attribute
+
+        @classmethod
+        def cached_or_new(cls):
+            return conv.check(cls.json_to_cached_instance)(None)
+
+        @classmethod
+        def json_to_cached_or_new_instance(cls, value, state = None):
+            json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
+            instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
+            if instance_and_error_couple is None:
+                instance_and_error_couple = cls.json_to_instance(value, state = state or conv.default_state)
+                # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create weak
+                # reference to 'tuple' object.
+                cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(instance_and_error_couple)
+            return instance_and_error_couple
+
+    model.TaxBenefitSystem = WebApiTaxBenefitSystem
+    model.tax_benefit_system = tax_benefit_system = WebApiTaxBenefitSystem()
+
+    if hasattr(country_package, 'init_reforms'):
+        country_package.init_reforms(tax_benefit_system)
 
     # Initialize caches, pre-fill with default values.
 
     country_decompositions = importlib.import_module('{}.decompositions'.format(conf['country_package']))
-    default_tax_benefit_system = TaxBenefitSystem()
 
     decomposition_json_by_file_path = {}
-    decomposition_file_path = os.path.join(default_tax_benefit_system.DECOMP_DIR,
+    decomposition_file_path = os.path.join(tax_benefit_system.DECOMP_DIR,
         country_decompositions.DEFAULT_DECOMP_FILE)
     decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
-        decomposition_file_path, default_tax_benefit_system)
+        decomposition_file_path, tax_benefit_system)
     model.decomposition_json_by_file_path = decomposition_json_by_file_path
-
-    model.tax_benefit_system_instance_by_json = {
-        None: default_tax_benefit_system,  # None key means that there are no attributes.
-        }
-
-    reform_by_name_by_tax_benefit_system_instance = {}
-    if hasattr(country_package, 'init_reforms'):
-        reform_by_name = country_package.init_reforms(default_tax_benefit_system)
-        reform_by_name_by_tax_benefit_system_instance[default_tax_benefit_system] = reform_by_name
-    model.reform_by_name_by_tax_benefit_system_instance = reform_by_name_by_tax_benefit_system_instance
