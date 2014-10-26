@@ -26,6 +26,7 @@
 """Environment configuration"""
 
 
+import datetime
 import importlib
 import json
 import logging
@@ -34,6 +35,7 @@ import sys
 import weakref
 
 from biryani1 import strings
+from openfisca_core import periods
 
 import openfisca_web_api
 from . import conv, model
@@ -102,7 +104,7 @@ def load_environment(global_conf, app_conf):
 
         @classmethod
         def cached_or_new(cls):
-            return conv.check(cls.json_to_cached_instance)(None)
+            return conv.check(cls.json_to_cached_or_new_instance)(None)
 
         @classmethod
         def make_json_to_cached_or_new_instance(cls, cache_dir, repair, tax_benefit_system):
@@ -125,7 +127,7 @@ def load_environment(global_conf, app_conf):
 
         @classmethod
         def cached_or_new(cls):
-            return conv.check(cls.json_to_cached_instance)(None)
+            return conv.check(cls.json_to_cached_or_new_instance)(None)
 
         @classmethod
         def json_to_cached_or_new_instance(cls, value, state = None):
@@ -139,7 +141,7 @@ def load_environment(global_conf, app_conf):
             return instance_and_error_couple
 
     model.TaxBenefitSystem = WebApiTaxBenefitSystem
-    model.tax_benefit_system = tax_benefit_system = WebApiTaxBenefitSystem()
+    model.tax_benefit_system = tax_benefit_system = WebApiTaxBenefitSystem.cached_or_new()
 
     if hasattr(country_package, 'init_reforms'):
         country_package.init_reforms(tax_benefit_system)
@@ -154,3 +156,10 @@ def load_environment(global_conf, app_conf):
     decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
         decomposition_file_path, tax_benefit_system)
     model.decomposition_json_by_file_path = decomposition_json_by_file_path
+
+    # Compute and cache compact legislation for each first day of month since at least 2 legal years.
+    today = periods.instant(datetime.date.today())
+    instant = today.offset('first-of', 'year').offset(-2, 'year')
+    while instant <= today:
+        tax_benefit_system.get_compact_legislation(instant)
+        instant = instant.offset(1, 'month')
