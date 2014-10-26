@@ -23,25 +23,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import xml.etree
+# Declarations, initialized in environment module
 
-from openfisca_core import decompositionsxml
-
-from . import conv
-
-
-# Declaration of caches, initialized in environment module
-
-decomposition_json_by_file_path = None
 TaxBenefitSystem = None
 tax_benefit_system = None
-
-
-def get_decomposition_json(xml_file_path, tax_benefit_system):
-    decomposition_tree = xml.etree.ElementTree.parse(xml_file_path)
-    decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(decomposition_tree.getroot(),
-        state = conv.State)
-    decomposition_xml_json = conv.check(decompositionsxml.make_validate_node_xml_json(tax_benefit_system))(
-        decomposition_xml_json, state = conv.State)
-    decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
-    return decomposition_json

@@ -33,9 +33,10 @@ import logging
 import os
 import sys
 import weakref
+import xml.etree
 
 from biryani1 import strings
-from openfisca_core import periods
+from openfisca_core import decompositionsxml, periods
 
 import openfisca_web_api
 from . import conv, model
@@ -97,37 +98,55 @@ def load_environment(global_conf, app_conf):
     # Initialize tax-benefit system.
 
     country_package = importlib.import_module(conf['country_package'])
-    TaxBenefitSystem = country_package.init_country()
+    CountryTaxBenefitSystem = country_package.init_country()
 
-    class WebApiScenario(TaxBenefitSystem.Scenario):
-        instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
-
-        @classmethod
-        def cached_or_new(cls):
-            return conv.check(cls.json_to_cached_or_new_instance)(None)
-
-        @classmethod
-        def make_json_to_cached_or_new_instance(cls, cache_dir, repair, tax_benefit_system):
-            def json_to_cached_or_new_instance(value, state = None):
-                json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
-                instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
-                if instance_and_error_couple is None:
-                    instance_and_error_couple = cls.make_json_to_instance(cache_dir, repair, tax_benefit_system)(value,
-                        state = state or conv.default_state)
-                    # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create weak
-                    # reference to 'tuple' object.
-                    cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(instance_and_error_couple)
-                return instance_and_error_couple
-
-            return json_to_cached_or_new_instance
-
-    class WebApiTaxBenefitSystem(TaxBenefitSystem):
+    class TaxBenefitSystem(CountryTaxBenefitSystem):
+        decomposition_json_by_filename_cache = None
         instance_and_error_couple_by_json_str_cache = {}  # class attribute
-        Scenario = WebApiScenario  # class attribute
+
+        class Scenario(CountryTaxBenefitSystem.Scenario):
+            instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
+
+            @classmethod
+            def cached_or_new(cls):
+                return conv.check(cls.json_to_cached_or_new_instance)(None)
+
+            @classmethod
+            def make_json_to_cached_or_new_instance(cls, cache_dir, repair, tax_benefit_system):
+                def json_to_cached_or_new_instance(value, state = None):
+                    json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
+                    instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
+                    if instance_and_error_couple is None:
+                        instance_and_error_couple = cls.make_json_to_instance(cache_dir, repair, tax_benefit_system)(
+                            value, state = state or conv.default_state)
+                        # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create
+                        # weak reference to 'tuple' object.
+                        cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(
+                            instance_and_error_couple)
+                    return instance_and_error_couple
+
+                return json_to_cached_or_new_instance
+
+        def __init__(self):
+            super(TaxBenefitSystem, self).__init__()
+            self.decomposition_json_by_filename_cache = {}
 
         @classmethod
         def cached_or_new(cls):
             return conv.check(cls.json_to_cached_or_new_instance)(None)
+
+        def get_decomposition_json(self, xml_filename):
+            decomposition_json = self.decomposition_json_by_filename_cache.get(xml_filename)
+            if decomposition_json is None:
+                xml_file_path = os.path.join(self.DECOMP_DIR, xml_filename)
+                decomposition_tree = xml.etree.ElementTree.parse(xml_file_path)
+                decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(
+                    decomposition_tree.getroot())
+                decomposition_xml_json = conv.check(decompositionsxml.make_validate_node_xml_json(self))(
+                    decomposition_xml_json)
+                decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
+                self.decomposition_json_by_filename_cache[xml_filename] = decomposition_json
+            return decomposition_json
 
         @classmethod
         def json_to_cached_or_new_instance(cls, value, state = None):
@@ -140,22 +159,14 @@ def load_environment(global_conf, app_conf):
                 cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(instance_and_error_couple)
             return instance_and_error_couple
 
-    model.TaxBenefitSystem = WebApiTaxBenefitSystem
-    model.tax_benefit_system = tax_benefit_system = WebApiTaxBenefitSystem.cached_or_new()
+    model.TaxBenefitSystem = TaxBenefitSystem
+    model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem.cached_or_new()
 
     if hasattr(country_package, 'init_reforms'):
         country_package.init_reforms(tax_benefit_system)
 
-    # Initialize caches, pre-fill with default values.
-
-    country_decompositions = importlib.import_module('{}.decompositions'.format(conf['country_package']))
-
-    decomposition_json_by_file_path = {}
-    decomposition_file_path = os.path.join(tax_benefit_system.DECOMP_DIR,
-        country_decompositions.DEFAULT_DECOMP_FILE)
-    decomposition_json_by_file_path[decomposition_file_path] = model.get_decomposition_json(
-        decomposition_file_path, tax_benefit_system)
-    model.decomposition_json_by_file_path = decomposition_json_by_file_path
+    # Cache default decomposition.
+    tax_benefit_system.get_decomposition_json(tax_benefit_system.DEFAULT_DECOMP_FILE)
 
     # Compute and cache compact legislation for each first day of month since at least 2 legal years.
     today = periods.instant(datetime.date.today())

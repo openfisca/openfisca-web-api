@@ -682,16 +682,16 @@ def api1_simulate(req):
                 with_reform = True
                 reform_name = data['reform_names'][0]
                 tax_benefit_system = tax_benefit_system.reform_by_name[reform_name]
+            reference_tax_benefit_system = tax_benefit_system.real_reference
             data, errors = conv.struct(
                 dict(
                     decomposition = conv.pipe(
                         conv.condition(
                             conv.test_isinstance(basestring),
-                            conv.test(lambda filename: filename in os.listdir(tax_benefit_system.DECOMP_DIR)),
-                            decompositions.make_validate_node_json(tax_benefit_system),
+                            conv.test(lambda filename: filename in os.listdir(reference_tax_benefit_system.DECOMP_DIR)),
+                            decompositions.make_validate_node_json(reference_tax_benefit_system),
                             ),
-                        conv.default(os.path.join(tax_benefit_system.DECOMP_DIR,
-                            tax_benefit_system.DEFAULT_DECOMP_FILE)),
+                        conv.default(reference_tax_benefit_system.DEFAULT_DECOMP_FILE),
                         ),
                     scenarios = conv.uniform_sequence(
                         tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
@@ -776,12 +776,7 @@ def api1_simulate(req):
             )
 
     if isinstance(data['decomposition'], basestring):
-        if data['decomposition'] in model.decomposition_json_by_file_path:
-            decomposition_json = model.decomposition_json_by_file_path[data['decomposition']]
-        else:
-            decomposition_file_path = os.path.join(tax_benefit_system.DECOMP_DIR, data['decomposition'])
-            decomposition_json = model.get_decomposition_json(decomposition_file_path, tax_benefit_system)
-            model.decomposition_json_by_file_path[data['decomposition']] = decomposition_json
+        decomposition_json = reference_tax_benefit_system.get_decomposition_json(data['decomposition'])
     else:
         decomposition_json = data['decomposition']
 
