@@ -10,12 +10,11 @@ OpenFisca-Web-API-France is the Docker image of this web API configured for Fran
 ## Launch a local image of the french web API
 
 ```
-docker run -d -p 2014:2014 openfisca/openfisca-web-api-france:latest 
+docker run -d -p 2000:2000 openfisca/openfisca-web-api-france:latest 
 ```
 
 or
 
 ```
-docker run -d -p 2014:2014 openfisca/openfisca-web-api-france:latest paster serve /src/openfisca-web-api/development-local.ini
+docker run -d -p 2000:2000 openfisca/openfisca-web-api-france:latest paster serve /src/openfisca-web-api/development-local.ini
 ```
-
