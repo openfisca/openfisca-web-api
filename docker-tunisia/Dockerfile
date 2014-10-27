@@ -9,7 +9,6 @@ RUN pip install -e git+https://github.com/openfisca/openfisca-tunisia.git#egg=Op
 RUN pip install -e git+https://github.com/openfisca/openfisca-web-api.git#egg=OpenFisca-Web-API
 
 RUN apt-get install --no-install-recommends -y python-pastescript
-RUN sed -e "s/host = 127.0.0.1/host = 0.0.0.0/" -e "s/country_package = openfisca_france/country_package = openfisca_tunisia/" /src/openfisca-web-api/development.ini > /src/openfisca-web-api/development-local.ini
+RUN sed -e "s/host = 127.0.0.1/host = 0.0.0.0/" -e "s/country_package = openfisca_france/country_package = openfisca_tunisia/" /src/openfisca-web-api/development-tunisia.ini > /src/openfisca-web-api/development-local.ini
 CMD paster serve /src/openfisca-web-api/development-local.ini
-EXPOSE 2014
-
+EXPOSE 2001
