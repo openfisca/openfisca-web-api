@@ -397,6 +397,7 @@ def api1_field(req):
             headers = headers,
             )
 
+    model.tax_benefit_system.set_variables_dependencies()
     simulation = simulations.Simulation(
         period = periods.period(datetime.date.today().year),
         tax_benefit_system = model.tax_benefit_system,
