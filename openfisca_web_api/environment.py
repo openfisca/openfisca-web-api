@@ -165,6 +165,8 @@ def load_environment(global_conf, app_conf):
     if hasattr(country_package, 'init_reforms'):
         country_package.init_reforms(tax_benefit_system)
 
+    tax_benefit_system.prefill_cache()
+
     # Cache default decomposition.
     tax_benefit_system.get_decomposition_json(tax_benefit_system.DEFAULT_DECOMP_FILE)
 
