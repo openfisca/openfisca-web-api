@@ -259,18 +259,19 @@ def api1_calculate(req):
 
     output_test_cases = []
     for scenario, simulation in itertools.izip(data['scenarios'], simulations):
-        test_case = scenario.to_json()['test_case']
         if data['intermediate_variables']:
-            holders_iter = (
-                step['holder']
-                for step in simulation.traceback.itervalues()
-                )
+            holders = []
+            for step in simulation.traceback.itervalues():
+                holder = step['holder']
+                if holder not in holders:
+                    holders.append(holder)
         else:
-            holders_iter = (
+            holders = [
                 simulation.get_holder(variable)
                 for variable in data['variables']
-                )
-        for holder in holders_iter:
+                ]
+        test_case = scenario.to_json()['test_case']
+        for holder in holders:
             if holder.array is not None:
                 column = holder.column
                 for test_case_entity, value in itertools.izip(test_case[holder.entity.key_plural].itervalues(),
@@ -279,26 +280,37 @@ def api1_calculate(req):
         output_test_cases.append(test_case)
 
     if data['trace']:
-        tracebacks = []
+        simulations_variables_json = []
+        tracebacks_json = []
         for simulation in simulations:
-            traceback_json = collections.OrderedDict()
-            for name, step in simulation.traceback.iteritems():
+            simulation_variables_json = {}
+            traceback_json = []
+            for (variable_name, period), step in simulation.traceback.iteritems():
                 holder = step['holder']
+                if variable_name not in simulation_variables_json:
+                    variable_value_json = holder.to_value_json()
+                    if variable_value_json is not None:
+                        simulation_variables_json[variable_name] = variable_value_json
+                arguments = step.get('arguments')
                 column = holder.column
-                traceback_json[name] = dict(
-                    array = [
-                        column.transform_value_to_json(value)
-                        for value in holder.array.tolist()
-                        ] if holder.array is not None else None,
+                traceback_json.append(dict(
+                    arguments = {
+                        argument_name: str(argument_period)
+                        for argument_name, argument_period in arguments.iteritems()
+                        } if arguments else None,
                     cell_type = column.val_type,
                     default_arguments = step.get('default_arguments', False),
                     entity = column.entity,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
-                    )
-            tracebacks.append(traceback_json)
+                    name = variable_name,
+                    period = str(period) if period is not None else None,
+                    ))
+            simulations_variables_json.append(simulation_variables_json)
+            tracebacks_json.append(traceback_json)
     else:
-        tracebacks = None
+        simulations_variables_json = None
+        tracebacks_json = None
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
@@ -307,9 +319,10 @@ def api1_calculate(req):
             method = req.script_name,
             params = inputs,
             suggestions = suggestions,
-            tracebacks = tracebacks,
+            tracebacks = tracebacks_json,
             url = req.url.decode('utf-8'),
             value = output_test_cases,
+            variables = simulations_variables_json,
             ).iteritems())),
         headers = headers,
         )
@@ -819,26 +832,37 @@ def api1_simulate(req):
             node['url'] = column.url
 
     if data['trace']:
-        tracebacks = []
+        simulations_variables_json = []
+        tracebacks_json = []
         for simulation in simulations:
-            traceback_json = collections.OrderedDict()
-            for name, step in simulation.traceback.iteritems():
+            simulation_variables_json = {}
+            traceback_json = []
+            for (variable_name, period), step in simulation.traceback.iteritems():
                 holder = step['holder']
+                if variable_name not in simulation_variables_json:
+                    variable_value_json = holder.to_value_json()
+                    if variable_value_json is not None:
+                        simulation_variables_json[variable_name] = variable_value_json
+                arguments = step.get('arguments')
                 column = holder.column
-                traceback_json[name] = dict(
-                    array = [
-                        column.transform_value_to_json(value)
-                        for value in holder.array.tolist()
-                        ] if holder.array is not None else None,
+                traceback_json.append(dict(
+                    arguments = {
+                        argument_name: str(argument_period)
+                        for argument_name, argument_period in arguments.iteritems()
+                        } if arguments else None,
                     cell_type = column.val_type,
                     default_arguments = step.get('default_arguments', False),
                     entity = column.entity,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
-                    )
-            tracebacks.append(traceback_json)
+                    name = variable_name,
+                    period = str(period) if period is not None else None,
+                    ))
+            simulations_variables_json.append(simulation_variables_json)
+            tracebacks_json.append(traceback_json)
     else:
-        tracebacks = None
+        simulations_variables_json = None
+        tracebacks_json = None
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
@@ -847,9 +871,10 @@ def api1_simulate(req):
             method = req.script_name,
             params = inputs,
             suggestions = suggestions,
-            tracebacks = tracebacks,
+            tracebacks = tracebacks_json,
             url = req.url.decode('utf-8'),
             value = response_json,
+            variables = simulations_variables_json,
             ).iteritems())),
         headers = headers,
         )
