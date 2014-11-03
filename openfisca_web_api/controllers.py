@@ -272,11 +272,21 @@ def api1_calculate(req):
                 ]
         test_case = scenario.to_json()['test_case']
         for holder in holders:
-            if holder.array is not None:
-                column = holder.column
-                for test_case_entity, value in itertools.izip(test_case[holder.entity.key_plural].itervalues(),
-                        holder.array.tolist()):
-                    test_case_entity[column.name] = column.transform_value_to_json(value)
+            variable_value_json = holder.to_value_json()
+            if variable_value_json is None:
+                continue
+            variable_name = holder.column.name
+            test_case_entity_by_id = test_case[holder.entity.key_plural]
+            if isinstance(variable_value_json, dict):
+                for entity_index, test_case_entity in enumerate(test_case_entity_by_id.itervalues()):
+                    test_case_entity[variable_name] = {
+                        period: array_json[entity_index]
+                        for period, array_json in variable_value_json.iteritems()
+                        }
+            else:
+                for test_case_entity, cell_json in itertools.izip(test_case_entity_by_id.itervalues(),
+                        variable_value_json):
+                    test_case_entity[variable_name] = cell_json
         output_test_cases.append(test_case)
 
     if data['trace']:
