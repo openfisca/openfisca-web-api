@@ -101,7 +101,7 @@ def api1_calculate(req):
                 apiVersion = '1.0',
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [error],
+                    errors = [conv.jsonify_value(error)],
                     message = ctx._(u'Invalid JSON in request POST body'),
                     ).iteritems())),
                 method = req.script_name,
@@ -186,7 +186,7 @@ def api1_calculate(req):
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [errors],
+                    errors = [conv.jsonify_value(errors)],
                     message = ctx._(u'Bad parameters in request'),
                     ).iteritems())),
                 method = req.script_name,
@@ -410,7 +410,7 @@ def api1_field(req):
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [errors],
+                    errors = [conv.jsonify_value(errors)],
                     message = ctx._(u'Bad parameters in request'),
                     ).iteritems())),
                 method = req.script_name,
@@ -465,7 +465,7 @@ def api1_fields(req):
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [errors],
+                    errors = [conv.jsonify_value(errors)],
                     message = ctx._(u'Bad parameters in request'),
                     ).iteritems())),
                 method = req.script_name,
@@ -546,7 +546,7 @@ def api1_graph(req):
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [errors],
+                    errors = [conv.jsonify_value(errors)],
                     message = ctx._(u'Bad parameters in request'),
                     ).iteritems())),
                 method = req.script_name,
@@ -635,7 +635,7 @@ def api1_simulate(req):
                 apiVersion = '1.0',
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [error],
+                    errors = [conv.jsonify_value(error)],
                     message = ctx._(u'Invalid JSON in request POST body'),
                     ).iteritems())),
                 method = req.script_name,
@@ -735,7 +735,7 @@ def api1_simulate(req):
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [errors],
+                    errors = [conv.jsonify_value(errors)],
                     message = ctx._(u'Bad parameters in request'),
                     ).iteritems())),
                 method = req.script_name,
@@ -926,7 +926,7 @@ def api1_submit_legislation(req):
                 apiVersion = '1.0',
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [error],
+                    errors = [conv.jsonify_value(error)],
                     message = ctx._(u'Invalid JSON in request POST body'),
                     ).iteritems())),
                 method = req.script_name,
@@ -961,7 +961,7 @@ def api1_submit_legislation(req):
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
-                    errors = [errors],
+                    errors = [conv.jsonify_value(errors)],
                     message = ctx._(u'Bad parameters in request'),
                     ).iteritems())),
                 method = req.script_name,

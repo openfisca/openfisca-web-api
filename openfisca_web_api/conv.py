@@ -26,4 +26,20 @@
 """Conversion functions"""
 
 
+import collections
+
 from openfisca_core.conv import *  # noqa
+
+
+def jsonify_value(value):
+    if isinstance(value, dict):
+        return collections.OrderedDict(
+            (unicode(item_key), jsonify_value(item_value))
+            for item_key, item_value in value.iteritems()
+            )
+    if isinstance(value, list):
+        return [
+            jsonify_value(item)
+            for item in value
+            ]
+    return value
