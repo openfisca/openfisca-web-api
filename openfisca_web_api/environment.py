@@ -172,7 +172,9 @@ def load_environment(global_conf, app_conf):
 
     # Compute and cache compact legislation for each first day of month since at least 2 legal years.
     today = periods.instant(datetime.date.today())
-    instant = today.offset('first-of', 'year').offset(-2, 'year')
-    while instant <= today:
+    first_day_of_year = today.offset('first-of', 'year')
+    instant = first_day_of_year.offset(-2, 'year')
+    two_years_later = first_day_of_year.offset(2, 'year')
+    while instant < two_years_later:
         tax_benefit_system.get_compact_legislation(instant)
         instant = instant.offset(1, 'month')
