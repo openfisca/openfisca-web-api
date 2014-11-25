@@ -56,8 +56,8 @@ def load_environment(global_conf, app_conf):
     conf.update(strings.deep_decode(app_conf))
     conf.update(conv.check(conv.struct(
         {
-            'app_conf': conv.set_value(app_conf),
-            'app_dir': conv.set_value(app_dir),
+            'app_conf': conv.set_value(app_conf, handle_none_value = True),
+            'app_dir': conv.set_value(app_dir, handle_none_value = True),
             'cache_dir': conv.default(os.path.join(os.path.dirname(app_dir), 'cache')),
             'country_package': conv.pipe(
                 conv.make_input_to_slug(separator = u'_'),
@@ -69,7 +69,7 @@ def load_environment(global_conf, app_conf):
                 conv.not_none,
                 ),
             'debug': conv.pipe(conv.guess_bool, conv.default(False)),
-            'global_conf': conv.set_value(global_conf),
+            'global_conf': conv.set_value(global_conf, handle_none_value = True),
             'i18n_dir': conv.default(os.path.join(app_dir, 'i18n')),
             'load_alert': conv.pipe(conv.guess_bool, conv.default(False)),
             'log_level': conv.pipe(
