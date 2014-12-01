@@ -303,6 +303,7 @@ def api1_calculate(req):
                         simulation_variables_json[variable_name] = variable_value_json
                 arguments = step.get('arguments')
                 column = holder.column
+                used_periods = step.get('used_periods')
                 traceback_json.append(dict(
                     arguments = {
                         argument_name: str(argument_period)
@@ -315,6 +316,10 @@ def api1_calculate(req):
                     label = column.label,
                     name = variable_name,
                     period = str(period) if period is not None else None,
+                    used_periods = [
+                        str(used_period)
+                        for used_period in used_periods
+                        ] if used_periods is not None else None,
                     ))
             simulations_variables_json.append(simulation_variables_json)
             tracebacks_json.append(traceback_json)
@@ -855,6 +860,7 @@ def api1_simulate(req):
                         simulation_variables_json[variable_name] = variable_value_json
                 arguments = step.get('arguments')
                 column = holder.column
+                used_periods = step.get('used_periods')
                 traceback_json.append(dict(
                     arguments = {
                         argument_name: str(argument_period)
@@ -867,6 +873,10 @@ def api1_simulate(req):
                     label = column.label,
                     name = variable_name,
                     period = str(period) if period is not None else None,
+                    used_periods = [
+                        str(used_period)
+                        for used_period in used_periods
+                        ] if used_periods is not None else None,
                     ))
             simulations_variables_json.append(simulation_variables_json)
             tracebacks_json.append(traceback_json)
