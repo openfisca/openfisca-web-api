@@ -122,10 +122,11 @@ def respond_json(ctx, data, code = None, headers = None, jsonp = None):
         if code is not None:
             response.status = code
         response.headers.update(headers)
-    try:
-        text = json.dumps(data, encoding = 'utf-8', ensure_ascii = False, indent = 2)
-    except UnicodeDecodeError:
-        text = json.dumps(data, ensure_ascii = True, indent = 2)
+    # try:
+    #     text = json.dumps(data, encoding = 'utf-8', ensure_ascii = False, indent = 2)
+    # except UnicodeDecodeError:
+    #     text = json.dumps(data, ensure_ascii = True, indent = 2)
+    text = json.dumps(data)
     text = unicode(text)
     if jsonp:
         text = u'{0}({1})'.format(jsonp, text)
