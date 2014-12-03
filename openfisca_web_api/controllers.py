@@ -35,6 +35,7 @@ import itertools
 import multiprocessing
 import os
 
+import numpy as np
 from openfisca_core import decompositions, legislations, periods, simulations
 
 from . import conf, contexts, conv, model, urls, wsgihelpers
@@ -514,6 +515,108 @@ def api1_fields(req):
                 if column.formula_class is not None
                 ),
             url = req.url.decode('utf-8'),
+            ).iteritems())),
+        headers = headers,
+        )
+
+
+@wsgihelpers.wsgify
+def api1_formula(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    tax_benefit_system = model.tax_benefit_system
+
+    requested_column, error = conv.pipe(
+        conv.cleanup_line,
+        conv.test_in(tax_benefit_system.column_by_name),
+        conv.function(lambda column_name: tax_benefit_system.column_by_name[column_name]),
+        conv.test(lambda column: column.formula_class is not None, error = N_(u"Variable is not a formula")),
+        conv.not_none,
+        )(req.urlvars.get('name'), state = ctx)
+    if error is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [conv.jsonify_value(error)],
+                    message = ctx._(u'Invalid formula name in request URL'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = req.body,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    params = req.GET
+    inputs = dict(params)
+    data, errors = conv.pipe(
+        conv.struct(
+            dict(
+                (column.name, conv.pipe(conv.input_to_int, column.json_to_python))  # TODO: column.input_to_python
+                for column in tax_benefit_system.column_by_name.itervalues()
+                ),
+            drop_none_values = True,
+            ),
+        )(params, state = ctx)
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [conv.jsonify_value(errors)],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    period = periods.period('month', datetime.date.today())
+    simulation = simulations.Simulation(
+        debug = False,
+        period = period,
+        tax_benefit_system = tax_benefit_system,
+        )
+    # Initialize entities, assuming there is only one person and one of each other entities ("familles",
+    # "foyers fiscaux", etc).
+    persons = None
+    for entity in simulation.entity_by_key_plural.itervalues():
+        entity.count = 1
+        entity.roles_count = 1
+        entity.step_size = 1
+        if entity.is_persons_entity:
+            persons = entity
+    # Link person to its entities using ID & role.
+    for entity in simulation.entity_by_key_plural.itervalues():
+        if not entity.is_persons_entity:
+            holder = persons.get_or_new_holder(entity.index_for_person_variable_name)
+            holder.set_array(period, np.array([0]))
+            holder = persons.get_or_new_holder(entity.role_for_person_variable_name)
+            holder.set_array(period, np.array([0]))
+    # Inject all variables from query string into arrays.
+    for column_name, value in data.iteritems():
+        column = tax_benefit_system.column_by_name[column_name]
+        entity = simulation.entity_by_key_plural[column.entity_key_plural]
+        holder = entity.get_or_new_holder(column_name)
+        holder.set_array(period, np.array([value]))
+
+    requested_dated_holder = simulation.compute(requested_column.name)
+
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            # context = data['context'],
+            method = req.script_name,
+            params = inputs,
+            url = req.url.decode('utf-8'),
+            value = requested_dated_holder.to_value_json()[0],  # We have only one person => Unwrap the array.
             ).iteritems())),
         headers = headers,
         )
@@ -1038,6 +1141,7 @@ def make_router():
         ('GET', '^/api/1/entities/?$', api1_entities),
         ('GET', '^/api/1/field/?$', api1_field),
         ('GET', '^/api/1/fields/?$', api1_fields),
+        ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', api1_formula),
         ('GET', '^/api/1/graph/?$', api1_graph),
         ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
         ('POST', '^/api/1/simulate/?$', api1_simulate),
