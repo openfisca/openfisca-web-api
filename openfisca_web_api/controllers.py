@@ -555,7 +555,7 @@ def api1_formula(req):
     data, errors = conv.pipe(
         conv.struct(
             dict(
-                (column.name, conv.pipe(conv.input_to_int, column.json_to_python))  # TODO: column.input_to_python
+                (column.name, column.input_to_dated_python)
                 for column in tax_benefit_system.column_by_name.itervalues()
                 ),
             drop_none_values = True,
