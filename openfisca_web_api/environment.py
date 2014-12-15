@@ -78,6 +78,13 @@ def load_environment(global_conf, app_conf):
                 ),
             'package_name': conv.default('openfisca-web-api'),
             'realm': conv.default(u'OpenFisca Web API'),
+            'reforms': conv.pipe(
+                conv.ini_items_list_to_ordered_dict,
+                conv.uniform_mapping(
+                    conv.noop,
+                    conv.module_function_str_to_function,
+                    ),
+                ),
             },
         default = 'drop',
         ))(conf))
@@ -161,9 +168,6 @@ def load_environment(global_conf, app_conf):
 
     model.TaxBenefitSystem = TaxBenefitSystem
     model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem.cached_or_new()
-
-    if hasattr(country_package, 'init_reforms'):
-        country_package.init_reforms(tax_benefit_system)
 
     tax_benefit_system.prefill_cache()
 

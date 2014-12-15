@@ -688,6 +688,34 @@ def api1_graph(req):
 
 
 @wsgihelpers.wsgify
+def api1_reforms(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+    params = req.GET
+    inputs = dict(params)
+    data, errors = conv.pipe(
+        conv.struct(
+            dict(
+                context = conv.noop,  # For asynchronous calls
+                ),
+            default = 'drop',
+            ),
+        )(inputs, state = ctx)
+    reform_names = conf['reforms'].keys()
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            context = data['context'],
+            method = req.script_name,
+            params = inputs,
+            reforms = reform_names,
+            url = req.url.decode('utf-8'),
+            ).iteritems())),
+        headers = headers,
+        )
+
+
+@wsgihelpers.wsgify
 def api1_simulate(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
@@ -1144,6 +1172,7 @@ def make_router():
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', api1_formula),
         ('GET', '^/api/1/graph/?$', api1_graph),
         ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
+        ('GET', '^/api/1/reforms/?$', api1_reforms),
         ('POST', '^/api/1/simulate/?$', api1_simulate),
         )
     return router
