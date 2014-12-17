@@ -35,7 +35,7 @@ import sys
 import weakref
 import xml.etree
 
-from biryani1 import strings
+from biryani import strings
 from openfisca_core import decompositionsxml, periods
 
 import openfisca_web_api

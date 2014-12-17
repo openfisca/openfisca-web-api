@@ -65,7 +65,7 @@ setup(
     include_package_data = True,
     install_requires = [
         'Babel >= 0.9.4',
-        'Biryani1 >= 0.9dev',
+        'Biryani[datetimeconv] >= 0.10.1',
         'OpenFisca-Core >= 0.4dev',
         'WebError >= 0.10',
         'WebOb >= 1.1',

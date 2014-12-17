@@ -29,7 +29,7 @@ import logging
 import urllib2
 import urlparse
 
-from biryani1 import baseconv, custom_conv, jsonconv, states
+from biryani import baseconv, custom_conv, jsonconv, states
 from nose.tools import assert_equal
 
 

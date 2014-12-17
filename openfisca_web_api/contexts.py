@@ -171,8 +171,8 @@ class Ctx(conv.State):
             translator = gettext.NullTranslations()
             for name, i18n_dir in [
                     (
-                        'biryani1',
-                        os.path.join(pkg_resources.get_distribution('biryani1').location, 'biryani1', 'i18n'),
+                        'biryani',
+                        os.path.join(pkg_resources.get_distribution('biryani').location, 'biryani', 'i18n'),
                         ),
                     (
                         conf['country_package'].replace('_', '-'),

@@ -3,7 +3,6 @@ FROM debian:unstable
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install --no-install-recommends -y git python-babel python-isodate python-numpy python-pastedeploy python-pip python-scipy python-tz python-weberror python-webob
 RUN apt-get clean
-RUN pip install -e git+https://github.com/etalab/biryani.git@biryani1#egg=Biryani1
 RUN pip install -e git+https://github.com/openfisca/openfisca-core.git#egg=OpenFisca-Core
 RUN pip install -e git+https://github.com/sgmap/openfisca-france.git#egg=OpenFisca-France
 RUN pip install -e git+https://github.com/openfisca/openfisca-web-api.git#egg=OpenFisca-Web-API
