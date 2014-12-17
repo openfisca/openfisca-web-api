@@ -2,6 +2,9 @@ check-tests-syntax:
 	rm -Rf cache/templates/
 	flake8 setup.py openfisca_web_api/
 
+ctags:
+	ctags --recurse=yes --exclude=node_modules --exclude=openfisca_web_ui/static/dist .
+
 test: check-tests-syntax
 	nosetests -x --with-doctest openfisca_web_api/
 
