@@ -45,7 +45,7 @@ doc_lines = __doc__.split('\n')
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '0.4dev',
+    version = '0.5dev',
 
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
@@ -66,7 +66,7 @@ setup(
     install_requires = [
         'Babel >= 0.9.4',
         'Biryani[datetimeconv] >= 0.10.1',
-        'OpenFisca-Core >= 0.4dev',
+        'OpenFisca-Core >= 0.5dev',
         'OpenFisca-France-Reform-Landais-Piketty-Saez',
         'WebError >= 0.10',
         'WebOb >= 1.1',
