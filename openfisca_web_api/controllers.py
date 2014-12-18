@@ -346,8 +346,8 @@ def api1_calculate(req):
                     default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
                     input_variables = [
-                        (variable_name, str(variable_period))
-                        for variable_name, variable_period in input_variables_infos
+                        (input_variable_name, str(input_variable_period))
+                        for input_variable_name, input_variable_period in input_variables_infos
                         ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
