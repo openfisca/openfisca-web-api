@@ -309,10 +309,10 @@ def api1_calculate(req):
                     cell_type = column.val_type,
                     default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
-                    input_variables = collections.OrderedDict(
+                    input_variables = [
                         (variable_name, str(variable_period))
                         for variable_name, variable_period in input_variables_infos
-                        ) if input_variables_infos else None,
+                        ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
                     name = variable_name,
@@ -996,10 +996,10 @@ def api1_simulate(req):
                     cell_type = column.val_type,
                     default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
-                    input_variables = collections.OrderedDict(
+                    input_variables = [
                         (variable_name, str(variable_period))
                         for variable_name, variable_period in input_variables_infos
-                        ) if input_variables_infos else None,
+                        ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
                     name = variable_name,
