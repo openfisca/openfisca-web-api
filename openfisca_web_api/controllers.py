@@ -302,17 +302,17 @@ def api1_calculate(req):
                     variable_value_json = holder.to_value_json()
                     if variable_value_json is not None:
                         simulation_variables_json[variable_name] = variable_value_json
-                arguments = step.get('arguments')
                 column = holder.column
+                input_variables_infos = step.get('input_variables_infos')
                 used_periods = step.get('used_periods')
                 traceback_json.append(dict(
-                    arguments = {
-                        argument_name: str(argument_period)
-                        for argument_name, argument_period in arguments.iteritems()
-                        } if arguments else None,
                     cell_type = column.val_type,
-                    default_arguments = step.get('default_arguments', False),
+                    default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
+                    input_variables = collections.OrderedDict(
+                        (variable_name, str(variable_period))
+                        for variable_name, variable_period in input_variables_infos
+                        ) if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
                     name = variable_name,
@@ -989,17 +989,17 @@ def api1_simulate(req):
                     variable_value_json = holder.to_value_json()
                     if variable_value_json is not None:
                         simulation_variables_json[variable_name] = variable_value_json
-                arguments = step.get('arguments')
+                input_variables_infos = step.get('input_variables_infos')
                 column = holder.column
                 used_periods = step.get('used_periods')
                 traceback_json.append(dict(
-                    arguments = {
-                        argument_name: str(argument_period)
-                        for argument_name, argument_period in arguments.iteritems()
-                        } if arguments else None,
                     cell_type = column.val_type,
-                    default_arguments = step.get('default_arguments', False),
+                    default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
+                    input_variables = collections.OrderedDict(
+                        (variable_name, str(variable_period))
+                        for variable_name, variable_period in input_variables_infos
+                        ) if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
                     name = variable_name,
