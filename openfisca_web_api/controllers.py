@@ -125,6 +125,7 @@ def api1_calculate(req):
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
+            reform_names = conv.noop,  # Real conversion is done once tax-benefit system is known.
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
@@ -167,19 +168,48 @@ def api1_calculate(req):
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
             dict(
-                variables = conv.uniform_sequence(
-                    conv.test_in(tax_benefit_system.column_by_name),
-                    ),
-                scenarios = conv.uniform_sequence(
-                    tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                        cache_dir = conf['cache_dir'],
-                        repair = data['validate'],
-                        tax_benefit_system = tax_benefit_system,
-                        )
+                reform_names = conv.pipe(
+                    conv.test_isinstance(list),
+                    conv.uniform_sequence(
+                        conv.pipe(
+                            conv.test_isinstance(basestring),
+                            conv.cleanup_line,
+                            conv.test_in(conf['reforms'].keys()),
+                            ),
+                        drop_none_items = True,
+                        ),
+                    conv.empty_to_none,
+                    conv.test(lambda values: len(values) == 1, error = u'Only one reform name is accepted for now'),
                     ),
                 ),
             default = conv.noop,
             )(data, state = ctx)
+
+        if errors is None:
+            if data['reform_names'] is None:
+                with_reform = False
+            else:
+                with_reform = True
+                reform_name = data['reform_names'][0]
+                build_reform = conf['reforms'][reform_name]
+                tax_benefit_system = build_reform(tax_benefit_system)
+            reference_tax_benefit_system = tax_benefit_system.real_reference
+            data, errors = conv.struct(
+                dict(
+                    scenarios = conv.uniform_sequence(
+                        tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                            cache_dir = conf['cache_dir'],
+                            repair = data['validate'],
+                            tax_benefit_system = tax_benefit_system,
+                            )
+                        ),
+                    variables = conv.uniform_sequence(
+                        conv.test_in(tax_benefit_system.column_by_name),
+                        ),
+                    ),
+                default = conv.noop,
+                )(data, state = ctx)
+
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
@@ -253,7 +283,13 @@ def api1_calculate(req):
 
     simulations = []
     for scenario in data['scenarios']:
-        simulation = scenario.new_simulation(trace = data['trace'] or data['intermediate_variables'])
+        if with_reform:
+            # First compute the reference simulation (ie without reform).
+            simulation = scenario.new_simulation(trace = data['trace'], reference = True)
+            for variable in data['variables']:
+                simulation.calculate(variable)
+            simulations.append(simulation)
+        simulation = scenario.new_simulation(trace = data['trace'])
         for variable in data['variables']:
             simulation.calculate(variable)
         simulations.append(simulation)
@@ -813,6 +849,7 @@ def api1_simulate(req):
                 ),
             ),
         )(inputs, state = ctx)
+
     if errors is None:
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
@@ -823,7 +860,7 @@ def api1_simulate(req):
                         conv.pipe(
                             conv.test_isinstance(basestring),
                             conv.cleanup_line,
-                            conv.test_in((tax_benefit_system.reform_by_name or {}).keys()),
+                            conv.test_in(conf['reforms'].keys()),
                             ),
                         drop_none_items = True,
                         ),
@@ -840,7 +877,8 @@ def api1_simulate(req):
             else:
                 with_reform = True
                 reform_name = data['reform_names'][0]
-                tax_benefit_system = tax_benefit_system.reform_by_name[reform_name]
+                build_reform = conf['reforms'][reform_name]
+                tax_benefit_system = build_reform(tax_benefit_system)
             reference_tax_benefit_system = tax_benefit_system.real_reference
             data, errors = conv.struct(
                 dict(
@@ -940,7 +978,6 @@ def api1_simulate(req):
         decomposition_json = data['decomposition']
 
     simulations = []
-
     for scenario in data['scenarios']:
         if with_reform:
             # First compute the reference simulation (ie without reform).
