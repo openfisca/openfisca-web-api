@@ -192,7 +192,8 @@ def api1_calculate(req):
                 with_reform = True
                 reform_name = data['reform_names'][0]
                 build_reform = conf['reforms'][reform_name]
-                tax_benefit_system = build_reform(tax_benefit_system)
+                Reform = build_reform(tax_benefit_system)
+                tax_benefit_system = Reform()
             reference_tax_benefit_system = tax_benefit_system.real_reference
             data, errors = conv.struct(
                 dict(
@@ -878,7 +879,8 @@ def api1_simulate(req):
                 with_reform = True
                 reform_name = data['reform_names'][0]
                 build_reform = conf['reforms'][reform_name]
-                tax_benefit_system = build_reform(tax_benefit_system)
+                Reform = build_reform(tax_benefit_system)
+                tax_benefit_system = Reform()
             reference_tax_benefit_system = tax_benefit_system.real_reference
             data, errors = conv.struct(
                 dict(
