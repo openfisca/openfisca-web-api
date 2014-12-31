@@ -719,15 +719,8 @@ def api1_swagger(req):
             'get': map_to_swagger(column.to_json())
         }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
-        if column.formula_class is None
+        if column.formula_class is not None  # output variables only, not input parameters
     }
-
-    prestations = collections.OrderedDict(
-        (name, column.to_json())
-        for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if column.formula_class is not None
-        )
 
     return wsgihelpers.respond_json(ctx,
         {
@@ -748,8 +741,7 @@ def api1_swagger(req):
                 }
             },
             'basePath': '/formula',
-            'paths': paths,
-            'prestations': prestations,
+            'paths': paths
         },
         headers = headers,
         )
