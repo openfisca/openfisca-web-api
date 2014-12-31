@@ -36,7 +36,9 @@ class TestSwagger(unittest.TestCase):
         expected = {
             "summary"      : "Contribution exceptionnelle sur les hauts revenus",
             "tags"         : [ "foy" ],
-            "externalDocs" : "http://www.legifrance.gouv.fr/affichCode.do?cidTexte=LEGITEXT000006069577&idSectionTA=LEGISCTA000025049019",
+            "externalDocs" : {
+                "url": "http://www.legifrance.gouv.fr/affichCode.do?cidTexte=LEGITEXT000006069577&idSectionTA=LEGISCTA000025049019"
+            },
             "responses": {
                 200: {
                     "description": "Contribution exceptionnelle sur les hauts revenus",

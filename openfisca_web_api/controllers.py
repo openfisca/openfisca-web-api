@@ -687,7 +687,7 @@ def map_to_swagger(column):
     }
 
     if column.get('url'):
-        result['externalDocs'] = column.get('url')
+        result['externalDocs'] = { 'url': column.get('url') }
 
     return result
 
