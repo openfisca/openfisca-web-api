@@ -2,7 +2,7 @@
 
 import unittest
 
-from openfisca_web_api.controllers import map_to_swagger
+from openfisca_web_api.controllers import map_to_swagger, map_type_to_swagger
 
 class TestSwagger(unittest.TestCase):
     def test_map_to_swagger_withour_url(self):
@@ -13,7 +13,8 @@ class TestSwagger(unittest.TestCase):
                 200: {
                     "description": "Nombre d'enfants à charge titulaires de la carte d'invalidité",
                     "schema": {
-                        "type": "integer"
+                        "type": "integer",
+                        "format": "int32"
                     }
                 }
             }
@@ -40,7 +41,8 @@ class TestSwagger(unittest.TestCase):
                 200: {
                     "description": "Contribution exceptionnelle sur les hauts revenus",
                     "schema": {
-                        "type": "float"
+                        "type": "number",
+                        "format": "float"
                     }
                 }
             }
@@ -57,6 +59,21 @@ class TestSwagger(unittest.TestCase):
 
         self.maxDiff = None
         self.assertEqual(actual, expected)
+
+    def test_map_type_to_swagger_integer(self):
+        self.assertEqual(map_type_to_swagger('Integer'), { 'type': 'integer', 'format': 'int32' })
+
+    def test_map_type_to_swagger_float(self):
+        self.assertEqual(map_type_to_swagger('Float'),   { 'type': 'number',  'format': 'float' })
+
+    def test_map_type_to_swagger_date(self):
+        self.assertEqual(map_type_to_swagger('Date'),    { 'type': 'string',  'format': 'date' })
+
+    def test_map_type_to_swagger_boolean(self):
+        self.assertEqual(map_type_to_swagger('Boolean'), { 'type': 'boolean' })
+
+    def test_map_type_to_swagger_string(self):
+        self.assertEqual(map_type_to_swagger('String'),  { 'type': 'string'  })
 
 
 unittest.main()
