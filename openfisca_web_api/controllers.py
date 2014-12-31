@@ -631,15 +631,28 @@ def map_to_swagger(column):
         'responses': {
             200: {
                 'description': column.get('label'),
-                'schema': {
-                    'type': column.get('@type', '').lower()
-                }
+                'schema': map_type_to_swagger(column.get('@type', ''))
             }
         }
     }
 
     if column.get('url'):
         result['externalDocs'] = column.get('url')
+
+    return result
+
+# Transforms a Python type to a Swagger type
+def map_type_to_swagger(type):
+    result = { 'type': type.lower() }
+
+    if type == 'Integer':
+        result['format'] = 'int32'
+    elif type == 'Float':
+        result['type'] = 'number'
+        result['format'] = 'float'
+    elif type == 'Date':
+        result['type'] = 'string'
+        result['format'] = 'date'
 
     return result
 
