@@ -75,5 +75,8 @@ class TestSwagger(unittest.TestCase):
     def test_map_type_to_swagger_string(self):
         self.assertEqual(map_type_to_swagger('String'),  { 'type': 'string'  })
 
+    def test_map_type_to_swagger_enum(self):
+        self.assertEqual(map_type_to_swagger('Enumeration'), { 'type': 'string' })
+
 
 unittest.main()

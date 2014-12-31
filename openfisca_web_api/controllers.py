@@ -703,6 +703,8 @@ def map_type_to_swagger(type):
     elif type == 'Date':
         result['type'] = 'string'
         result['format'] = 'date'
+    elif type == 'Enumeration':
+        result['type'] = 'string'
 
     return result
 
