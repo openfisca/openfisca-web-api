@@ -34,6 +34,7 @@ import datetime
 import itertools
 import multiprocessing
 import os
+import json
 
 import numpy as np
 from openfisca_core import decompositions, legislations, periods, simulations
@@ -622,6 +623,73 @@ def api1_formula(req):
         )
 
 
+# Transforms the description of a column obtained through `to_json()` into a Swagger representation
+def map_to_swagger(column):
+    result = {
+        'summary'      : column.get('label'),
+        'tags'         : [ column.get('entity') ],
+        'responses': {
+            200: {
+                'description': column.get('label'),
+                'schema': {
+                    'type': column.get('@type', '').lower()
+                }
+            }
+        }
+    }
+
+    if column.get('url'):
+        result['externalDocs'] = column.get('url')
+
+    return result
+
+
+@wsgihelpers.wsgify
+def api1_swagger(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    paths = {
+        '/' + name: {
+            'get': map_to_swagger(column.to_json())
+        }
+        for name, column in model.tax_benefit_system.column_by_name.iteritems()
+        if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
+        if column.formula_class is None
+    }
+
+    prestations = collections.OrderedDict(
+        (name, column.to_json())
+        for name, column in model.tax_benefit_system.column_by_name.iteritems()
+        if column.formula_class is not None
+        )
+
+    return wsgihelpers.respond_json(ctx,
+        {
+            'swagger': '2.0',
+            'info': {
+                'version': '1.0.0',
+                'title': 'OpenFisca',
+                'description': '',
+                'termsOfService': 'http://github.com/openfisca/openfisca-web-api',
+                'contact': {
+                    'name': 'OpenFisca team',
+                    'email': 'contact@openfisca.fr',
+                    'url': 'http://github.com/openfisca/openfisca-web-api/issues'
+                },
+                'license': {
+                    'name': 'AGPL',
+                    'url': 'https://www.gnu.org/licenses/agpl-3.0.html'
+                }
+            },
+            'basePath': '/formula',
+            'paths': paths,
+            'prestations': prestations,
+        },
+        headers = headers,
+        )
+
+
 @wsgihelpers.wsgify
 def api1_graph(req):
     ctx = contexts.Ctx(req)
@@ -1170,6 +1238,7 @@ def make_router():
         ('GET', '^/api/1/field/?$', api1_field),
         ('GET', '^/api/1/fields/?$', api1_fields),
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', api1_formula),
+        ('GET', '^/api/1/swagger$', api1_swagger),
         ('GET', '^/api/1/graph/?$', api1_graph),
         ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
         ('GET', '^/api/1/reforms/?$', api1_reforms),
