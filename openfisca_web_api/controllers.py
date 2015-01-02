@@ -709,6 +709,9 @@ def map_type_to_swagger(type):
     return result
 
 
+SWAGGER_BASE_PATH = '/api/1/formula'
+
+
 @wsgihelpers.wsgify
 def api1_swagger(req):
     ctx = contexts.Ctx(req)
@@ -740,7 +743,7 @@ def api1_swagger(req):
                     'url': 'https://www.gnu.org/licenses/agpl-3.0.html'
                 }
             },
-            'basePath': '/formula',
+            'basePath': SWAGGER_BASE_PATH,
             'paths': paths
         },
         headers = headers,
@@ -1296,7 +1299,7 @@ def make_router():
         ('GET', '^/api/1/entities/?$', api1_entities),
         ('GET', '^/api/1/field/?$', api1_field),
         ('GET', '^/api/1/fields/?$', api1_fields),
-        ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', api1_formula),
+        ('GET', '^' + SWAGGER_BASE_PATH + '/(?P<name>[^/]+)/?$', api1_formula),
         ('GET', '^/api/1/swagger$', api1_swagger),
         ('GET', '^/api/1/graph/?$', api1_graph),
         ('POST', '^/api/1/legislations/?$', api1_submit_legislation),
