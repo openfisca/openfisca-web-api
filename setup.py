@@ -67,7 +67,6 @@ setup(
         'Babel >= 0.9.4',
         'Biryani[datetimeconv] >= 0.10.1',
         'OpenFisca-Core >= 0.4dev',
-        'OpenFisca-France-Reform-Landais-Piketty-Saez',
         'WebError >= 0.10',
         'WebOb >= 1.1',
         ],
