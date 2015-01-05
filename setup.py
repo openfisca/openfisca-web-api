@@ -62,6 +62,9 @@ setup(
     entry_points = {
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
         },
+    extras_require = dict(
+        introspection = ['OpenFisca-Parsers >= 0.5dev'],
+        ),
     include_package_data = True,
     install_requires = [
         'Babel >= 0.9.4',

@@ -431,12 +431,18 @@ def api1_field(req):
     params = req.GET
     inputs = dict(
         context = params.get('context'),
+        input_variables = params.get('input_variables'),
         variable = params.get('variable'),
         )
     data, errors = conv.pipe(
         conv.struct(
             dict(
                 context = conv.noop,  # For asynchronous calls
+                input_variables = conv.pipe(
+                    conv.test_isinstance((bool, int, basestring)),
+                    conv.anything_to_bool,
+                    conv.default(False),
+                    ),
                 variable = conv.pipe(
                     conv.cleanup_line,
                     conv.default(u'revdisp'),
@@ -476,7 +482,9 @@ def api1_field(req):
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
-            value = holder.to_field_json(),
+            value = holder.to_field_json(
+                input_variables_extractor = model.input_variables_extractor if data['input_variables'] else None,
+                ),
             ).iteritems())),
         headers = headers,
         )
