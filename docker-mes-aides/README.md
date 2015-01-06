@@ -10,11 +10,6 @@ OpenFisca-Web-API-Mes-Aides is the Docker image of this web API configured for [
 ## Launch a local image of the mes-aides.gouv.fr web API
 
 ```
-docker run -d -p 2000:2000 openfisca/openfisca-web-api-mes-aides:latest
-```
-
-or
-
-```
-docker run -d -p 2000:2000 openfisca/openfisca-web-api-mes-aides:latest paster serve /src/openfisca-web-api/development-local.ini
+docker pull openfisca/openfisca-web-api-mes-aides:latest
+docker run --detach -p 2000:2000 --name api-mes-aides openfisca/openfisca-web-api-mes-aides:latest
 ```

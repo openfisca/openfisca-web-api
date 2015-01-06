@@ -10,11 +10,6 @@ OpenFisca-Web-API-Tunisia is the Docker image of this web API configured for Tun
 ## Launch a local image of the tunisian web API
 
 ```
-docker run -d -p 2001:2001 openfisca/openfisca-web-api-tunisia:latest
-```
-
-or
-
-```
-docker run -d -p 2001:2001 openfisca/openfisca-web-api-tunisia:latest paster serve /src/openfisca-web-api/development-local.ini
+docker pull openfisca/openfisca-web-api-tunisia:latest
+docker run --detach -p 2001:2001 --name api-tunisia openfisca/openfisca-web-api-tunisia:latest
 ```
