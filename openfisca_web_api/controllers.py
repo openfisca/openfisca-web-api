@@ -675,12 +675,12 @@ def api1_formula(req):
 
 # Transforms the description of a column into a Swagger representation.
 def map_to_swagger(column):
+    return map_path_to_swagger(column)
+
+
+def map_path_to_swagger(column):
     column_json = column.to_json()
 
-    return map_path_to_swagger(column_json)
-
-
-def map_path_to_swagger(column_json):
     result = {
         'summary'      : column_json.get('label'),
         'tags'         : [ column_json.get('entity') ],
@@ -694,6 +694,8 @@ def map_path_to_swagger(column_json):
 
     if column_json.get('url'):
         result['externalDocs'] = { 'url': column_json.get('url') }
+
+    result['parameters'] = map_parameters_to_swagger(column)
 
     return result
 
