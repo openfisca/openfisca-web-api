@@ -706,11 +706,16 @@ def map_parameters_to_swagger(column):
 def map_parameter_to_swagger(column):
     column_json = column.to_json()
 
+    default = column.default
+
+    if isinstance(default, datetime.date):
+        default = '%s-%s-%s' % (default.year, default.month, default.day)
+
     result = map_type_to_swagger(column_json.get('@type'))
     result.update({
         'name'        : column_json.get('name'),
         'description' : column_json.get('label'),
-        'default'     : column.default,
+        'default'     : default,
         'in'          : 'query'
     })
 
