@@ -655,7 +655,7 @@ def api1_formula(req):
         column = tax_benefit_system.column_by_name[column_name]
         entity = simulation.entity_by_key_plural[column.entity_key_plural]
         holder = entity.get_or_new_holder(column_name)
-        holder.set_array(period, np.array([value]))
+        holder.set_array(period, np.array([value], dtype = column.dtype))
 
     requested_dated_holder = simulation.compute(requested_column.name)
 
