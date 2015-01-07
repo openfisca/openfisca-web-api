@@ -700,9 +700,16 @@ def map_path_to_swagger(column):
     return result
 
 def map_parameters_to_swagger(column):
+    input_variables = []
+
+    try:
+        input_variables = model.input_variables_extractor.get_input_variables(column)
+    except Exception, e:
+        print(e)
+
     return [
         map_parameter_to_swagger(model.tax_benefit_system.column_by_name[variable_name])
-        for variable_name in model.input_variables_extractor.get_input_variables(column)
+        for variable_name in input_variables
     ]
 
 def map_parameter_to_swagger(column):
