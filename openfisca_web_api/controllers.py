@@ -673,21 +673,46 @@ def api1_formula(req):
         )
 
 
-# Transforms the description of a column obtained through `to_json()` into a Swagger representation
+# Transforms the description of a column into a Swagger representation.
 def map_to_swagger(column):
+    column_json = column.to_json()
+
+    return map_path_to_swagger(column_json)
+
+
+def map_path_to_swagger(column_json):
     result = {
-        'summary'      : column.get('label'),
-        'tags'         : [ column.get('entity') ],
+        'summary'      : column_json.get('label'),
+        'tags'         : [ column_json.get('entity') ],
         'responses': {
             200: {
-                'description': column.get('label'),
-                'schema': map_type_to_swagger(column.get('@type', ''))
+                'description': column_json.get('label'),
+                'schema': map_type_to_swagger(column_json.get('@type', ''))
             }
         }
     }
 
-    if column.get('url'):
-        result['externalDocs'] = { 'url': column.get('url') }
+    if column_json.get('url'):
+        result['externalDocs'] = { 'url': column_json.get('url') }
+
+    return result
+
+def map_parameters_to_swagger(column):
+    return [
+        map_parameter_to_swagger(model.tax_benefit_system.column_by_name[variable_name])
+        for variable_name in model.input_variables_extractor.get_input_variables(column)
+    ]
+
+def map_parameter_to_swagger(column):
+    column_json = column.to_json()
+
+    result = map_type_to_swagger(column_json.get('@type'))
+    result.update({
+        'name'        : column_json.get('name'),
+        'description' : column_json.get('label'),
+        'default'     : column.default,
+        'in'          : 'query'
+    })
 
     return result
 
@@ -719,7 +744,7 @@ def api1_swagger(req):
 
     paths = {
         '/' + name: {
-            'get': map_to_swagger(column.to_json())
+            'get': map_to_swagger(column)
         }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if column.formula_class is not None  # output variables only, not input parameters
