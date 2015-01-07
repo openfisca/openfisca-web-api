@@ -174,7 +174,7 @@ def api1_calculate(req):
                         conv.pipe(
                             conv.test_isinstance(basestring),
                             conv.cleanup_line,
-                            conv.test_in((conf['reforms'] or []).keys()),
+                            conv.test_in((conf['reforms'] or {}).keys()),
                             ),
                         drop_none_items = True,
                         ),
@@ -751,7 +751,7 @@ def api1_reforms(req):
             default = 'drop',
             ),
         )(inputs, state = ctx)
-    reform_names = (conf['reforms'] or []).keys()
+    reform_names = (conf['reforms'] or {}).keys()
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = '1.0',
@@ -875,7 +875,7 @@ def api1_simulate(req):
                         conv.pipe(
                             conv.test_isinstance(basestring),
                             conv.cleanup_line,
-                            conv.test_in((conf['reforms'] or []).keys()),
+                            conv.test_in((conf['reforms'] or {}).keys()),
                             ),
                         drop_none_items = True,
                         ),
