@@ -622,7 +622,7 @@ def api1_formula(req):
             headers = headers,
             )
 
-    period = periods.period('month', datetime.date.today())
+    period = periods.period('month', datetime.date.today()).offset('first-of')
     simulation = simulations.Simulation(
         debug = False,
         period = period,
