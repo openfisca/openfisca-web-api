@@ -194,7 +194,7 @@ def api1_calculate(req):
                 build_reform = conf['reforms'][reform_name]
                 Reform = build_reform(tax_benefit_system)
                 tax_benefit_system = Reform()
-            reference_tax_benefit_system = tax_benefit_system.real_reference
+            # reference_tax_benefit_system = tax_benefit_system.real_reference
             data, errors = conv.struct(
                 dict(
                     scenarios = conv.uniform_sequence(
