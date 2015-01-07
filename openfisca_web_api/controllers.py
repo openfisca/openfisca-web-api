@@ -596,12 +596,18 @@ def api1_formula(req):
 
     params = req.GET
     inputs = dict(params)
+    fields = dict(
+        (column.name, column.input_to_dated_python)
+        for column in tax_benefit_system.column_by_name.itervalues()
+        )
+    fields['period'] = conv.pipe(
+        periods.json_or_python_to_period,
+        conv.default(periods.period('month', datetime.date.today())),
+        conv.function(lambda period: period.offset('first-of')),
+        )
     data, errors = conv.pipe(
         conv.struct(
-            dict(
-                (column.name, column.input_to_dated_python)
-                for column in tax_benefit_system.column_by_name.itervalues()
-                ),
+            fields,
             drop_none_values = True,
             ),
         )(params, state = ctx)
@@ -622,7 +628,7 @@ def api1_formula(req):
             headers = headers,
             )
 
-    period = periods.period('month', datetime.date.today()).offset('first-of')
+    period = data.pop('period')
     simulation = simulations.Simulation(
         debug = False,
         period = period,
