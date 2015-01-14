@@ -4,7 +4,7 @@
 # OpenFisca -- A versatile microsimulation software
 # By: OpenFisca Team <contact@openfisca.fr>
 #
-# Copyright (C) 2011, 2012, 2013, 2014 OpenFisca Team
+# Copyright (C) 2011, 2012, 2013, 2014, 2015 OpenFisca Team
 # https://github.com/openfisca
 #
 # This file is part of OpenFisca.
@@ -37,6 +37,10 @@ import xml.etree
 
 from biryani import strings
 from openfisca_core import decompositionsxml, periods
+try:
+    from openfisca_parsers import input_variables_extractors
+except ImportError:
+    input_variables_extractors = None
 
 import openfisca_web_api
 from . import conv, model
@@ -182,3 +186,7 @@ def load_environment(global_conf, app_conf):
     while instant < two_years_later:
         tax_benefit_system.get_compact_legislation(instant)
         instant = instant.offset(1, 'month')
+
+    # Initialize lib2to3-based input variables extractor.
+    if input_variables_extractors is not None:
+        model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)

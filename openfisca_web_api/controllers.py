@@ -4,7 +4,7 @@
 # OpenFisca -- A versatile microsimulation software
 # By: OpenFisca Team <contact@openfisca.fr>
 #
-# Copyright (C) 2011, 2012, 2013, 2014 OpenFisca Team
+# Copyright (C) 2011, 2012, 2013, 2014, 2015 OpenFisca Team
 # https://github.com/openfisca
 #
 # This file is part of OpenFisca.
@@ -125,6 +125,7 @@ def api1_calculate(req):
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
+            reform_names = conv.noop,  # Real conversion is done once tax-benefit system is known.
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
@@ -167,19 +168,49 @@ def api1_calculate(req):
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
             dict(
-                variables = conv.uniform_sequence(
-                    conv.test_in(tax_benefit_system.column_by_name),
-                    ),
-                scenarios = conv.uniform_sequence(
-                    tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                        cache_dir = conf['cache_dir'],
-                        repair = data['validate'],
-                        tax_benefit_system = tax_benefit_system,
-                        )
+                reform_names = conv.pipe(
+                    conv.test_isinstance(list),
+                    conv.uniform_sequence(
+                        conv.pipe(
+                            conv.test_isinstance(basestring),
+                            conv.cleanup_line,
+                            conv.test_in((conf['reforms'] or {}).keys()),
+                            ),
+                        drop_none_items = True,
+                        ),
+                    conv.empty_to_none,
+                    conv.test(lambda values: len(values) == 1, error = u'Only one reform name is accepted for now'),
                     ),
                 ),
             default = conv.noop,
             )(data, state = ctx)
+
+        if errors is None:
+            if data['reform_names'] is None:
+                with_reform = False
+            else:
+                with_reform = True
+                reform_name = data['reform_names'][0]
+                build_reform = conf['reforms'][reform_name]
+                Reform = build_reform(tax_benefit_system)
+                tax_benefit_system = Reform()
+            # reference_tax_benefit_system = tax_benefit_system.real_reference
+            data, errors = conv.struct(
+                dict(
+                    scenarios = conv.uniform_sequence(
+                        tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                            cache_dir = conf['cache_dir'],
+                            repair = data['validate'],
+                            tax_benefit_system = tax_benefit_system,
+                            )
+                        ),
+                    variables = conv.uniform_sequence(
+                        conv.test_in(tax_benefit_system.column_by_name),
+                        ),
+                    ),
+                default = conv.noop,
+                )(data, state = ctx)
+
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
@@ -253,7 +284,13 @@ def api1_calculate(req):
 
     simulations = []
     for scenario in data['scenarios']:
-        simulation = scenario.new_simulation(trace = data['trace'] or data['intermediate_variables'])
+        if with_reform:
+            # First compute the reference simulation (ie without reform).
+            simulation = scenario.new_simulation(trace = data['trace'], reference = True)
+            for variable in data['variables']:
+                simulation.calculate(variable)
+            simulations.append(simulation)
+        simulation = scenario.new_simulation(trace = data['trace'])
         for variable in data['variables']:
             simulation.calculate(variable)
         simulations.append(simulation)
@@ -302,17 +339,17 @@ def api1_calculate(req):
                     variable_value_json = holder.to_value_json()
                     if variable_value_json is not None:
                         simulation_variables_json[variable_name] = variable_value_json
-                arguments = step.get('arguments')
                 column = holder.column
+                input_variables_infos = step.get('input_variables_infos')
                 used_periods = step.get('used_periods')
                 traceback_json.append(dict(
-                    arguments = {
-                        argument_name: str(argument_period)
-                        for argument_name, argument_period in arguments.iteritems()
-                        } if arguments else None,
                     cell_type = column.val_type,
-                    default_arguments = step.get('default_arguments', False),
+                    default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
+                    input_variables = [
+                        (input_variable_name, str(input_variable_period))
+                        for input_variable_name, input_variable_period in input_variables_infos
+                        ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
                     name = variable_name,
@@ -394,12 +431,18 @@ def api1_field(req):
     params = req.GET
     inputs = dict(
         context = params.get('context'),
+        input_variables = params.get('input_variables'),
         variable = params.get('variable'),
         )
     data, errors = conv.pipe(
         conv.struct(
             dict(
                 context = conv.noop,  # For asynchronous calls
+                input_variables = conv.pipe(
+                    conv.test_isinstance((bool, int, basestring)),
+                    conv.anything_to_bool,
+                    conv.default(False),
+                    ),
                 variable = conv.pipe(
                     conv.cleanup_line,
                     conv.default(u'revdisp'),
@@ -426,7 +469,6 @@ def api1_field(req):
             headers = headers,
             )
 
-    model.tax_benefit_system.set_variables_dependencies()
     simulation = simulations.Simulation(
         period = periods.period(datetime.date.today().year),
         tax_benefit_system = model.tax_benefit_system,
@@ -440,7 +482,9 @@ def api1_field(req):
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
-            value = holder.to_field_json(),
+            value = holder.to_field_json(
+                input_variables_extractor = model.input_variables_extractor if data['input_variables'] else None,
+                ),
             ).iteritems())),
         headers = headers,
         )
@@ -552,12 +596,18 @@ def api1_formula(req):
 
     params = req.GET
     inputs = dict(params)
+    fields = dict(
+        (column.name, column.input_to_dated_python)
+        for column in tax_benefit_system.column_by_name.itervalues()
+        )
+    fields['period'] = conv.pipe(
+        periods.json_or_python_to_period,
+        conv.default(periods.period('month', datetime.date.today())),
+        conv.function(lambda period: period.offset('first-of')),
+        )
     data, errors = conv.pipe(
         conv.struct(
-            dict(
-                (column.name, column.input_to_dated_python)
-                for column in tax_benefit_system.column_by_name.itervalues()
-                ),
+            fields,
             drop_none_values = True,
             ),
         )(params, state = ctx)
@@ -578,7 +628,7 @@ def api1_formula(req):
             headers = headers,
             )
 
-    period = periods.period('month', datetime.date.today())
+    period = data.pop('period')
     simulation = simulations.Simulation(
         debug = False,
         period = period,
@@ -605,7 +655,7 @@ def api1_formula(req):
         column = tax_benefit_system.column_by_name[column_name]
         entity = simulation.entity_by_key_plural[column.entity_key_plural]
         holder = entity.get_or_new_holder(column_name)
-        holder.set_array(period, np.array([value]))
+        holder.set_array(period, np.array([value], dtype = column.dtype))
 
     requested_dated_holder = simulation.compute(requested_column.name)
 
@@ -701,7 +751,7 @@ def api1_reforms(req):
             default = 'drop',
             ),
         )(inputs, state = ctx)
-    reform_names = conf['reforms'].keys()
+    reform_names = (conf['reforms'] or {}).keys()
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = '1.0',
@@ -814,6 +864,7 @@ def api1_simulate(req):
                 ),
             ),
         )(inputs, state = ctx)
+
     if errors is None:
         tax_benefit_system = data['tax_benefit_system']
         data, errors = conv.struct(
@@ -824,7 +875,7 @@ def api1_simulate(req):
                         conv.pipe(
                             conv.test_isinstance(basestring),
                             conv.cleanup_line,
-                            conv.test_in((tax_benefit_system.reform_by_name or {}).keys()),
+                            conv.test_in((conf['reforms'] or {}).keys()),
                             ),
                         drop_none_items = True,
                         ),
@@ -841,7 +892,9 @@ def api1_simulate(req):
             else:
                 with_reform = True
                 reform_name = data['reform_names'][0]
-                tax_benefit_system = tax_benefit_system.reform_by_name[reform_name]
+                build_reform = conf['reforms'][reform_name]
+                Reform = build_reform(tax_benefit_system)
+                tax_benefit_system = Reform()
             reference_tax_benefit_system = tax_benefit_system.real_reference
             data, errors = conv.struct(
                 dict(
@@ -941,7 +994,6 @@ def api1_simulate(req):
         decomposition_json = data['decomposition']
 
     simulations = []
-
     for scenario in data['scenarios']:
         if with_reform:
             # First compute the reference simulation (ie without reform).
@@ -989,17 +1041,17 @@ def api1_simulate(req):
                     variable_value_json = holder.to_value_json()
                     if variable_value_json is not None:
                         simulation_variables_json[variable_name] = variable_value_json
-                arguments = step.get('arguments')
+                input_variables_infos = step.get('input_variables_infos')
                 column = holder.column
                 used_periods = step.get('used_periods')
                 traceback_json.append(dict(
-                    arguments = {
-                        argument_name: str(argument_period)
-                        for argument_name, argument_period in arguments.iteritems()
-                        } if arguments else None,
                     cell_type = column.val_type,
-                    default_arguments = step.get('default_arguments', False),
+                    default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
+                    input_variables = [
+                        (variable_name, str(variable_period))
+                        for variable_name, variable_period in input_variables_infos
+                        ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
                     label = column.label,
                     name = variable_name,
