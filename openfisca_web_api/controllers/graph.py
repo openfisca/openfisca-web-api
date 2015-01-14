@@ -36,6 +36,7 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api1_graph(req):
+    assert model.input_variables_extractor is not None
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
@@ -83,7 +84,7 @@ def api1_graph(req):
     edges = []
     nodes = []
     visited = set()
-    simulation.graph(data['variable'], edges, nodes, visited)
+    simulation.graph(data['variable'], edges, model.input_variables_extractor, nodes, visited)
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(

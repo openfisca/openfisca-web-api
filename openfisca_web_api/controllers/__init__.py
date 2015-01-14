@@ -27,7 +27,7 @@
 
 
 from . import calculate, entities, fields, formula, graph, legislation, reforms, simulate
-from .. import urls
+from .. import model, urls
 
 
 router = None
@@ -36,16 +36,18 @@ router = None
 def make_router():
     """Return a WSGI application that searches requests to controllers """
     global router
-    router = urls.make_router(
+    routings = [
         ('POST', '^/api/1/calculate/?$', calculate.api1_calculate),
         ('GET', '^/api/1/default-legislation/?$', legislation.api1_default_legislation),
         ('GET', '^/api/1/entities/?$', entities.api1_entities),
         ('GET', '^/api/1/field/?$', fields.api1_field),
         ('GET', '^/api/1/fields/?$', fields.api1_fields),
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', formula.api1_formula),
-        ('GET', '^/api/1/graph/?$', graph.api1_graph),
         ('POST', '^/api/1/legislations/?$', legislation.api1_submit_legislation),
         ('GET', '^/api/1/reforms/?$', reforms.api1_reforms),
         ('POST', '^/api/1/simulate/?$', simulate.api1_simulate),
-        )
+        ]
+    if model.input_variables_extractor is not None:
+        routings.append(('GET', '^/api/1/graph/?$', graph.api1_graph))
+    router = urls.make_router(*routings)
     return router
