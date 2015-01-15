@@ -35,8 +35,8 @@ SWAGGER_BASE_PATH = '/api/1/formula'
 # Transforms the description of a column obtained through `to_json()` into a Swagger representation
 def map_to_swagger(column):
     result = {
-        'summary'      : column.get('label'),
-        'tags'         : [ column.get('entity') ],
+        'summary': column.get('label'),
+        'tags': [column.get('entity')],
         'responses': {
             200: {
                 'description': column.get('label'),
@@ -46,14 +46,14 @@ def map_to_swagger(column):
     }
 
     if column.get('url'):
-        result['externalDocs'] = { 'url': column.get('url') }
+        result['externalDocs'] = {'url': column.get('url')}
 
     return result
 
 
 # Transforms a Python type to a Swagger type
 def map_type_to_swagger(type):
-    result = { 'type': type.lower() }
+    result = {'type': type.lower()}
 
     if type == 'Integer':
         result['format'] = 'int32'
