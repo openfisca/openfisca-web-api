@@ -5,7 +5,7 @@
 # OpenFisca -- A versatile microsimulation software
 # By: OpenFisca Team <contact@openfisca.fr>
 #
-# Copyright (C) 2011, 2012, 2013, 2014 OpenFisca Team
+# Copyright (C) 2011, 2012, 2013, 2014, 2015 OpenFisca Team
 # https://github.com/openfisca
 #
 # This file is part of OpenFisca.
@@ -45,7 +45,7 @@ doc_lines = __doc__.split('\n')
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '0.4dev',
+    version = '0.5dev',
 
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
@@ -62,11 +62,15 @@ setup(
     entry_points = {
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
         },
+    extras_require = {
+        'dev': ['PasteScript'],
+        'introspection': ['OpenFisca-Parsers >= 0.5dev'],
+        },
     include_package_data = True,
     install_requires = [
         'Babel >= 0.9.4',
         'Biryani[datetimeconv] >= 0.10.1',
-        'OpenFisca-Core >= 0.4dev',
+        'OpenFisca-Core >= 0.5dev',
         'WebError >= 0.10',
         'WebOb >= 1.1',
         ],
