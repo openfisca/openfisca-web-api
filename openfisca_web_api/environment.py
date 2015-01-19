@@ -56,7 +56,8 @@ class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictio
 
 
 def get_git_last_commit_sha():
-    return subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=os.path.dirname(__file__))
+    output = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=os.path.dirname(__file__))
+    return output.rstrip('\n')
 
 
 def load_environment(global_conf, app_conf):
