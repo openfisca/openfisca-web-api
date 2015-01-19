@@ -45,6 +45,17 @@ def environment_setter(app):
     return set_environment
 
 
+def x_api_version_header_setter(app):
+    """WSGI middleware that sets response X-API-Version header."""
+    def set_x_api_version_header(environ, start_response):
+        req = webob.Request(environ)
+        res = req.get_response(app)
+        res.headers.update({'X-API-Version': environment.last_commit_sha})
+        return res(environ, start_response)
+
+    return set_x_api_version_header
+
+
 def make_app(global_conf, **app_conf):
     """Create a WSGI application and return it
 
@@ -65,6 +76,9 @@ def make_app(global_conf, **app_conf):
 
     # Init request-dependant environment
     app = environment_setter(app)
+
+    # Set X-API-Version response header
+    app = x_api_version_header_setter(app)
 
     # CUSTOM MIDDLEWARE HERE (filtered by error handling middlewares)
 

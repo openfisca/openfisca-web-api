@@ -31,6 +31,7 @@ import importlib
 import json
 import logging
 import os
+import subprocess
 import sys
 import weakref
 import xml.etree
@@ -47,10 +48,15 @@ from . import conv, model
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
+last_commit_sha = None
 
 
 class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.
     pass
+
+
+def get_git_last_commit_sha():
+    return subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=os.path.dirname(__file__))
 
 
 def load_environment(global_conf, app_conf):
@@ -190,3 +196,7 @@ def load_environment(global_conf, app_conf):
     # Initialize lib2to3-based input variables extractor.
     if input_variables_extractors is not None:
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
+
+    # Store Git last commit SHA
+    global last_commit_sha
+    last_commit_sha = get_git_last_commit_sha()
