@@ -28,7 +28,7 @@
 
 import collections
 
-from .. import contexts, model, wsgihelpers
+from .. import contexts, conv, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -51,10 +51,48 @@ def api1_entities(req):
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
+    params = req.GET
+    inputs = dict(
+        context = params.get('context'),
+        )
+    data, errors = conv.pipe(
+        conv.struct(
+            dict(
+                context = conv.noop,  # For asynchronous calls
+                ),
+            default = 'drop',
+            ),
+        )(inputs, state = ctx)
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [conv.jsonify_value(errors)],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
 
     entities_class = model.tax_benefit_system.entity_class_by_key_plural.itervalues()
-    data = collections.OrderedDict(sorted({
+    entities = collections.OrderedDict(sorted({
         entity_class.key_plural: build_entity_data(entity_class)
         for entity_class in entities_class
         }.iteritems()))
-    return wsgihelpers.respond_json(ctx, data, headers = headers)
+
+    return wsgihelpers.respond_json(ctx,
+        collections.OrderedDict(sorted(dict(
+            apiVersion = '1.0',
+            context = data['context'],
+            entities = entities,
+            method = req.script_name,
+            params = inputs,
+            ).iteritems())),
+        headers = headers,
+        )
