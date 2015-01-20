@@ -120,7 +120,6 @@ def load_environment(global_conf, app_conf):
 
     class TaxBenefitSystem(CountryTaxBenefitSystem):
         decomposition_json_by_filename_cache = None
-        instance_and_error_couple_by_json_str_cache = {}  # class attribute
 
         class Scenario(CountryTaxBenefitSystem.Scenario):
             instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
@@ -149,10 +148,6 @@ def load_environment(global_conf, app_conf):
             super(TaxBenefitSystem, self).__init__()
             self.decomposition_json_by_filename_cache = {}
 
-        @classmethod
-        def cached_or_new(cls):
-            return conv.check(cls.json_to_cached_or_new_instance)(None)
-
         def get_decomposition_json(self, xml_filename):
             decomposition_json = self.decomposition_json_by_filename_cache.get(xml_filename)
             if decomposition_json is None:
@@ -166,19 +161,8 @@ def load_environment(global_conf, app_conf):
                 self.decomposition_json_by_filename_cache[xml_filename] = decomposition_json
             return decomposition_json
 
-        @classmethod
-        def json_to_cached_or_new_instance(cls, value, state = None):
-            json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
-            instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
-            if instance_and_error_couple is None:
-                instance_and_error_couple = cls.json_to_instance(value, state = state or conv.default_state)
-                # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create weak
-                # reference to 'tuple' object.
-                cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(instance_and_error_couple)
-            return instance_and_error_couple
-
     model.TaxBenefitSystem = TaxBenefitSystem
-    model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem.cached_or_new()
+    model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem()
 
     tax_benefit_system.prefill_cache()
 

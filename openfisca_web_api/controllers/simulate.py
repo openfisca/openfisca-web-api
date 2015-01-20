@@ -128,7 +128,6 @@ def api1_simulate(req):
                     error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
                 ),
-            tax_benefit_system = model.TaxBenefitSystem.json_to_cached_or_new_instance,
             trace = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
@@ -143,7 +142,7 @@ def api1_simulate(req):
         )(inputs, state = ctx)
 
     if errors is None:
-        tax_benefit_system = data['tax_benefit_system']
+        tax_benefit_system = model.tax_benefit_system
         data, errors = conv.struct(
             dict(
                 reform_names = conv.pipe(
