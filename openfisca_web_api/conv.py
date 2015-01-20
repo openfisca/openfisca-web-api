@@ -88,6 +88,7 @@ def module_and_function_names_to_function(values, state = None):
 
 str_to_module_and_function_names = function(lambda value: value.rsplit('.', 1))
 
+
 # Level 2 converters
 
 module_function_str_to_function = pipe(
