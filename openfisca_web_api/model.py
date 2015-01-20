@@ -26,5 +26,6 @@
 # Declarations, initialized in environment module
 
 input_variables_extractor = None
+reform_by_name = None
 TaxBenefitSystem = None
 tax_benefit_system = None

@@ -37,7 +37,7 @@ import weakref
 import xml.etree
 
 from biryani import strings
-from openfisca_core import decompositionsxml, periods
+from openfisca_core import decompositionsxml, periods, reforms
 try:
     from openfisca_parsers import input_variables_extractors
 except ImportError:
@@ -185,3 +185,12 @@ def load_environment(global_conf, app_conf):
     # Store Git last commit SHA
     global last_commit_sha
     last_commit_sha = get_git_last_commit_sha()
+
+    # Load reforms and store instances
+    model.reform_by_name = conv.check(conv.uniform_mapping(
+        conv.noop,
+        conv.pipe(
+            conv.function(lambda build_reform: build_reform(tax_benefit_system)),
+            conv.test_issubclass(reforms.Reform),
+            ),
+        )(conf['reforms']))

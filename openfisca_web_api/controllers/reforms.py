@@ -28,15 +28,19 @@
 
 import collections
 
-from .. import conf, contexts, conv, wsgihelpers
+from .. import contexts, conv, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
 def api1_reforms(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
+    assert req.method == 'GET', req.method
     params = req.GET
-    inputs = dict(params)
+    inputs = dict(
+        context = params.get('context'),
+        )
     data, errors = conv.pipe(
         conv.struct(
             dict(
@@ -45,14 +49,33 @@ def api1_reforms(req):
             default = 'drop',
             ),
         )(inputs, state = ctx)
-    reform_names = (conf['reforms'] or {}).keys()
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = '1.0',
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [conv.jsonify_value(errors)],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = '1.0',
             context = data['context'],
             method = req.script_name,
             params = inputs,
-            reforms = reform_names,
+            reforms = {
+                reform_name: reform.name
+                for reform_name, reform in model.reform_by_name.iteritems()
+                },
             url = req.url.decode('utf-8'),
             ).iteritems())),
         headers = headers,
