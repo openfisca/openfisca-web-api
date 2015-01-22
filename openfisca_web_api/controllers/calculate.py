@@ -58,7 +58,7 @@ def api1_calculate(req):
             if load_average[0] / cpu_count > 1:
                 return wsgihelpers.respond_json(ctx,
                     collections.OrderedDict(sorted(dict(
-                        apiVersion = '1.0',
+                        apiVersion = 1,
                         error = collections.OrderedDict(sorted(dict(
                             code = 503,  # Service Unavailable
                             message = ctx._(u'Server is overloaded: {} {} {}').format(*load_average),
@@ -75,7 +75,7 @@ def api1_calculate(req):
     if content_type != 'application/json':
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = '1.0',
+                apiVersion = 1,
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
                     message = ctx._(u'Bad content-type: {}').format(content_type),
@@ -94,7 +94,7 @@ def api1_calculate(req):
     if error is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = '1.0',
+                apiVersion = 1,
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
                     errors = [conv.jsonify_value(error)],
@@ -208,7 +208,7 @@ def api1_calculate(req):
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = '1.0',
+                apiVersion = 1,
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
@@ -232,7 +232,7 @@ def api1_calculate(req):
 #    if account is None:
 #        return wsgihelpers.respond_json(ctx,
 #            collections.OrderedDict(sorted(dict(
-#                apiVersion = '1.0',
+#                apiVersion = 1,
 #                context = data['context'],
 #                error = collections.OrderedDict(sorted(dict(
 #                    code = 401,  # Unauthorized
@@ -262,7 +262,7 @@ def api1_calculate(req):
         # Only a validation is requested. Don't launch simulation
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = '1.0',
+                apiVersion = 1,
                 context = inputs.get('context'),
                 method = req.script_name,
                 params = inputs,
@@ -361,7 +361,7 @@ def api1_calculate(req):
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
-            apiVersion = '1.0',
+            apiVersion = 1,
             context = data['context'],
             method = req.script_name,
             params = inputs,

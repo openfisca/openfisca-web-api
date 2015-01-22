@@ -69,7 +69,7 @@ def api1_field(req):
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = '1.0',
+                apiVersion = 1,
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
@@ -91,7 +91,7 @@ def api1_field(req):
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
-            apiVersion = '1.0',
+            apiVersion = 1,
             context = data['context'],
             method = req.script_name,
             params = inputs,
@@ -125,7 +125,7 @@ def api1_fields(req):
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = '1.0',
+                apiVersion = 1,
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
@@ -161,7 +161,7 @@ def api1_fields(req):
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
-            apiVersion = '1.0',
+            apiVersion = 1,
             columns = columns,
             columns_tree = columns_tree,
             context = data['context'],
