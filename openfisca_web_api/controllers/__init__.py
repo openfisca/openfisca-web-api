@@ -26,7 +26,7 @@
 """Controllers"""
 
 
-from . import calculate, entities, fields, formula, graph, legislation, reforms, simulate
+from . import calculate, entities, fields, formula, graph, reforms, simulate
 from .. import model, urls
 
 
@@ -38,12 +38,10 @@ def make_router():
     global router
     routings = [
         ('POST', '^/api/1/calculate/?$', calculate.api1_calculate),
-        ('GET', '^/api/1/default-legislation/?$', legislation.api1_default_legislation),
         ('GET', '^/api/1/entities/?$', entities.api1_entities),
         ('GET', '^/api/1/field/?$', fields.api1_field),
         ('GET', '^/api/1/fields/?$', fields.api1_fields),
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', formula.api1_formula),
-        ('POST', '^/api/1/legislations/?$', legislation.api1_submit_legislation),
         ('GET', '^/api/1/reforms/?$', reforms.api1_reforms),
         ('POST', '^/api/1/simulate/?$', simulate.api1_simulate),
         ]

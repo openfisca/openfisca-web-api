@@ -193,7 +193,6 @@ def api1_calculate(req):
                 dict(
                     scenarios = conv.uniform_sequence(
                         tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                            cache_dir = conf['cache_dir'],
                             repair = data['validate'],
                             tax_benefit_system = tax_benefit_system,
                             )

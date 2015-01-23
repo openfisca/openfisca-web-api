@@ -69,7 +69,6 @@ def load_environment(global_conf, app_conf):
         {
             'app_conf': conv.set_value(app_conf),
             'app_dir': conv.set_value(app_dir),
-            'cache_dir': conv.default(os.path.join(os.path.dirname(app_dir), 'cache')),
             'country_package': conv.pipe(
                 conv.make_input_to_slug(separator = u'_'),
                 conv.test_in((
@@ -129,12 +128,12 @@ def load_environment(global_conf, app_conf):
                 return conv.check(cls.json_to_cached_or_new_instance)(None)
 
             @classmethod
-            def make_json_to_cached_or_new_instance(cls, cache_dir, repair, tax_benefit_system):
+            def make_json_to_cached_or_new_instance(cls, repair, tax_benefit_system):
                 def json_to_cached_or_new_instance(value, state = None):
                     json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
                     instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
                     if instance_and_error_couple is None:
-                        instance_and_error_couple = cls.make_json_to_instance(cache_dir, repair, tax_benefit_system)(
+                        instance_and_error_couple = cls.make_json_to_instance(repair, tax_benefit_system)(
                             value, state = state or conv.default_state)
                         # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create
                         # weak reference to 'tuple' object.
