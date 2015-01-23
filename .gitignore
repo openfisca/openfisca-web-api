@@ -7,7 +7,6 @@
 /.pydevproject
 /.settings/
 /build/
-/cache/
 /config-*.ini
 /development-*local.ini
 /dist/
