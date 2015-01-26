@@ -48,6 +48,8 @@ def api1_swagger(req):
     return wsgihelpers.respond_json(ctx,
         {
             'swagger': '2.0',
+            'basePath': SWAGGER_BASE_PATH,
+            'paths': paths,
             'info': {
                 'version': '1.0.0',
                 'title': 'OpenFisca',
@@ -63,8 +65,6 @@ def api1_swagger(req):
                     'url': 'https://www.gnu.org/licenses/agpl-3.0.html'
                 }
             },
-            'basePath': SWAGGER_BASE_PATH,
-            'paths': paths
         },
         headers = headers,
         )
@@ -81,10 +81,11 @@ def map_path_to_swagger(column):
 
     return result
 
+
 def map_path_base_to_swagger(column_json):
     result = {
-        'summary'      : column_json.get('label'),
-        'tags'         : [ column_json.get('entity') ],
+        'summary': column_json.get('label'),
+        'tags': [column_json.get('entity')],
         'responses': {
             200: {
                 'description': column_json.get('label'),
@@ -94,9 +95,10 @@ def map_path_base_to_swagger(column_json):
     }
 
     if column_json.get('url'):
-        result['externalDocs'] = { 'url': column_json.get('url') }
+        result['externalDocs'] = {'url': column_json.get('url')}
 
     return result
+
 
 def map_parameters_to_swagger(column):
     input_variables = []
@@ -111,6 +113,7 @@ def map_parameters_to_swagger(column):
         for variable_name in input_variables
     ]
 
+
 def map_parameter_to_swagger(column):
     column_json = column.to_json()
 
@@ -120,13 +123,14 @@ def map_parameter_to_swagger(column):
         result['enum'] = column_json.get('labels').values()
 
     result.update({
-        'name'        : column_json.get('name'),
-        'description' : column_json.get('label'),
-        'default'     : get_default_value(column, column_json),
-        'in'          : 'query'
+        'name': column_json.get('name'),
+        'description': column_json.get('label'),
+        'default': get_default_value(column, column_json),
+        'in': 'query'
     })
 
     return result
+
 
 def get_default_value(column, column_json = None):
     result = column.default
@@ -143,7 +147,7 @@ def get_default_value(column, column_json = None):
 
 # Transforms a Python type to a Swagger type
 def map_type_to_swagger(type):
-    result = { 'type': type.lower() }
+    result = {'type': type.lower()}
 
     if type == 'Integer':
         result['format'] = 'int32'
