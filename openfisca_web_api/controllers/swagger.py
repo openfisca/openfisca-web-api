@@ -114,20 +114,32 @@ def map_parameters_to_swagger(column):
 def map_parameter_to_swagger(column):
     column_json = column.to_json()
 
-    default = column.default
-
-    if isinstance(default, datetime.date):
-        default = '%s-%s-%s' % (default.year, default.month, default.day)
-
     result = map_type_to_swagger(column_json.get('@type'))
+
+    if column_json.get('labels'):
+        result['enum'] = column_json.get('labels').values()
+
     result.update({
         'name'        : column_json.get('name'),
         'description' : column_json.get('label'),
-        'default'     : default,
+        'default'     : get_default_value(column, column_json),
         'in'          : 'query'
     })
 
     return result
+
+def get_default_value(column, column_json = None):
+    result = column.default
+
+    if isinstance(result, datetime.date):
+        result = '%s-%s-%s' % (result.year, result.month, result.day)
+    elif column_json.get('labels'):  # the default value is actually the key to the array of allowed values
+        if column_json is None:
+            column_json = column.to_json()
+        result = column_json.get('labels').get(result)
+
+    return result
+
 
 # Transforms a Python type to a Swagger type
 def map_type_to_swagger(type):

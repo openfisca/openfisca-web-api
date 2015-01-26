@@ -153,4 +153,26 @@ class TestSwagger(unittest.TestCase):
 
         self.assertEqual(map_parameter_to_swagger(target_column), expected)
 
+    def test_map_enum_parameter_to_swagger(self):
+        self.maxDiff = None
+
+        target_column = model.tax_benefit_system.column_by_name['taille_entreprise']
+
+        expected = {
+            'name'        : u'taille_entreprise',
+            'description' : u"Catégode taille d'entreprise (pour calcul des cotisations sociales)",
+            'in'          : 'query',
+            'type'        : 'string',
+            'enum'        : [
+                u'Non pertinent',
+                u'Moins de 10 salariés',
+                u'De 10 à 19 salariés',
+                u'De 20 à 249 salariés',
+                u'Plus de 250 salariés',
+            ],
+            'default'     : u'Non pertinent',
+        }
+
+        self.assertEqual(map_parameter_to_swagger(target_column), expected)
+
 unittest.main()
