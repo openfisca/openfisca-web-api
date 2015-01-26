@@ -126,7 +126,7 @@ def make_router(*routings):
             headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
             return wsgihelpers.respond_json(ctx,
                 dict(
-                    apiVersion = '1.0',
+                    apiVersion = 1,
                     error = dict(
                         code = 400,  # Bad Request
                         message = ctx._(u"Invalid path: {0}").format(req.path_info),
@@ -149,7 +149,7 @@ def make_router(*routings):
         headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
         return wsgihelpers.respond_json(ctx,
             dict(
-                apiVersion = '1.0',
+                apiVersion = 1,
                 error = dict(
                     code = 404,  # Not Found
                     message = ctx._(u"Path not found: {0}").format(req.path_info),

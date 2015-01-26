@@ -1,11 +1,15 @@
-check-tests-syntax:
-	rm -Rf cache/templates/
-	flake8 setup.py openfisca_web_api/
+all: flake8 test
+
+clean-pyc:
+	find -name '*.pyc' -exec rm \{\} \;
 
 ctags:
 	ctags --recurse=yes --exclude=node_modules --exclude=openfisca_web_ui/static/dist .
 
-test: check-tests-syntax
+flake8: clean-pyc
+	flake8
+
+test:
 	nosetests -x --with-doctest openfisca_web_api/
 
 test-with-coverage:

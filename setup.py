@@ -62,13 +62,14 @@ setup(
     entry_points = {
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
         },
-    extras_require = dict(
-        introspection = ['OpenFisca-Parsers >= 0.5dev'],
-        ),
+    extras_require = {
+        'dev': ['PasteScript'],
+        'introspection': ['OpenFisca-Parsers >= 0.5dev'],
+        },
     include_package_data = True,
     install_requires = [
         'Babel >= 0.9.4',
-        'Biryani[datetimeconv] >= 0.10.1',
+        'Biryani[datetimeconv] >= 0.10.3',
         'OpenFisca-Core >= 0.5dev',
         'WebError >= 0.10',
         'WebOb >= 1.1',

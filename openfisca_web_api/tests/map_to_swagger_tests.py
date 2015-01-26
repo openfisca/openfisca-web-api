@@ -6,7 +6,7 @@ import os
 
 from openfisca_web_api import environment, model
 from paste.deploy import appconfig
-from openfisca_web_api.controllers import map_path_to_swagger, map_type_to_swagger, map_parameters_to_swagger, map_parameter_to_swagger
+from openfisca_web_api.controllers.swagger import map_path_to_swagger, map_type_to_swagger, map_parameters_to_swagger, map_parameter_to_swagger
 
 
 class TestSwagger(unittest.TestCase):

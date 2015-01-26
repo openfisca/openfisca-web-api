@@ -31,27 +31,28 @@ import collections
 from openfisca_core.conv import *  # noqa
 
 
+N_ = lambda message: message
+
+
 # Level 1 converters
 
-def ini_items_list_to_ordered_dict(values, state = None):
-    if state is None:
-        state = default_state
-    return pipe(
-        cleanup_line,
-        function(lambda value: value.split('\n')),
-        uniform_sequence(
-            pipe(
-                cleanup_line,
-                function(lambda value: value.split('=')),
-                uniform_sequence(cleanup_line),
-                ),
+
+ini_items_list_to_ordered_dict = pipe(
+    cleanup_line,
+    function(lambda value: value.split('\n')),
+    uniform_sequence(
+        pipe(
+            cleanup_line,
+            function(lambda value: value.split('=')),
+            uniform_sequence(cleanup_line),
             ),
-        test(
-            lambda values: len(list(set(value[0] for value in values))) == len(values),
-            error = state._(u'Key duplicates found in items list'),
-            ),
-        function(collections.OrderedDict),
-        )(values, state = state)
+        ),
+    test(
+        lambda values: len(list(set(value[0] for value in values))) == len(values),
+        error = N_(u'Key duplicates found in items list'),
+        ),
+    function(collections.OrderedDict),
+    )
 
 
 def jsonify_value(value):
@@ -86,6 +87,7 @@ def module_and_function_names_to_function(values, state = None):
 
 
 str_to_module_and_function_names = function(lambda value: value.rsplit('.', 1))
+
 
 # Level 2 converters
 

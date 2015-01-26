@@ -31,12 +31,13 @@ import importlib
 import json
 import logging
 import os
+import subprocess
 import sys
 import weakref
 import xml.etree
 
 from biryani import strings
-from openfisca_core import decompositionsxml, periods
+from openfisca_core import decompositionsxml, periods, reforms
 try:
     from openfisca_parsers import input_variables_extractors
 except ImportError:
@@ -47,10 +48,16 @@ from . import conv, model
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
+last_commit_sha = None
 
 
 class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.
     pass
+
+
+def get_git_last_commit_sha():
+    output = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=os.path.dirname(__file__))
+    return output.rstrip('\n')
 
 
 def load_environment(global_conf, app_conf):
@@ -62,7 +69,6 @@ def load_environment(global_conf, app_conf):
         {
             'app_conf': conv.set_value(app_conf),
             'app_dir': conv.set_value(app_dir),
-            'cache_dir': conv.default(os.path.join(os.path.dirname(app_dir), 'cache')),
             'country_package': conv.pipe(
                 conv.make_input_to_slug(separator = u'_'),
                 conv.test_in((
@@ -113,7 +119,6 @@ def load_environment(global_conf, app_conf):
 
     class TaxBenefitSystem(CountryTaxBenefitSystem):
         decomposition_json_by_filename_cache = None
-        instance_and_error_couple_by_json_str_cache = {}  # class attribute
 
         class Scenario(CountryTaxBenefitSystem.Scenario):
             instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
@@ -123,12 +128,12 @@ def load_environment(global_conf, app_conf):
                 return conv.check(cls.json_to_cached_or_new_instance)(None)
 
             @classmethod
-            def make_json_to_cached_or_new_instance(cls, cache_dir, repair, tax_benefit_system):
+            def make_json_to_cached_or_new_instance(cls, repair, tax_benefit_system):
                 def json_to_cached_or_new_instance(value, state = None):
                     json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
                     instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
                     if instance_and_error_couple is None:
-                        instance_and_error_couple = cls.make_json_to_instance(cache_dir, repair, tax_benefit_system)(
+                        instance_and_error_couple = cls.make_json_to_instance(repair, tax_benefit_system)(
                             value, state = state or conv.default_state)
                         # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create
                         # weak reference to 'tuple' object.
@@ -141,10 +146,6 @@ def load_environment(global_conf, app_conf):
         def __init__(self):
             super(TaxBenefitSystem, self).__init__()
             self.decomposition_json_by_filename_cache = {}
-
-        @classmethod
-        def cached_or_new(cls):
-            return conv.check(cls.json_to_cached_or_new_instance)(None)
 
         def get_decomposition_json(self, xml_filename):
             decomposition_json = self.decomposition_json_by_filename_cache.get(xml_filename)
@@ -159,19 +160,8 @@ def load_environment(global_conf, app_conf):
                 self.decomposition_json_by_filename_cache[xml_filename] = decomposition_json
             return decomposition_json
 
-        @classmethod
-        def json_to_cached_or_new_instance(cls, value, state = None):
-            json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
-            instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
-            if instance_and_error_couple is None:
-                instance_and_error_couple = cls.json_to_instance(value, state = state or conv.default_state)
-                # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create weak
-                # reference to 'tuple' object.
-                cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(instance_and_error_couple)
-            return instance_and_error_couple
-
     model.TaxBenefitSystem = TaxBenefitSystem
-    model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem.cached_or_new()
+    model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem()
 
     tax_benefit_system.prefill_cache()
 
@@ -190,3 +180,16 @@ def load_environment(global_conf, app_conf):
     # Initialize lib2to3-based input variables extractor.
     if input_variables_extractors is not None:
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
+
+    # Store Git last commit SHA
+    global last_commit_sha
+    last_commit_sha = get_git_last_commit_sha()
+
+    # Load reforms and store instances
+    model.reform_by_name = conv.check(conv.uniform_mapping(
+        conv.noop,
+        conv.pipe(
+            conv.function(lambda build_reform: build_reform(tax_benefit_system)),
+            conv.test_issubclass(reforms.Reform),
+            ),
+        )(conf['reforms']))
