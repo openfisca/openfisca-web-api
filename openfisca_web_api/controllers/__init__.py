@@ -26,7 +26,7 @@
 """Controllers"""
 
 
-from . import calculate, entities, fields, formula, graph, reforms, simulate
+from . import calculate, entities, fields, formula, graph, reforms, simulate, swagger
 from .. import model, urls
 
 
@@ -44,6 +44,7 @@ def make_router():
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', formula.api1_formula),
         ('GET', '^/api/1/reforms/?$', reforms.api1_reforms),
         ('POST', '^/api/1/simulate/?$', simulate.api1_simulate),
+        ('GET', '^/api/1/swagger$', swagger.api1_swagger),
         ]
     if model.input_variables_extractor is not None:
         routings.append(('GET', '^/api/1/graph/?$', graph.api1_graph))
