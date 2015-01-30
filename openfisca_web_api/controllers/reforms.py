@@ -74,8 +74,8 @@ def api1_reforms(req):
             params = inputs,
             reforms = collections.OrderedDict(sorted({
                 reform_key: reform.name
-                for reform_key, reform in model.reform_by_name.iteritems()
-                }.iteritems())) if model.reform_by_name is not None else None,
+                for reform_key, reform in model.reform_by_key.iteritems()
+                }.iteritems())) if model.reform_by_key is not None else None,
             url = req.url.decode('utf-8'),
             ).iteritems())),
         headers = headers,

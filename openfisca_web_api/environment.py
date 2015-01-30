@@ -34,10 +34,9 @@ import os
 import subprocess
 import sys
 import weakref
-import xml.etree
 
 from biryani import strings
-from openfisca_core import decompositionsxml, periods, reforms
+from openfisca_core import periods, reforms
 try:
     from openfisca_parsers import input_variables_extractors
 except ImportError:
@@ -88,13 +87,7 @@ def load_environment(global_conf, app_conf):
                 ),
             'package_name': conv.default('openfisca-web-api'),
             'realm': conv.default(u'OpenFisca Web API'),
-            'reforms': conv.pipe(
-                conv.ini_items_list_to_ordered_dict,
-                conv.uniform_mapping(
-                    conv.noop,
-                    conv.module_function_str_to_function,
-                    ),
-                ),
+            'reforms': conv.ini_items_list_to_ordered_dict,  # Another validation is done below.
             },
         default = 'drop',
         ))(conf))
@@ -117,48 +110,32 @@ def load_environment(global_conf, app_conf):
     country_package = importlib.import_module(conf['country_package'])
     CountryTaxBenefitSystem = country_package.init_country()
 
+    class Scenario(CountryTaxBenefitSystem.Scenario):
+        instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
+
+        @classmethod
+        def cached_or_new(cls):
+            return conv.check(cls.json_to_cached_or_new_instance)(None)
+
+        @classmethod
+        def make_json_to_cached_or_new_instance(cls, repair, tax_benefit_system):
+            def json_to_cached_or_new_instance(value, state = None):
+                json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
+                instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
+                if instance_and_error_couple is None:
+                    instance_and_error_couple = cls.make_json_to_instance(repair, tax_benefit_system)(
+                        value, state = state or conv.default_state)
+                    # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create
+                    # weak reference to 'tuple' object.
+                    cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(
+                        instance_and_error_couple)
+                return instance_and_error_couple
+
+            return json_to_cached_or_new_instance
+
     class TaxBenefitSystem(CountryTaxBenefitSystem):
-        decomposition_json_by_filename_cache = None
-
-        class Scenario(CountryTaxBenefitSystem.Scenario):
-            instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
-
-            @classmethod
-            def cached_or_new(cls):
-                return conv.check(cls.json_to_cached_or_new_instance)(None)
-
-            @classmethod
-            def make_json_to_cached_or_new_instance(cls, repair, tax_benefit_system):
-                def json_to_cached_or_new_instance(value, state = None):
-                    json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
-                    instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
-                    if instance_and_error_couple is None:
-                        instance_and_error_couple = cls.make_json_to_instance(repair, tax_benefit_system)(
-                            value, state = state or conv.default_state)
-                        # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create
-                        # weak reference to 'tuple' object.
-                        cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(
-                            instance_and_error_couple)
-                    return instance_and_error_couple
-
-                return json_to_cached_or_new_instance
-
-        def __init__(self):
-            super(TaxBenefitSystem, self).__init__()
-            self.decomposition_json_by_filename_cache = {}
-
-        def get_decomposition_json(self, xml_filename):
-            decomposition_json = self.decomposition_json_by_filename_cache.get(xml_filename)
-            if decomposition_json is None:
-                xml_file_path = os.path.join(self.DECOMP_DIR, xml_filename)
-                decomposition_tree = xml.etree.ElementTree.parse(xml_file_path)
-                decomposition_xml_json = conv.check(decompositionsxml.xml_decomposition_to_json)(
-                    decomposition_tree.getroot())
-                decomposition_xml_json = conv.check(decompositionsxml.make_validate_node_xml_json(self))(
-                    decomposition_xml_json)
-                decomposition_json = decompositionsxml.transform_node_xml_json_to_json(decomposition_xml_json)
-                self.decomposition_json_by_filename_cache[xml_filename] = decomposition_json
-            return decomposition_json
+        pass
+    TaxBenefitSystem.Scenario = Scenario
 
     model.TaxBenefitSystem = TaxBenefitSystem
     model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem()
@@ -166,7 +143,7 @@ def load_environment(global_conf, app_conf):
     tax_benefit_system.prefill_cache()
 
     # Cache default decomposition.
-    tax_benefit_system.get_decomposition_json(tax_benefit_system.DEFAULT_DECOMP_FILE)
+    model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
     # Compute and cache compact legislation for each first day of month since at least 2 legal years.
     today = periods.instant(datetime.date.today())
@@ -185,11 +162,20 @@ def load_environment(global_conf, app_conf):
     global last_commit_sha
     last_commit_sha = get_git_last_commit_sha()
 
-    # Load reforms and store instances
-    model.reform_by_name = conv.check(conv.uniform_mapping(
-        conv.noop,
-        conv.pipe(
-            conv.function(lambda build_reform: build_reform(tax_benefit_system)),
-            conv.test_issubclass(reforms.Reform),
-            ),
-        )(conf['reforms']))
+    # Load reform modules and store build_reform functions.
+    model.build_reform_function_by_key = build_reform_function_by_key = conv.check(
+        conv.uniform_mapping(
+            conv.noop,
+            conv.module_function_str_to_function,
+            )(conf['reforms'])
+        )
+    # Check that each reform builds and cache instances. Must not be used with composed reforms.
+    model.reform_by_key = conv.check(
+        conv.uniform_mapping(
+            conv.noop,
+            conv.pipe(
+                conv.function(lambda build_reform: build_reform(tax_benefit_system)),
+                conv.test_isinstance(reforms.AbstractReform),
+                ),
+            )(build_reform_function_by_key)
+        )

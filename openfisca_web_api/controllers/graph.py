@@ -29,7 +29,7 @@
 import collections
 import datetime
 
-from openfisca_core import periods, simulations
+from openfisca_core import periods, reforms, simulations
 
 from .. import contexts, conv, model, wsgihelpers
 
@@ -44,22 +44,40 @@ def api1_graph(req):
     params = req.GET
     inputs = dict(
         context = params.get('context'),
+        reforms = params.getall('reform'),
         variable = params.get('variable'),
         )
-    tax_benefit_system = model.tax_benefit_system
+
+    str_to_reforms = conv.make_str_to_reforms()
+
     data, errors = conv.pipe(
         conv.struct(
             dict(
                 context = conv.noop,  # For asynchronous calls
-                variable = conv.pipe(
-                    conv.cleanup_line,
-                    conv.default(u'revdisp'),
-                    conv.test_in(tax_benefit_system.column_by_name),
-                    ),
+                reforms = str_to_reforms,
+                variable = conv.noop,  # Real conversion is done once tax-benefit system is known.
                 ),
             default = 'drop',
             ),
         )(inputs, state = ctx)
+
+    if errors is None:
+        country_tax_benefit_system = model.tax_benefit_system
+        tax_benefit_system = reforms.compose_reforms(
+            base_tax_benefit_system = country_tax_benefit_system,
+            build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
+            ) if data['reforms'] is not None else country_tax_benefit_system
+        data, errors = conv.struct(
+            dict(
+                variable = conv.pipe(
+                    conv.empty_to_none,
+                    conv.default(u'revdisp'),
+                    conv.test_in(tax_benefit_system.column_by_name),
+                    ),
+                ),
+            default = conv.noop,
+            )(data, state = ctx)
+
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
