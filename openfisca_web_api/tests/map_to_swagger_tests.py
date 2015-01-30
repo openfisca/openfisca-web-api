@@ -180,4 +180,6 @@ class TestSwagger(unittest.TestCase):
 
         self.assertEqual(map_parameter_to_swagger(target_column), expected)
 
-unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
