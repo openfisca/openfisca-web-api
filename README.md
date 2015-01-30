@@ -1,5 +1,7 @@
 # OpenFisca Web-API
 
+[![Build Status via Travis CI](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
+
 ## Presentation
 
 [OpenFisca](http://www.openfisca.fr/) is a versatile microsimulation free software.
