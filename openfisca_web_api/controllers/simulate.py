@@ -33,13 +33,46 @@ import copy
 import multiprocessing
 import os
 
-from openfisca_core import decompositions
+from openfisca_core import decompositions, reforms
 
 from .. import conf, contexts, conv, model, wsgihelpers
 
 
 cpu_count = multiprocessing.cpu_count()
 N_ = lambda message: message
+
+
+def build_and_calculate_simulations(decomposition_json, scenarios, trace = False):
+    simulations = []
+    for scenario in scenarios:
+        simulation = scenario.new_simulation(trace = trace)
+        for node in decompositions.iter_decomposition_nodes(decomposition_json):
+            if not node.get('children'):
+                simulation.calculate(node['code'])
+        simulations.append(simulation)
+    return simulations
+
+
+def fill_decomposition_json_with_values(response_json, simulations, tax_benefit_system):
+    for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):
+        children = node.get('children')
+        if children:
+            node['values'] = map(lambda *l: sum(l), *(
+                child['values']
+                for child in children
+                ))
+        else:
+            node['values'] = values = []
+            for simulation in simulations:
+                holder = simulation.get_holder(node['code'])
+                column = holder.column
+                values.extend(
+                    column.transform_value_to_json(value)
+                    for value in holder.new_test_case_array(simulation.period).tolist()
+                    )
+        column = tax_benefit_system.column_by_name.get(node['code'])
+        if column is not None and column.url is not None:
+            node['url'] = column.url
 
 
 @wsgihelpers.wsgify
@@ -108,6 +141,8 @@ def api1_simulate(req):
             headers = headers,
             )
 
+    str_to_reforms = conv.make_str_to_reforms()
+
     data, errors = conv.struct(
         dict(
             # api_key = conv.pipe(  # Shared secret between client and server
@@ -115,9 +150,11 @@ def api1_simulate(req):
             #     conv.input_to_uuid_str,
             #     conv.not_none,
             #     ),
+            base_decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
+            base_reforms = str_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
-            decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
-            reform_names = conv.noop,  # Real conversion is done once tax-benefit system is known.
+            reform_decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
+            reforms = str_to_reforms,
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
@@ -142,55 +179,43 @@ def api1_simulate(req):
         )(inputs, state = ctx)
 
     if errors is None:
-        tax_benefit_system = model.tax_benefit_system
+        country_tax_benefit_system = model.tax_benefit_system
+        base_tax_benefit_system = reforms.compose_reforms(
+            base_tax_benefit_system = country_tax_benefit_system,
+            build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['base_reforms']],
+            ) if data['base_reforms'] is not None else country_tax_benefit_system
+        if data['reforms'] is not None:
+            reform_tax_benefit_system = reforms.compose_reforms(
+                base_tax_benefit_system = base_tax_benefit_system,
+                build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
+                )
         data, errors = conv.struct(
             dict(
-                reform_names = conv.pipe(
-                    conv.test_isinstance(list),
-                    conv.uniform_sequence(
-                        conv.pipe(
-                            conv.test_isinstance(basestring),
-                            conv.cleanup_line,
-                            conv.test_in((conf['reforms'] or {}).keys()),
-                            ),
-                        drop_none_items = True,
-                        ),
-                    conv.empty_to_none,
-                    conv.test(lambda values: len(values) == 1, error = u'Only one reform name is accepted for now'),
+                base_decomposition = conv.condition(
+                    conv.test_isinstance(basestring),
+                    conv.test(lambda filename: filename in os.listdir(base_tax_benefit_system.DECOMP_DIR)),
+                    decompositions.make_validate_node_json(base_tax_benefit_system),
+                    ),
+                base_scenarios = conv.uniform_sequence(
+                    base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                        repair = data['validate'],
+                        tax_benefit_system = base_tax_benefit_system,
+                        )
+                    ),
+                reform_decomposition = conv.condition(
+                    conv.test_isinstance(basestring),
+                    conv.test(lambda filename: filename in os.listdir(reform_tax_benefit_system.DECOMP_DIR)),
+                    decompositions.make_validate_node_json(reform_tax_benefit_system),
+                    ) if data['reforms'] is not None else conv.noop,
+                reform_scenarios = conv.uniform_sequence(
+                    reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                        repair = data['validate'],
+                        tax_benefit_system = reform_tax_benefit_system,
+                        )
                     ),
                 ),
             default = conv.noop,
             )(data, state = ctx)
-
-        if errors is None:
-            if data['reform_names'] is None:
-                with_reform = False
-            else:
-                with_reform = True
-                reform_name = data['reform_names'][0]
-                build_reform = conf['reforms'][reform_name]
-                Reform = build_reform(tax_benefit_system)
-                tax_benefit_system = Reform()
-            reference_tax_benefit_system = tax_benefit_system.real_reference
-            data, errors = conv.struct(
-                dict(
-                    decomposition = conv.pipe(
-                        conv.condition(
-                            conv.test_isinstance(basestring),
-                            conv.test(lambda filename: filename in os.listdir(reference_tax_benefit_system.DECOMP_DIR)),
-                            decompositions.make_validate_node_json(reference_tax_benefit_system),
-                            ),
-                        conv.default(reference_tax_benefit_system.DEFAULT_DECOMP_FILE),
-                        ),
-                    scenarios = conv.uniform_sequence(
-                        tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                            repair = data['validate'],
-                            tax_benefit_system = tax_benefit_system,
-                            )
-                        ),
-                    ),
-                default = conv.noop,
-                )(data, state = ctx)
 
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
@@ -232,8 +257,10 @@ def api1_simulate(req):
 #            headers = headers,
 #            )
 
+    scenarios = data['reform_scenarios'] if data['reforms'] is not None else data['base_scenarios']
+
     suggestions = {}
-    for scenario_index, scenario in enumerate(data['scenarios']):
+    for scenario_index, scenario in enumerate(scenarios):
         if data['validate']:
             original_test_case = scenario.test_case
             scenario.test_case = copy.deepcopy(original_test_case)
@@ -255,7 +282,7 @@ def api1_simulate(req):
                 params = inputs,
                 repaired_scenarios = [
                     scenario.to_json()
-                    for scenario in data['scenarios']
+                    for scenario in scenarios
                     ],
                 suggestions = suggestions,
                 url = req.url.decode('utf-8'),
@@ -263,50 +290,48 @@ def api1_simulate(req):
             headers = headers,
             )
 
-    if isinstance(data['decomposition'], basestring):
-        decomposition_json = reference_tax_benefit_system.get_decomposition_json(data['decomposition'])
-    else:
-        decomposition_json = data['decomposition']
+    base_decomposition_json = model.get_cached_or_new_decomposition_json(
+        tax_benefit_system = base_tax_benefit_system,
+        xml_file_name = data['base_decomposition'],
+        ) if data['base_decomposition'] is None or isinstance(data['base_decomposition'], basestring) \
+        else data['base_decomposition']
+    if data['reforms'] is not None:
+        reform_decomposition_json = model.get_cached_or_new_decomposition_json(
+            tax_benefit_system = reform_tax_benefit_system,
+            xml_file_name = data['reform_decomposition'],
+            ) if data['reform_decomposition'] is None or isinstance(data['reform_decomposition'], basestring) \
+            else data['reform_decomposition']
 
-    simulations = []
-    for scenario in data['scenarios']:
-        if with_reform:
-            # First compute the reference simulation (ie without reform).
-            simulation = scenario.new_simulation(trace = data['trace'], reference = True)
-            for node in decompositions.iter_decomposition_nodes(decomposition_json):
-                if not node.get('children'):
-                    simulation.calculate(node['code'])
-            simulations.append(simulation)
-        simulation = scenario.new_simulation(trace = data['trace'])
-        for node in decompositions.iter_decomposition_nodes(decomposition_json):
-            if not node.get('children'):
-                simulation.calculate(node['code'])
-        simulations.append(simulation)
+    base_simulations = build_and_calculate_simulations(
+        decomposition_json = base_decomposition_json,
+        scenarios = data['base_scenarios'],
+        trace = data['trace'],
+        )
+    if data['reforms'] is not None:
+        reform_simulations = build_and_calculate_simulations(
+            decomposition_json = reform_decomposition_json,
+            scenarios = data['reform_scenarios'],
+            trace = data['trace'],
+            )
 
-    response_json = copy.deepcopy(decomposition_json)  # Use decomposition as a skeleton for response.
-    for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):
-        children = node.get('children')
-        if children:
-            node['values'] = map(lambda *l: sum(l), *(
-                child['values']
-                for child in children
-                ))
-        else:
-            node['values'] = values = []
-            for simulation in simulations:
-                holder = simulation.get_holder(node['code'])
-                column = holder.column
-                values.extend(
-                    column.transform_value_to_json(value)
-                    for value in holder.new_test_case_array(simulation.period).tolist()
-                    )
-        column = tax_benefit_system.column_by_name.get(node['code'])
-        if column is not None and column.url is not None:
-            node['url'] = column.url
+    base_response_json = copy.deepcopy(base_decomposition_json)
+    fill_decomposition_json_with_values(
+        response_json = base_response_json,
+        simulations = base_simulations,
+        tax_benefit_system = base_tax_benefit_system,
+        )
+    if data['reforms'] is not None:
+        reform_response_json = copy.deepcopy(reform_decomposition_json)
+        fill_decomposition_json_with_values(
+            response_json = reform_response_json,
+            simulations = reform_simulations,
+            tax_benefit_system = reform_tax_benefit_system,
+            )
 
     if data['trace']:
         simulations_variables_json = []
         tracebacks_json = []
+        simulations = reform_simulations if data['reforms'] is not None else base_simulations
         for simulation in simulations:
             simulation_variables_json = {}
             traceback_json = []
@@ -342,17 +367,20 @@ def api1_simulate(req):
         simulations_variables_json = None
         tracebacks_json = None
 
+    response_data = dict(
+        apiVersion = 1,
+        context = data['context'],
+        method = req.script_name,
+        params = inputs,
+        suggestions = suggestions,
+        tracebacks = tracebacks_json,
+        url = req.url.decode('utf-8'),
+        value = reform_response_json if data['reforms'] is not None else base_response_json,
+        variables = simulations_variables_json,
+        )
+    if data['reforms'] is not None:
+        response_data['baseValue'] = base_response_json
     return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            context = data['context'],
-            method = req.script_name,
-            params = inputs,
-            suggestions = suggestions,
-            tracebacks = tracebacks_json,
-            url = req.url.decode('utf-8'),
-            value = response_json,
-            variables = simulations_variables_json,
-            ).iteritems())),
+        collections.OrderedDict(sorted(response_data.iteritems())),
         headers = headers,
         )

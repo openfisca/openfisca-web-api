@@ -34,11 +34,58 @@ import itertools
 import multiprocessing
 import os
 
+from openfisca_core import reforms
+
 from .. import conf, contexts, conv, model, wsgihelpers
 
 
 cpu_count = multiprocessing.cpu_count()
 N_ = lambda message: message
+
+
+def build_and_calculate_simulations(variables, scenarios, trace = False):
+    simulations = []
+    for scenario in scenarios:
+        simulation = scenario.new_simulation(trace = trace)
+        for variable in variables:
+            simulation.calculate(variable)
+        simulations.append(simulation)
+    return simulations
+
+
+def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, tax_benefit_system, variables):
+    output_test_cases = []
+    for scenario, simulation in itertools.izip(scenarios, simulations):
+        if intermediate_variables:
+            holders = []
+            for step in simulation.traceback.itervalues():
+                holder = step['holder']
+                if holder not in holders:
+                    holders.append(holder)
+        else:
+            holders = [
+                simulation.get_holder(variable)
+                for variable in variables
+                ]
+        test_case = scenario.to_json()['test_case']
+        for holder in holders:
+            variable_value_json = holder.to_value_json()
+            if variable_value_json is None:
+                continue
+            variable_name = holder.column.name
+            test_case_entity_by_id = test_case[holder.entity.key_plural]
+            if isinstance(variable_value_json, dict):
+                for entity_index, test_case_entity in enumerate(test_case_entity_by_id.itervalues()):
+                    test_case_entity[variable_name] = {
+                        period: array_json[entity_index]
+                        for period, array_json in variable_value_json.iteritems()
+                        }
+            else:
+                for test_case_entity, cell_json in itertools.izip(test_case_entity_by_id.itervalues(),
+                        variable_value_json):
+                    test_case_entity[variable_name] = cell_json
+        output_test_cases.append(test_case)
+    return output_test_cases
 
 
 @wsgihelpers.wsgify
@@ -107,6 +154,22 @@ def api1_calculate(req):
             headers = headers,
             )
 
+    str_to_reforms = conv.make_str_to_reforms()
+    str_to_variables = conv.pipe(
+        conv.test_isinstance(list),
+        conv.uniform_sequence(
+            conv.pipe(
+                conv.test_isinstance(basestring),
+                conv.empty_to_none,
+                # Remaining of conversion is done once tax-benefit system is known.
+                conv.not_none,
+                ),
+            constructor = set,
+            ),
+        conv.test(lambda variables: len(variables) >= 1, error = N_(u'At least one variable is required')),
+        conv.not_none,
+        )
+
     data, errors = conv.struct(
         dict(
             # api_key = conv.pipe(  # Shared secret between client and server
@@ -114,13 +177,15 @@ def api1_calculate(req):
             #     conv.input_to_uuid_str,
             #     conv.not_none,
             #     ),
+            base_reforms = str_to_reforms,
+            base_variables = str_to_variables,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             intermediate_variables = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
-            reform_names = conv.noop,  # Real conversion is done once tax-benefit system is known.
+            reforms = str_to_reforms,
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
@@ -141,68 +206,44 @@ def api1_calculate(req):
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
-            variables = conv.pipe(
-                conv.test_isinstance(list),
-                conv.uniform_sequence(
-                    conv.pipe(
-                        conv.test_isinstance(basestring),
-                        conv.cleanup_line,
-                        # Remaining of conversion is done once tax-benefit system is known.
-                        conv.not_none,
-                        ),
-                    constructor = set,
-                    ),
-                conv.test(lambda variables: len(variables) >= 1, error = N_(u'At least one variable is required')),
-                conv.not_none,
-                ),
+            reform_variables = str_to_variables,
             ),
         )(inputs, state = ctx)
 
     if errors is None:
-        tax_benefit_system = model.tax_benefit_system
+        country_tax_benefit_system = model.tax_benefit_system
+        base_tax_benefit_system = reforms.compose_reforms(
+            base_tax_benefit_system = country_tax_benefit_system,
+            build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['base_reforms']],
+            ) if data['base_reforms'] is not None else country_tax_benefit_system
+        if data['reforms'] is not None:
+            reform_tax_benefit_system = reforms.compose_reforms(
+                base_tax_benefit_system = base_tax_benefit_system,
+                build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
+                )
         data, errors = conv.struct(
             dict(
-                reform_names = conv.pipe(
-                    conv.test_isinstance(list),
-                    conv.uniform_sequence(
-                        conv.pipe(
-                            conv.test_isinstance(basestring),
-                            conv.cleanup_line,
-                            conv.test_in((conf['reforms'] or {}).keys()),
-                            ),
-                        drop_none_items = True,
-                        ),
-                    conv.empty_to_none,
-                    conv.test(lambda values: len(values) == 1, error = u'Only one reform name is accepted for now'),
+                base_scenarios = conv.uniform_sequence(
+                    base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                        repair = data['validate'],
+                        tax_benefit_system = base_tax_benefit_system,
+                        )
                     ),
+                base_variables = conv.uniform_sequence(
+                    conv.test_in(base_tax_benefit_system.column_by_name),
+                    ),
+                reform_scenarios = conv.uniform_sequence(
+                    reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                        repair = data['validate'],
+                        tax_benefit_system = reform_tax_benefit_system,
+                        )
+                    ),
+                reform_variables = conv.uniform_sequence(
+                    conv.test_in(reform_tax_benefit_system.column_by_name),
+                    ) if data['reforms'] is not None else conv.noop,
                 ),
             default = conv.noop,
             )(data, state = ctx)
-
-        if errors is None:
-            if data['reform_names'] is None:
-                with_reform = False
-            else:
-                with_reform = True
-                reform_name = data['reform_names'][0]
-                build_reform = conf['reforms'][reform_name]
-                Reform = build_reform(tax_benefit_system)
-                tax_benefit_system = Reform()
-            # reference_tax_benefit_system = tax_benefit_system.real_reference
-            data, errors = conv.struct(
-                dict(
-                    scenarios = conv.uniform_sequence(
-                        tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                            repair = data['validate'],
-                            tax_benefit_system = tax_benefit_system,
-                            )
-                        ),
-                    variables = conv.uniform_sequence(
-                        conv.test_in(tax_benefit_system.column_by_name),
-                        ),
-                    ),
-                default = conv.noop,
-                )(data, state = ctx)
 
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
@@ -244,8 +285,10 @@ def api1_calculate(req):
 #            headers = headers,
 #            )
 
+    scenarios = data['reform_scenarios'] if data['reforms'] is not None else data['base_scenarios']
+
     suggestions = {}
-    for scenario_index, scenario in enumerate(data['scenarios']):
+    for scenario_index, scenario in enumerate(scenarios):
         if data['validate']:
             original_test_case = scenario.test_case
             scenario.test_case = copy.deepcopy(original_test_case)
@@ -267,7 +310,7 @@ def api1_calculate(req):
                 params = inputs,
                 repaired_scenarios = [
                     scenario.to_json()
-                    for scenario in data['scenarios']
+                    for scenario in scenarios
                     ],
                 suggestions = suggestions,
                 url = req.url.decode('utf-8'),
@@ -275,55 +318,38 @@ def api1_calculate(req):
             headers = headers,
             )
 
-    simulations = []
-    for scenario in data['scenarios']:
-        if with_reform:
-            # First compute the reference simulation (ie without reform).
-            simulation = scenario.new_simulation(trace = data['intermediate_variables'] or data['trace'],
-                reference = True)
-            for variable in data['variables']:
-                simulation.calculate(variable)
-            simulations.append(simulation)
-        simulation = scenario.new_simulation(trace = data['intermediate_variables'] or data['trace'])
-        for variable in data['variables']:
-            simulation.calculate(variable)
-        simulations.append(simulation)
+    base_simulations = build_and_calculate_simulations(
+        scenarios = data['base_scenarios'],
+        trace = data['intermediate_variables'] or data['trace'],
+        variables = data['base_variables'],
+        )
+    if data['reforms'] is not None:
+        reform_simulations = build_and_calculate_simulations(
+            scenarios = data['reform_scenarios'],
+            trace = data['intermediate_variables'] or data['trace'],
+            variables = data['reform_variables'],
+            )
 
-    output_test_cases = []
-    for scenario, simulation in itertools.izip(data['scenarios'], simulations):
-        if data['intermediate_variables']:
-            holders = []
-            for step in simulation.traceback.itervalues():
-                holder = step['holder']
-                if holder not in holders:
-                    holders.append(holder)
-        else:
-            holders = [
-                simulation.get_holder(variable)
-                for variable in data['variables']
-                ]
-        test_case = scenario.to_json()['test_case']
-        for holder in holders:
-            variable_value_json = holder.to_value_json()
-            if variable_value_json is None:
-                continue
-            variable_name = holder.column.name
-            test_case_entity_by_id = test_case[holder.entity.key_plural]
-            if isinstance(variable_value_json, dict):
-                for entity_index, test_case_entity in enumerate(test_case_entity_by_id.itervalues()):
-                    test_case_entity[variable_name] = {
-                        period: array_json[entity_index]
-                        for period, array_json in variable_value_json.iteritems()
-                        }
-            else:
-                for test_case_entity, cell_json in itertools.izip(test_case_entity_by_id.itervalues(),
-                        variable_value_json):
-                    test_case_entity[variable_name] = cell_json
-        output_test_cases.append(test_case)
+    base_output_test_cases = fill_test_cases_with_values(
+        intermediate_variables = data['intermediate_variables'],
+        scenarios = data['base_scenarios'],
+        simulations = base_simulations,
+        tax_benefit_system = base_tax_benefit_system,
+        variables = data['base_variables'],
+        )
+    if data['reforms'] is not None:
+        reform_output_test_cases = fill_test_cases_with_values(
+            intermediate_variables = data['intermediate_variables'],
+            scenarios = data['reform_scenarios'],
+            simulations = reform_simulations,
+            tax_benefit_system = reform_tax_benefit_system,
+            variables = data['reform_variables'],
+            )
 
     if data['trace']:
         simulations_variables_json = []
         tracebacks_json = []
+        simulations = reform_simulations if data['reforms'] is not None else base_simulations
         for simulation in simulations:
             simulation_variables_json = {}
             traceback_json = []
@@ -359,17 +385,20 @@ def api1_calculate(req):
         simulations_variables_json = None
         tracebacks_json = None
 
+    response_data = dict(
+        apiVersion = 1,
+        context = data['context'],
+        method = req.script_name,
+        params = inputs,
+        suggestions = suggestions,
+        tracebacks = tracebacks_json,
+        url = req.url.decode('utf-8'),
+        value = reform_output_test_cases if data['reforms'] is not None else base_output_test_cases,
+        variables = simulations_variables_json,
+        )
+    if data['reforms'] is not None:
+        response_data['baseValue'] = base_output_test_cases
     return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            context = data['context'],
-            method = req.script_name,
-            params = inputs,
-            suggestions = suggestions,
-            tracebacks = tracebacks_json,
-            url = req.url.decode('utf-8'),
-            value = output_test_cases,
-            variables = simulations_variables_json,
-            ).iteritems())),
+        collections.OrderedDict(sorted(response_data.iteritems())),
         headers = headers,
         )

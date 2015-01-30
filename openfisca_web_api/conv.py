@@ -30,6 +30,8 @@ import collections
 
 from openfisca_core.conv import *  # noqa
 
+from . import conf
+
 
 N_ = lambda message: message
 
@@ -67,6 +69,21 @@ def jsonify_value(value):
             for item in value
             ]
     return value
+
+
+# Defer with lambda for conf to load.
+make_str_to_reforms = lambda: pipe(
+    test_isinstance(list),
+    uniform_sequence(
+        pipe(
+            test_isinstance(basestring),
+            empty_to_none,
+            test_in((conf['reforms'] or {}).keys()),
+            ),
+        drop_none_items = True,
+        ),
+    empty_to_none,
+    )
 
 
 def module_and_function_names_to_function(values, state = None):

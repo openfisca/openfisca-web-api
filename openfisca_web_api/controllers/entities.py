@@ -28,41 +28,51 @@
 
 import collections
 
+from openfisca_core import reforms
+
 from .. import contexts, conv, model, wsgihelpers
+
+
+def build_entity_data(entity_class):
+    entity_data = {
+        'isPersonsEntity': entity_class.is_persons_entity,
+        'label': entity_class.label,
+        'nameKey': entity_class.name_key,
+        }
+    if hasattr(entity_class, 'roles_key'):
+        entity_data.update({
+            'maxCardinalityByRoleKey': entity_class.max_cardinality_by_role_key,
+            'roles': entity_class.roles_key,
+            'labelByRoleKey': entity_class.label_by_role_key,
+            })
+    return entity_data
 
 
 @wsgihelpers.wsgify
 def api1_entities(req):
-    def build_entity_data(entity_class):
-        entity_data = {
-            'isPersonsEntity': entity_class.is_persons_entity,
-            'label': entity_class.label,
-            'nameKey': entity_class.name_key,
-            }
-        if hasattr(entity_class, 'roles_key'):
-            entity_data.update({
-                'maxCardinalityByRoleKey': entity_class.max_cardinality_by_role_key,
-                'roles': entity_class.roles_key,
-                'labelByRoleKey': entity_class.label_by_role_key,
-                })
-        return entity_data
-
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
+
     params = req.GET
     inputs = dict(
         context = params.get('context'),
+        reforms = params.getall('reform'),
         )
+
+    str_to_reforms = conv.make_str_to_reforms()
+
     data, errors = conv.pipe(
         conv.struct(
             dict(
                 context = conv.noop,  # For asynchronous calls
+                reforms = str_to_reforms,
                 ),
             default = 'drop',
             ),
         )(inputs, state = ctx)
+
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
@@ -80,17 +90,23 @@ def api1_entities(req):
             headers = headers,
             )
 
-    entities_class = model.tax_benefit_system.entity_class_by_key_plural.itervalues()
-    entities = collections.OrderedDict(sorted({
+    country_tax_benefit_system = model.tax_benefit_system
+    tax_benefit_system = reforms.compose_reforms(
+        base_tax_benefit_system = country_tax_benefit_system,
+        build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
+        ) if data['reforms'] is not None else country_tax_benefit_system
+
+    entities_class = tax_benefit_system.entity_class_by_key_plural.itervalues()
+    entities = {
         entity_class.key_plural: build_entity_data(entity_class)
         for entity_class in entities_class
-        }.iteritems()))
+        }
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
             context = data['context'],
-            entities = entities,
+            entities = collections.OrderedDict(sorted(entities.iteritems())),
             method = req.script_name,
             params = inputs,
             ).iteritems())),
