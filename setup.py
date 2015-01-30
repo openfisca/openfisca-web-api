@@ -65,6 +65,7 @@ setup(
     extras_require = {
         'dev': ['PasteScript'],
         'introspection': ['OpenFisca-Parsers >= 0.5dev'],
+        'tests': ['PasteDeploy'],
         },
     include_package_data = True,
     install_requires = [
