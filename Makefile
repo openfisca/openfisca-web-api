@@ -1,7 +1,7 @@
 all: flake8 test
 
 clean-pyc:
-	find -name '*.pyc' -exec rm \{\} \;
+	find . -name '*.pyc' -exec rm \{\} \;
 
 ctags:
 	ctags --recurse=yes --exclude=node_modules --exclude=openfisca_web_ui/static/dist .
