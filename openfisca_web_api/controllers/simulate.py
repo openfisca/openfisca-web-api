@@ -189,6 +189,7 @@ def api1_simulate(req):
                 base_tax_benefit_system = base_tax_benefit_system,
                 build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
                 )
+        data['base_scenarios'] = data['reform_scenarios'] = data['scenarios']
         data, errors = conv.struct(
             dict(
                 base_decomposition = conv.condition(
@@ -212,7 +213,7 @@ def api1_simulate(req):
                         repair = data['validate'],
                         tax_benefit_system = reform_tax_benefit_system,
                         )
-                    ),
+                    ) if data['reforms'] is not None else conv.noop,
                 ),
             default = conv.noop,
             )(data, state = ctx)
