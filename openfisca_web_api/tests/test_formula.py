@@ -23,20 +23,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os
-import pkg_resources
+import json
 
-from paste.deploy import loadapp
+from webob import Request
 
-
-app = None
-CONF_FILE_NAME = 'development-france.ini'
+from . import common
 
 
-def get_or_load_app():
-    global app
-    if app is None:
-        pkg_root_dir = pkg_resources.get_distribution('OpenFisca-Web-API').location
-        conf_file_path = os.path.join(pkg_root_dir, CONF_FILE_NAME)
-        app = loadapp(u'config:{}#main'.format(conf_file_path))
-    return app
+def setup_module(module):
+    common.get_or_load_app()
+
+
+def test_formula_revdisp():
+    req = Request.blank('/api/1/formula/revdisp', method = 'GET')
+    res = req.get_response(common.app)
+    res_json = json.loads(res.body)
+    assert isinstance(res_json['value'], float)
+    assert res.status_code == 200
