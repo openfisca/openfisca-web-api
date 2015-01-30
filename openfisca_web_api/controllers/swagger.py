@@ -25,10 +25,12 @@
 
 
 import datetime
+import pkg_resources
 
 from .. import contexts, model, wsgihelpers
 
 
+PACKAGE_VERSION = pkg_resources.get_distribution('OpenFisca-Web-API').version
 SWAGGER_BASE_PATH = '/api/1/formula'
 
 
@@ -51,7 +53,7 @@ def api1_swagger(req):
             'basePath': SWAGGER_BASE_PATH,
             'paths': paths,
             'info': {
-                'version': '1.0.0',
+                'version': PACKAGE_VERSION,
                 'title': 'OpenFisca',
                 'description': '',
                 'termsOfService': 'http://github.com/openfisca/openfisca-web-api',
