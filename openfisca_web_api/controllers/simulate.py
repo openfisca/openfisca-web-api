@@ -383,7 +383,7 @@ def api1_simulate(req):
         variables = simulations_variables_json,
         )
     if data['reforms'] is not None:
-        response_data['baseValue'] = base_response_json
+        response_data['base_value'] = base_response_json
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(response_data.iteritems())),
         headers = headers,
