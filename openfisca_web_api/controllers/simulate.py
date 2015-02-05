@@ -153,9 +153,9 @@ def api1_simulate(req):
             #     conv.input_to_uuid_str,
             #     conv.not_none,
             #     ),
-            base_decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
             base_reforms = str_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
+            decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
             reform_decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
             reforms = str_to_reforms,
             scenarios = conv.pipe(
@@ -195,16 +195,16 @@ def api1_simulate(req):
         data['base_scenarios'] = data['reform_scenarios'] = data['scenarios']
         data, errors = conv.struct(
             dict(
-                base_decomposition = conv.condition(
-                    conv.test_isinstance(basestring),
-                    conv.test(lambda filename: filename in os.listdir(base_tax_benefit_system.DECOMP_DIR)),
-                    decompositions.make_validate_node_json(base_tax_benefit_system),
-                    ),
                 base_scenarios = conv.uniform_sequence(
                     base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
                         repair = data['validate'],
                         tax_benefit_system = base_tax_benefit_system,
                         )
+                    ),
+                decomposition = conv.condition(
+                    conv.test_isinstance(basestring),
+                    conv.test(lambda filename: filename in os.listdir(base_tax_benefit_system.DECOMP_DIR)),
+                    decompositions.make_validate_node_json(base_tax_benefit_system),
                     ),
                 reform_decomposition = conv.condition(
                     conv.test_isinstance(basestring),
@@ -294,11 +294,11 @@ def api1_simulate(req):
             headers = headers,
             )
 
-    base_decomposition_json = model.get_cached_or_new_decomposition_json(
+    decomposition_json = model.get_cached_or_new_decomposition_json(
         tax_benefit_system = base_tax_benefit_system,
-        xml_file_name = data['base_decomposition'],
-        ) if data['base_decomposition'] is None or isinstance(data['base_decomposition'], basestring) \
-        else data['base_decomposition']
+        xml_file_name = data['decomposition'],
+        ) if data['decomposition'] is None or isinstance(data['decomposition'], basestring) \
+        else data['decomposition']
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(
             tax_benefit_system = reform_tax_benefit_system,
@@ -307,7 +307,7 @@ def api1_simulate(req):
             else data['reform_decomposition']
 
     base_simulations = build_and_calculate_simulations(
-        decomposition_json = base_decomposition_json,
+        decomposition_json = decomposition_json,
         scenarios = data['base_scenarios'],
         trace = data['trace'],
         )
@@ -318,7 +318,7 @@ def api1_simulate(req):
             trace = data['trace'],
             )
 
-    base_response_json = copy.deepcopy(base_decomposition_json)
+    base_response_json = copy.deepcopy(decomposition_json)
     fill_decomposition_json_with_values(
         response_json = base_response_json,
         simulations = base_simulations,
