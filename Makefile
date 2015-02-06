@@ -1,4 +1,4 @@
-TESTS_DIR="openfisca_web_api/tests/"
+TESTS_DIR=openfisca_web_api/tests
 
 all: flake8 test
 
