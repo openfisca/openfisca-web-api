@@ -279,11 +279,12 @@ def api1_calculate(req):
     for scenario in data['scenarios']:
         if with_reform:
             # First compute the reference simulation (ie without reform).
-            simulation = scenario.new_simulation(trace = data['trace'], reference = True)
+            simulation = scenario.new_simulation(trace = data['intermediate_variables'] or data['trace'],
+                reference = True)
             for variable in data['variables']:
                 simulation.calculate(variable)
             simulations.append(simulation)
-        simulation = scenario.new_simulation(trace = data['trace'])
+        simulation = scenario.new_simulation(trace = data['intermediate_variables'] or data['trace'])
         for variable in data['variables']:
             simulation.calculate(variable)
         simulations.append(simulation)
