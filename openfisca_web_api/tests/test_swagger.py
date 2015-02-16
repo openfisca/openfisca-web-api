@@ -47,10 +47,10 @@ def test_map_path_base_to_swagger_withour_url():
                 "schema": {
                     "type": "integer",
                     "format": "int32"
+                    }
                 }
             }
         }
-    }
 
     actual = map_path_base_to_swagger({
         "@type": "Integer",
@@ -59,7 +59,7 @@ def test_map_path_base_to_swagger_withour_url():
         "entity": "foy",
         "label": "Nombre d'enfants à charge titulaires de la carte d'invalidité",
         "name": "nbG"
-    })
+        })
 
     assert actual == expected
 
@@ -71,17 +71,17 @@ def test_map_path_base_to_swagger_with_url():
         "externalDocs": {
             "url": "http://www.legifrance.gouv.fr/affichCode.do?"
                    "cidTexte=LEGITEXT000006069577&idSectionTA=LEGISCTA000025049019"
-        },
+            },
         "responses": {
             200: {
                 "description": "Contribution exceptionnelle sur les hauts revenus",
                 "schema": {
                     "type": "number",
                     "format": "float"
+                    }
                 }
             }
         }
-    }
 
     actual = map_path_base_to_swagger({
         "@type": "Float",
@@ -91,7 +91,7 @@ def test_map_path_base_to_swagger_with_url():
         "name": "cehr",
         "url": "http://www.legifrance.gouv.fr/affichCode.do?"
                "cidTexte=LEGITEXT000006069577&idSectionTA=LEGISCTA000025049019"
-    })
+        })
 
     assert actual == expected
 
@@ -105,10 +105,10 @@ def test_map_path_base_to_swagger_with_enum():
                 "description": "Catégorie de taille d'entreprise (pour calcul des cotisations sociales)",
                 "schema": {
                     "type": "string"
+                    }
                 }
             }
         }
-    }
 
     actual = map_path_base_to_swagger({
         "@type": "Enumeration",
@@ -122,8 +122,8 @@ def test_map_path_base_to_swagger_with_enum():
             "2": "De 10 à 19 salariés",
             "3": "De 20 à 249 salariés",
             "4": "Plus de 250 salariés"
-        }
-    })
+            }
+        })
 
     assert actual == expected
 
@@ -158,7 +158,7 @@ def test_map_parameters_to_swagger():
     actual = [
         description.get('name')
         for description in map_parameters_to_swagger(target_column)
-    ]
+        ]
 
     assert actual == ['ppe', 'rev_trav', 'rev_cap', 'pen', 'psoc', 'impo']
 
@@ -173,7 +173,7 @@ def test_map_parameter_to_swagger():
         'type': 'number',
         'format': 'float',
         'default': 0
-    }
+        }
 
     assert map_parameter_to_swagger(target_column) == expected
 
@@ -192,8 +192,8 @@ def test_map_enum_parameter_to_swagger():
             u'De 10 à 19 salariés',
             u'De 20 à 249 salariés',
             u'Plus de 250 salariés',
-        ],
+            ],
         'default': u'Non pertinent',
-    }
+        }
 
     assert map_parameter_to_swagger(target_column) == expected
