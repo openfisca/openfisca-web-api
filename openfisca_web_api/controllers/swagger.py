@@ -42,10 +42,10 @@ def api1_swagger(req):
     paths = {
         '/' + name: {
             'get': map_to_swagger(column)
-        }
+            }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if column.formula_class is not None  # output variables only, not input parameters
-    }
+        }
 
     return wsgihelpers.respond_json(ctx,
         {
@@ -61,13 +61,13 @@ def api1_swagger(req):
                     'name': 'OpenFisca team',
                     'email': 'contact@openfisca.fr',
                     'url': 'http://github.com/openfisca/openfisca-web-api/issues'
-                },
+                    },
                 'license': {
                     'name': 'AGPL',
                     'url': 'https://www.gnu.org/licenses/agpl-3.0.html'
-                }
+                    }
+                },
             },
-        },
         headers = headers,
         )
 
@@ -92,9 +92,9 @@ def map_path_base_to_swagger(column_json):
             200: {
                 'description': column_json.get('label'),
                 'schema': map_type_to_swagger(column_json.get('@type', ''))
+                }
             }
         }
-    }
 
     if column_json.get('url'):
         result['externalDocs'] = {'url': column_json.get('url')}
@@ -113,7 +113,7 @@ def map_parameters_to_swagger(column):
     return [
         map_parameter_to_swagger(model.tax_benefit_system.column_by_name[variable_name])
         for variable_name in input_variables
-    ]
+        ]
 
 
 def map_parameter_to_swagger(column):
@@ -129,7 +129,7 @@ def map_parameter_to_swagger(column):
         'description': column_json.get('label'),
         'default': get_default_value(column, column_json),
         'in': 'query'
-    })
+        })
 
     return result
 

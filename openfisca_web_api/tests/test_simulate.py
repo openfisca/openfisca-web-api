@@ -69,7 +69,7 @@ def test_simulate_with_test_case():
                     'individus': {
                         'ind0': {'sali': 15000},
                         'ind1': {},
-                    },
+                        },
                     'menages': [
                         {
                             'conjoint': 'ind1',
