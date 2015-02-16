@@ -155,8 +155,6 @@ def api1_simulate(req):
             #     ),
             base_reforms = str_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
-            decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
-            reform_decomposition = conv.noop,  # Real conversion is done once tax-benefit system is known.
             reforms = str_to_reforms,
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
@@ -201,16 +199,6 @@ def api1_simulate(req):
                         tax_benefit_system = base_tax_benefit_system,
                         )
                     ),
-                decomposition = conv.condition(
-                    conv.test_isinstance(basestring),
-                    conv.test(lambda filename: filename in os.listdir(base_tax_benefit_system.DECOMP_DIR)),
-                    decompositions.make_validate_node_json(base_tax_benefit_system),
-                    ),
-                reform_decomposition = conv.condition(
-                    conv.test_isinstance(basestring),
-                    conv.test(lambda filename: filename in os.listdir(reform_tax_benefit_system.DECOMP_DIR)),
-                    decompositions.make_validate_node_json(reform_tax_benefit_system),
-                    ) if data['reforms'] is not None else conv.noop,
                 reform_scenarios = conv.uniform_sequence(
                     reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
                         repair = data['validate'],
@@ -294,18 +282,11 @@ def api1_simulate(req):
             headers = headers,
             )
 
-    decomposition_json = model.get_cached_or_new_decomposition_json(
-        tax_benefit_system = base_tax_benefit_system,
-        xml_file_name = data['decomposition'],
-        ) if data['decomposition'] is None or isinstance(data['decomposition'], basestring) \
-        else data['decomposition']
+    decomposition_json = model.get_cached_or_new_decomposition_json(tax_benefit_system = base_tax_benefit_system)
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(
             tax_benefit_system = reform_tax_benefit_system,
-            xml_file_name = data['reform_decomposition'],
-            ) if data['reform_decomposition'] is None or isinstance(data['reform_decomposition'], basestring) \
-            else data['reform_decomposition']
-
+            )
     base_simulations = build_and_calculate_simulations(
         decomposition_json = decomposition_json,
         scenarios = data['base_scenarios'],
