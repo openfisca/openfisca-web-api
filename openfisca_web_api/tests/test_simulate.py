@@ -66,10 +66,10 @@ def test_simulate_with_test_case():
                             'declarants': ['ind0', 'ind1'],
                             },
                         ],
-                    'individus': {
-                        'ind0': {'sali': 15000},
-                        'ind1': {},
-                        },
+                    'individus': [
+                        {'id': 'ind0', 'sali': 15000},
+                        {'id': 'ind1'},
+                        ],
                     'menages': [
                         {
                             'conjoint': 'ind1',
