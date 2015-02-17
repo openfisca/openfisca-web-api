@@ -11,3 +11,9 @@
 /development-*local.ini
 /dist/
 /tags
+
+# pip install clones dependencies in this folder
+src
+
+# OSX generated files
+.DS_Store
