@@ -26,12 +26,14 @@
 import json
 
 from webob import Request
-from nose.tools import assert_equal, assert_is_instance
+from nose.tools import *
+from unittest.case import SkipTest
 
 from . import common
 
 
 TARGET_URL = '/api/1/formula/salaire_net_a_payer'
+QUERY_STRING = '?salaire_de_base=1300'
 
 
 def setup_module(module):
@@ -62,8 +64,33 @@ def test_formula_delete_status_code():
     assert_equal(res.status_code, 405)
 
 
-def test_formula_value():
+def test_formula_value_without_params():
     req = Request.blank(TARGET_URL, method = 'GET')
     res = req.get_response(common.app)
-    res_json = json.loads(res.body)
-    assert_is_instance(res_json['value'], float)
+    value = json.loads(res.body)['value']
+    assert_is_instance(value, float)
+    assert_equal(value, 0)
+
+
+def test_formula_value_with_params():
+    req = Request.blank(TARGET_URL + QUERY_STRING, method = 'GET')
+    res = req.get_response(common.app)
+    value = json.loads(res.body)['value']
+    assert_is_instance(value, float)
+    assert_not_equal(value, 0)
+
+
+def test_formula_echo_params_without_params():
+    req = Request.blank(TARGET_URL, method = 'GET')
+    res = req.get_response(common.app)
+    params = json.loads(res.body)['params']
+    assert_equal({}, params)
+
+
+def test_formula_echo_params_with_params():
+    raise SkipTest('Params are always echoed as strings.')
+
+    req = Request.blank(TARGET_URL + QUERY_STRING, method = 'GET')
+    res = req.get_response(common.app)
+    params = json.loads(res.body)['params']
+    assert_equal({'salaire_de_base': 1300}, params)
