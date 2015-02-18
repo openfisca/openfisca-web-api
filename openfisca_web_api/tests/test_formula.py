@@ -36,68 +36,64 @@ TARGET_URL = '/api/1/formula/salaire_net_a_payer'
 QUERY_STRING = '?salaire_de_base=1300'
 
 
+def send(method = 'GET', with_query_string = False):
+    target = TARGET_URL
+
+    if with_query_string:
+        target += QUERY_STRING
+
+    req = Request.blank(target, method = method)
+    res = req.get_response(common.app)
+
+    return {
+        'status_code': res.status_code,
+        'payload': json.loads(res.body)
+        }
+
+
 def setup_module(module):
     common.get_or_load_app()
 
 
 def test_formula_get_status_code():
-    req = Request.blank(TARGET_URL, method = 'GET')
-    res = req.get_response(common.app)
-    assert_equal(res.status_code, 200)
+    assert_equal(send()['status_code'], 200)
 
 
 def test_formula_post_status_code():
-    req = Request.blank(TARGET_URL, method = 'POST')
-    res = req.get_response(common.app)
-    assert_equal(res.status_code, 405)
+    assert_equal(send(method = 'POST')['status_code'], 405)
 
 
 def test_formula_put_status_code():
-    req = Request.blank(TARGET_URL, method = 'PUT')
-    res = req.get_response(common.app)
-    assert_equal(res.status_code, 405)
+    assert_equal(send(method = 'PUT')['status_code'], 405)
 
 
 def test_formula_delete_status_code():
-    req = Request.blank(TARGET_URL, method = 'DELETE')
-    res = req.get_response(common.app)
-    assert_equal(res.status_code, 405)
+    assert_equal(send(method = 'DELETE')['status_code'], 405)
 
 
 def test_formula_api_version():
-    req = Request.blank(TARGET_URL, method = 'GET')
-    res = req.get_response(common.app)
-    api_version = json.loads(res.body)['apiVersion']
-    assert_equal(api_version, 1)
+    assert_equal(send()['payload']['apiVersion'], 1)
 
 
 def test_formula_value_without_params():
-    req = Request.blank(TARGET_URL, method = 'GET')
-    res = req.get_response(common.app)
-    value = json.loads(res.body)['value']
+    value = send()['payload']['value']
     assert_is_instance(value, float)
     assert_equal(value, 0)
 
 
 def test_formula_value_with_params():
-    req = Request.blank(TARGET_URL + QUERY_STRING, method = 'GET')
-    res = req.get_response(common.app)
-    value = json.loads(res.body)['value']
+    value = send(with_query_string = True)['payload']['value']
     assert_is_instance(value, float)
     assert_not_equal(value, 0)
 
 
 def test_formula_echo_params_without_params():
-    req = Request.blank(TARGET_URL, method = 'GET')
-    res = req.get_response(common.app)
-    params = json.loads(res.body)['params']
+    params = send()['payload']['params']
     assert_equal({}, params)
 
 
 def test_formula_echo_params_with_params():
     raise SkipTest('Params are always echoed as strings.')
 
-    req = Request.blank(TARGET_URL + QUERY_STRING, method = 'GET')
-    res = req.get_response(common.app)
-    params = json.loads(res.body)['params']
+    params = send()['payload']['params']
     assert_equal({'salaire_de_base': 1300}, params)
