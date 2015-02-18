@@ -26,19 +26,44 @@
 import json
 
 from webob import Request
+from nose.tools import assert_equal, assert_is_instance
 
 from . import common
+
+
+TARGET_URL = '/api/1/formula/salaire_net_a_payer'
 
 
 def setup_module(module):
     common.get_or_load_app()
 
 
-def test_formula_revdisp():
-    req = Request.blank('/api/1/formula/revdisp', method = 'GET')
+def test_formula_get_status_code():
+    req = Request.blank(TARGET_URL, method = 'GET')
     res = req.get_response(common.app)
-    assert res.status_code == 200
+    assert_equal(res.status_code, 200)
+
+
+def test_formula_post_status_code():
+    req = Request.blank(TARGET_URL, method = 'POST')
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 405)
+
+
+def test_formula_put_status_code():
+    req = Request.blank(TARGET_URL, method = 'PUT')
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 405)
+
+
+def test_formula_delete_status_code():
+    req = Request.blank(TARGET_URL, method = 'DELETE')
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 405)
+
+
+def test_formula_value():
+    req = Request.blank(TARGET_URL, method = 'GET')
+    res = req.get_response(common.app)
     res_json = json.loads(res.body)
-    assert isinstance(res_json, dict), res_json
-    assert 'value' in res_json, res_json
-    assert isinstance(res_json['value'], float), res_json
+    assert_is_instance(res_json['value'], float)
