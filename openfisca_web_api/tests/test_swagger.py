@@ -22,6 +22,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from nose.tools import *
 
 from .. import model
 from ..controllers.swagger import (
@@ -61,7 +62,7 @@ def test_map_path_base_to_swagger_withour_url():
         "name": "nbG"
         })
 
-    assert actual == expected
+    assert_equal(actual, expected)
 
 
 def test_map_path_base_to_swagger_with_url():
@@ -93,7 +94,7 @@ def test_map_path_base_to_swagger_with_url():
                "cidTexte=LEGITEXT000006069577&idSectionTA=LEGISCTA000025049019"
         })
 
-    assert actual == expected
+    assert_equal(actual, expected)
 
 
 def test_map_path_base_to_swagger_with_enum():
@@ -125,31 +126,31 @@ def test_map_path_base_to_swagger_with_enum():
             }
         })
 
-    assert actual == expected
+    assert_equal(actual, expected)
 
 
 def test_map_type_to_swagger_integer():
-    assert map_type_to_swagger('Integer') == {'type': 'integer', 'format': 'int32'}
+    assert_equal(map_type_to_swagger('Integer'), {'type': 'integer', 'format': 'int32'})
 
 
 def test_map_type_to_swagger_float():
-    assert map_type_to_swagger('Float') == {'type': 'number', 'format': 'float'}
+    assert_equal(map_type_to_swagger('Float'), {'type': 'number', 'format': 'float'})
 
 
 def test_map_type_to_swagger_date():
-    assert map_type_to_swagger('Date') == {'type': 'string', 'format': 'date'}
+    assert_equal(map_type_to_swagger('Date'), {'type': 'string', 'format': 'date'})
 
 
 def test_map_type_to_swagger_boolean():
-    assert map_type_to_swagger('Boolean') == {'type': 'boolean'}
+    assert_equal(map_type_to_swagger('Boolean'), {'type': 'boolean'})
 
 
 def test_map_type_to_swagger_string():
-    assert map_type_to_swagger('String') == {'type': 'string'}
+    assert_equal(map_type_to_swagger('String'), {'type': 'string'})
 
 
 def test_map_type_to_swagger_enum():
-    assert map_type_to_swagger('Enumeration') == {'type': 'string'}
+    assert_equal(map_type_to_swagger('Enumeration'), {'type': 'string'})
 
 
 def test_map_parameters_to_swagger():
@@ -160,7 +161,7 @@ def test_map_parameters_to_swagger():
         for description in map_parameters_to_swagger(target_column)
         ]
 
-    assert actual == ['ppe', 'rev_trav', 'rev_cap', 'pen', 'psoc', 'impo']
+    assert_equal(actual, ['ppe', 'rev_trav', 'rev_cap', 'pen', 'psoc', 'impo'])
 
 
 def test_map_parameter_to_swagger():
@@ -175,7 +176,7 @@ def test_map_parameter_to_swagger():
         'default': 0
         }
 
-    assert map_parameter_to_swagger(target_column) == expected
+    assert_equal(map_parameter_to_swagger(target_column), expected)
 
 
 def test_map_enum_parameter_to_swagger():
@@ -196,4 +197,4 @@ def test_map_enum_parameter_to_swagger():
         'default': u'Non pertinent',
         }
 
-    assert map_parameter_to_swagger(target_column) == expected
+    assert_equal(map_parameter_to_swagger(target_column), expected)
