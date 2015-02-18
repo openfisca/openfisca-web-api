@@ -32,12 +32,12 @@ from unittest.case import SkipTest
 from . import common
 
 
-TARGET_URL = '/api/1/formula/salaire_net_a_payer'
+TARGET_URL = '/api/1/formula/'
 QUERY_STRING = '?salaire_de_base=1300'
 
 
-def send(method = 'GET', with_query_string = False):
-    target = TARGET_URL
+def send(formula = 'salaire_net_a_payer', method = 'GET', with_query_string = False):
+    target = TARGET_URL + formula
 
     if with_query_string:
         target += QUERY_STRING
@@ -73,6 +73,21 @@ def test_formula_delete_status_code():
 
 def test_formula_api_version():
     assert_equal(send()['payload']['apiVersion'], 1)
+
+
+def test_invalid_formula_status_code():
+    assert_equal(send(formula = 'inexistent')['status_code'], 400)
+
+
+def test_invalid_formula_error():
+    assert_equal(
+        send(formula = 'inexistent')['payload']['error']['message'],
+        'Invalid formula name in request URL'
+        )
+
+
+def test_invalid_formula_value():
+    assert_not_in('value', send(formula = 'inexistent')['payload'])
 
 
 def test_formula_value_without_params():
