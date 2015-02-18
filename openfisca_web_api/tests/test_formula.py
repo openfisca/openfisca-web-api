@@ -64,6 +64,13 @@ def test_formula_delete_status_code():
     assert_equal(res.status_code, 405)
 
 
+def test_formula_api_version():
+    req = Request.blank(TARGET_URL, method = 'GET')
+    res = req.get_response(common.app)
+    api_version = json.loads(res.body)['apiVersion']
+    assert_equal(api_version, 1)
+
+
 def test_formula_value_without_params():
     req = Request.blank(TARGET_URL, method = 'GET')
     res = req.get_response(common.app)
