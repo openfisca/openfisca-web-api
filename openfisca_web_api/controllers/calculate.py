@@ -222,31 +222,37 @@ def api1_calculate(req):
                 base_tax_benefit_system = base_tax_benefit_system,
                 build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
                 )
-        data['base_scenarios'] = data['reform_scenarios'] = data['scenarios']
-        data, errors = conv.struct(
-            dict(
-                base_scenarios = conv.uniform_sequence(
-                    base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                        repair = data['validate'],
-                        tax_benefit_system = base_tax_benefit_system,
-                        )
-                    ),
-                reform_scenarios = conv.uniform_sequence(
-                    reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                        repair = data['validate'],
-                        tax_benefit_system = reform_tax_benefit_system,
-                        )
-                    ) if data['reforms'] is not None else conv.noop,
-                variables = conv.uniform_sequence(
-                    conv.test_in(
-                        base_tax_benefit_system.column_by_name
-                        if data['reforms'] is None
-                        else reform_tax_benefit_system.column_by_name,
+
+        base_scenarios, base_scenarios_errors = conv.uniform_sequence(
+            base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                repair = data['validate'],
+                tax_benefit_system = base_tax_benefit_system,
+                )
+            )(data['scenarios'])
+        errors = {'scenarios': base_scenarios_errors} if base_scenarios_errors is not None else None
+
+        if errors is None and data['reforms'] is not None:
+            reform_scenarios, reform_scenarios_errors = conv.uniform_sequence(
+                reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                    repair = data['validate'],
+                    tax_benefit_system = reform_tax_benefit_system,
+                    )
+                )(data['scenarios'])
+            errors = {'scenarios': reform_scenarios_errors} if reform_scenarios_errors is not None else None
+
+        if errors is None:
+            data, errors = conv.struct(
+                dict(
+                    variables = conv.uniform_sequence(
+                        conv.test_in(
+                            base_tax_benefit_system.column_by_name
+                            if data['reforms'] is None
+                            else reform_tax_benefit_system.column_by_name,
+                            ),
                         ),
                     ),
-                ),
-            default = conv.noop,
-            )(data, state = ctx)
+                default = conv.noop,
+                )(data, state = ctx)
 
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
@@ -288,7 +294,7 @@ def api1_calculate(req):
 #            headers = headers,
 #            )
 
-    scenarios = data['reform_scenarios'] if data['reforms'] is not None else data['base_scenarios']
+    scenarios = base_scenarios if data['reforms'] is None else reform_scenarios
 
     suggestions = {}
     for scenario_index, scenario in enumerate(scenarios):
@@ -322,20 +328,20 @@ def api1_calculate(req):
             )
 
     base_simulations = build_and_calculate_simulations(
-        scenarios = data['base_scenarios'],
+        scenarios = base_scenarios,
         trace = data['intermediate_variables'] or data['trace'],
         variables = data['variables'],
         )
     if data['reforms'] is not None:
         reform_simulations = build_and_calculate_simulations(
-            scenarios = data['reform_scenarios'],
+            scenarios = reform_scenarios,
             trace = data['intermediate_variables'] or data['trace'],
             variables = data['variables'],
             )
 
     base_output_test_cases = fill_test_cases_with_values(
         intermediate_variables = data['intermediate_variables'],
-        scenarios = data['base_scenarios'],
+        scenarios = base_scenarios,
         simulations = base_simulations,
         tax_benefit_system = base_tax_benefit_system,
         variables = data['variables'],
@@ -343,7 +349,7 @@ def api1_calculate(req):
     if data['reforms'] is not None:
         reform_output_test_cases = fill_test_cases_with_values(
             intermediate_variables = data['intermediate_variables'],
-            scenarios = data['reform_scenarios'],
+            scenarios = reform_scenarios,
             simulations = reform_simulations,
             tax_benefit_system = reform_tax_benefit_system,
             variables = data['variables'],
