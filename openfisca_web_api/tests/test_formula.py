@@ -75,15 +75,29 @@ def test_formula_api_version():
     assert_equal(send()['payload']['apiVersion'], 1)
 
 
+def test_not_a_formula_status_code():
+    assert_equal(send(formula = 'birth')['status_code'], 422)
+
+
+def test_not_a_formula_error_message():
+    assert_equal(
+        send(formula = 'birth')['payload']['error']['message'],
+        'You requested an input variable, it cannot be computed'
+        )
+
+
+def test_not_a_formula_value():
+    assert_not_in('value', send(formula = 'birth')['payload'])
+
+
 def test_invalid_formula_status_code():
     assert_equal(send(formula = 'inexistent')['status_code'], 404)
 
 
-def test_invalid_formula_error():
-    assert_equal(
-        send(formula = 'inexistent')['payload']['error']['message'],
-        'Invalid formula name in request URL'
-        )
+def test_invalid_formula_error_message():
+    message = send(formula = 'inexistent')['payload']['error']['message']
+    assert_in('not known', message)
+    assert_in('inexistent', message)
 
 
 def test_invalid_formula_value():

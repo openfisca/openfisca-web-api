@@ -35,40 +35,39 @@ from openfisca_core import periods, simulations
 from .. import contexts, conv, model, wsgihelpers
 
 
-def N_(message):
-    return message
-
-
 @wsgihelpers.wsgify
 def api1_formula(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
-
     tax_benefit_system = model.tax_benefit_system
+    error = dict()
 
-    requested_column, error = conv.pipe(
-        conv.cleanup_line,
-        conv.test_in(tax_benefit_system.column_by_name),
-        conv.function(lambda column_name: tax_benefit_system.column_by_name[column_name]),
-        conv.test(lambda column: column.formula_class is not None, error = N_(u"Variable is not a formula")),
-        conv.not_none,
-        )(req.urlvars.get('name'), state = ctx)
-    if error is not None:
+    params = dict(req.GET)
+    requested_formula_name = req.urlvars.get('name')
+    column = None
+
+    try:
+        column = tax_benefit_system.column_by_name[requested_formula_name]
+    except KeyError:
+        error['message'] = u"You requested to compute variable '%s', but it is not known by OpenFisca" % requested_formula_name
+        error['code'] = 404
+
+    if column is not None and column.formula_class is None:
+        error['message'] = u'You requested an input variable, it cannot be computed'
+        error['code'] = 422
+
+
+    if len(error) is not 0:
         return wsgihelpers.respond_json(ctx,
-            collections.OrderedDict(sorted(dict(
+            dict(
                 apiVersion = 1,
-                error = collections.OrderedDict(sorted(dict(
-                    errors = [conv.jsonify_value(error)],
-                    message = ctx._(u'Invalid formula name in request URL'),
-                    ).iteritems())),
-                params = req.body,
-                ).iteritems())),
-            code = 404,
+                error = error,
+                params = params,
+                ),
             headers = headers,
             )
 
-    params = req.GET
-    inputs = dict(params)
+
     fields = dict(
         (column.name, column.input_to_dated_python)
         for column in tax_benefit_system.column_by_name.itervalues()
@@ -88,14 +87,14 @@ def api1_formula(req):
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
                 apiVersion = 1,
-                context = inputs.get('context'),
+                context = params.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
                     errors = [conv.jsonify_value(errors)],
                     message = ctx._(u'Bad parameters in request'),
                     ).iteritems())),
                 method = req.script_name,
-                params = inputs,
+                params = params,
                 url = req.url.decode('utf-8'),
                 ).iteritems())),
             headers = headers,
@@ -130,14 +129,14 @@ def api1_formula(req):
         holder = entity.get_or_new_holder(column_name)
         holder.set_array(period, np.array([value], dtype = column.dtype))
 
-    requested_dated_holder = simulation.compute(requested_column.name)
+    requested_dated_holder = simulation.compute(column.name)
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
             # context = data['context'],
             method = req.script_name,
-            params = inputs,
+            params = params,
             url = req.url.decode('utf-8'),
             value = requested_dated_holder.to_value_json()[0],  # We have only one person => Unwrap the array.
             ).iteritems())),
