@@ -38,6 +38,7 @@ VALID_FORMULA = 'salaire_net_a_payer'
 INVALID_FORMULA = 'inexistent'
 PARAM_VALUE = 1300
 VALID_QUERY_STRING = '?{0}={1}'.format(INPUT_VARIABLE, PARAM_VALUE)
+INVALID_QUERY_STRING = '?{0}={1}'.format(INVALID_FORMULA, PARAM_VALUE)
 
 
 def send(formula = VALID_FORMULA, method = 'GET', query_string = ''):
@@ -131,3 +132,18 @@ def test_formula_echo_params_without_params():
 def test_formula_echo_params_with_params():
     params = send(query_string = VALID_QUERY_STRING)['payload']['params']
     assert_equal({INPUT_VARIABLE: PARAM_VALUE}, params)
+
+
+def test_bad_params_status_code():
+    assert_equal(send(query_string = INVALID_QUERY_STRING)['status_code'], 400)
+
+
+def test_bad_params_error_message():
+    message = send(query_string = INVALID_QUERY_STRING)['payload']['error']['message']
+
+    assert_in(INVALID_FORMULA, message)
+    assert_in('does not exist', message)
+
+
+def test_bad_params_value():
+    assert_not_in('value', send(query_string = INVALID_QUERY_STRING)['payload'])
