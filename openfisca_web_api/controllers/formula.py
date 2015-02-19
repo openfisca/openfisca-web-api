@@ -58,14 +58,12 @@ def api1_formula(req):
             collections.OrderedDict(sorted(dict(
                 apiVersion = 1,
                 error = collections.OrderedDict(sorted(dict(
-                    code = 400,  # Bad Request
                     errors = [conv.jsonify_value(error)],
                     message = ctx._(u'Invalid formula name in request URL'),
                     ).iteritems())),
-                method = req.script_name,
                 params = req.body,
-                url = req.url.decode('utf-8'),
                 ).iteritems())),
+            code = 400,
             headers = headers,
             )
 
