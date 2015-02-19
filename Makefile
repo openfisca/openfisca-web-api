@@ -16,7 +16,7 @@ flake8: clean-pyc
 	flake8
 
 test: check-syntax-errors
-	nosetests -x --with-doctest $(TESTS_DIR)
+	nosetests $(TESTS_DIR) --stop --with-doctest
 
 test-with-coverage:
-	nosetests -x $(TESTS_DIR) --with-coverage --cover-package=openfisca_core --cover-erase --cover-branches --cover-html
+	nosetests $(TESTS_DIR) --stop --with-coverage --cover-package=openfisca_core --cover-erase --cover-branches --cover-html
