@@ -90,6 +90,13 @@ def test_invalid_formula_value():
     assert_not_in('value', send(formula = 'inexistent')['payload'])
 
 
+def test_invalid_formula_params():
+    assert_equal(
+        {'salaire_de_base': 1300},
+        send(formula = 'inexistent')['payload']['params']
+        )
+
+
 def test_formula_value_without_params():
     value = send()['payload']['value']
     assert_is_instance(value, float)
@@ -108,7 +115,5 @@ def test_formula_echo_params_without_params():
 
 
 def test_formula_echo_params_with_params():
-    raise SkipTest('Params are always echoed as strings.')
-
     params = send()['payload']['params']
     assert_equal({'salaire_de_base': 1300}, params)
