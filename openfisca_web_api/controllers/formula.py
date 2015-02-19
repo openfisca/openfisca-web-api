@@ -56,6 +56,25 @@ def api1_formula(req):
         error['message'] = u'You requested an input variable, it cannot be computed'
         error['code'] = 422
 
+    period = params.pop('period', '{}-{}'.format(datetime.datetime.now().year, datetime.datetime.now().month))
+    try:
+        period = periods.period(period)
+    except ValueError:
+        error['message'] = "You requested computation for period '{}', but it could not be parsed as a period".format(period)
+        error['code'] = 400
+
+    for param_name, value in params.items():
+        normalization_error_message = None
+
+        try:
+            params[param_name], normalization_error_message = normalize_param(param_name, value)
+        except KeyError:
+            normalization_error_message = u"You passed parameter '%s', but it does not exist" % param_name
+
+        if normalization_error_message is not None:
+            error['message'] = normalization_error_message
+            error['code'] = 400
+
 
     if len(error) is not 0:
         return wsgihelpers.respond_json(ctx,
@@ -67,48 +86,14 @@ def api1_formula(req):
             headers = headers,
             )
 
-    fields = dict(
-        (column.name, column.input_to_dated_python)
-        for column in tax_benefit_system.column_by_name.itervalues()
-        )
-    fields['period'] = conv.pipe(
-        periods.json_or_python_to_period,
-        conv.default(periods.period('month', datetime.date.today())),
-        conv.function(lambda period: period.offset('first-of')),
-        )
-    data, errors = conv.pipe(
-        conv.struct(
-            fields,
-            drop_none_values = True,
-            ),
-        )(params, state = ctx)
-    if errors is not None:
-        return wsgihelpers.respond_json(ctx,
-            collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
-                context = params.get('context'),
-                error = collections.OrderedDict(sorted(dict(
-                    code = 400,  # Bad Request
-                    errors = [conv.jsonify_value(errors)],
-                    message = ctx._(u'Bad parameters in request'),
-                    ).iteritems())),
-                method = req.script_name,
-                params = params,
-                url = req.url.decode('utf-8'),
-                ).iteritems())),
-            headers = headers,
-            )
-
-    period = data.pop('period')
-
-    simulation = create_simulation(data, period)
+    simulation = create_simulation(params, period)
 
     requested_dated_holder = simulation.compute(column.name)
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
-            # context = data['context'],
+            # context = params['context'],
             method = req.script_name,
             params = params,
             url = req.url.decode('utf-8'),
@@ -116,6 +101,14 @@ def api1_formula(req):
             ).iteritems())),
         headers = headers,
         )
+
+
+def normalize_param(key, value):
+    column = model.tax_benefit_system.column_by_name[key]
+
+    return conv.pipe(
+        column.input_to_dated_python    # if the column is not a date, this will be None and conv.pipe will be pass-through
+        )(value)
 
 
 def create_simulation(data, period):
