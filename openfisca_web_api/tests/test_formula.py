@@ -76,7 +76,7 @@ def test_formula_api_version():
 
 
 def test_invalid_formula_status_code():
-    assert_equal(send(formula = 'inexistent')['status_code'], 400)
+    assert_equal(send(formula = 'inexistent')['status_code'], 404)
 
 
 def test_invalid_formula_error():

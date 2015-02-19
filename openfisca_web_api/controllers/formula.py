@@ -63,7 +63,7 @@ def api1_formula(req):
                     ).iteritems())),
                 params = req.body,
                 ).iteritems())),
-            code = 400,
+            code = 404,
             headers = headers,
             )
 
