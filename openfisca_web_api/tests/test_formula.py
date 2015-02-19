@@ -33,14 +33,15 @@ from . import common
 
 
 TARGET_URL = '/api/1/formula/'
-QUERY_STRING = '?salaire_de_base=1300'
+INPUT_VARIABLE = 'salaire_de_base'
+VALID_FORMULA = 'salaire_net_a_payer'
+INVALID_FORMULA = 'inexistent'
+PARAM_VALUE = 1300
+VALID_QUERY_STRING = '?{0}={1}'.format(INPUT_VARIABLE, PARAM_VALUE)
 
 
-def send(formula = 'salaire_net_a_payer', method = 'GET', with_query_string = False):
-    target = TARGET_URL + formula
-
-    if with_query_string:
-        target += QUERY_STRING
+def send(formula = VALID_FORMULA, method = 'GET', query_string = ''):
+    target = TARGET_URL + formula + query_string
 
     req = Request.blank(target, method = method)
     res = req.get_response(common.app)
@@ -76,39 +77,38 @@ def test_formula_api_version():
 
 
 def test_not_a_formula_status_code():
-    assert_equal(send(formula = 'birth')['status_code'], 422)
+    assert_equal(send(formula = INPUT_VARIABLE)['status_code'], 422)
 
 
 def test_not_a_formula_error_message():
     assert_equal(
-        send(formula = 'birth')['payload']['error']['message'],
+        send(formula = INPUT_VARIABLE)['payload']['error']['message'],
         'You requested an input variable, it cannot be computed'
         )
 
 
 def test_not_a_formula_value():
-    assert_not_in('value', send(formula = 'birth')['payload'])
+    assert_not_in('value', send(formula = INPUT_VARIABLE)['payload'])
 
 
 def test_invalid_formula_status_code():
-    assert_equal(send(formula = 'inexistent')['status_code'], 404)
+    assert_equal(send(formula = INVALID_FORMULA)['status_code'], 404)
 
 
 def test_invalid_formula_error_message():
-    message = send(formula = 'inexistent')['payload']['error']['message']
+    message = send(formula = INVALID_FORMULA)['payload']['error']['message']
     assert_in('not known', message)
-    assert_in('inexistent', message)
+    assert_in(INVALID_FORMULA, message)
 
 
 def test_invalid_formula_value():
-    assert_not_in('value', send(formula = 'inexistent')['payload'])
+    assert_not_in('value', send(formula = INVALID_FORMULA)['payload'])
 
 
 def test_invalid_formula_params():
-    assert_equal(
-        {'salaire_de_base': 1300},
-        send(formula = 'inexistent')['payload']['params']
-        )
+    params = send(formula = INVALID_FORMULA, query_string = VALID_QUERY_STRING)['payload']['params']
+
+    assert_equal({INPUT_VARIABLE: PARAM_VALUE}, params)
 
 
 def test_formula_value_without_params():
@@ -118,7 +118,7 @@ def test_formula_value_without_params():
 
 
 def test_formula_value_with_params():
-    value = send(with_query_string = True)['payload']['value']
+    value = send(query_string = VALID_QUERY_STRING)['payload']['value']
     assert_is_instance(value, float)
     assert_not_equal(value, 0)
 
@@ -129,5 +129,5 @@ def test_formula_echo_params_without_params():
 
 
 def test_formula_echo_params_with_params():
-    params = send()['payload']['params']
-    assert_equal({'salaire_de_base': 1300}, params)
+    params = send(query_string = VALID_QUERY_STRING)['payload']['params']
+    assert_equal({INPUT_VARIABLE: PARAM_VALUE}, params)
