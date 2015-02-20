@@ -37,8 +37,6 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api1_formula(req):
-    ctx = contexts.Ctx(req)
-    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
     tax_benefit_system = model.tax_benefit_system
     error = dict()
 
@@ -77,29 +75,30 @@ def api1_formula(req):
 
 
     if len(error) is not 0:
-        return wsgihelpers.respond_json(ctx,
-            dict(
-                apiVersion = 1,
-                error = error,
-                params = params,
-                ),
-            headers = headers,
-            )
+        return respond(req, dict(error = error), params)
 
     simulation = create_simulation(params, period)
+    resulting_dated_holder = simulation.compute(column.name)
+    result = resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
 
-    requested_dated_holder = simulation.compute(column.name)
+    return respond(req, dict(value = result), params)
+
+
+# req: the original request we're responding to.
+# data: dict. Will be transformed to JSON and added to the response root.
+#       `data` will be mutated. Currently considered acceptable because responding marks process end.
+# params: dict. Parsed parameters. Will be echoed in the "params" key.
+def respond(req, data, params):
+    data.update(dict(
+        apiVersion = 1,
+        params = params
+        ))
+
+    ctx = contexts.Ctx(req)
 
     return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            # context = params['context'],
-            method = req.script_name,
-            params = params,
-            url = req.url.decode('utf-8'),
-            value = requested_dated_holder.to_value_json()[0],  # We have only one person => Unwrap the array.
-            ).iteritems())),
-        headers = headers,
+        data,
+        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
         )
 
 
