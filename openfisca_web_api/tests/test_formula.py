@@ -149,6 +149,21 @@ def test_bad_params_value():
     assert_not_in('value', send(query_string = INVALID_QUERY_STRING)['payload'])
 
 
+def test_unnormalizable_params_status_code():
+    assert_equal(send(query_string = '?birth=herp')['status_code'], 400)
+
+
+def test_unnormalizable_params_error_message():
+    message = send(query_string = '?birth=herp')['payload']['error']['message']
+
+    assert_in('birth', message)
+    assert_in('normalized', message)
+
+
+def test_unnormalizable_params_value():
+    assert_not_in('value', send(query_string = '?birth=herp')['payload'])
+
+
 def test_bad_period_status_code():
     assert_equal(send(query_string = '?period=herp')['status_code'], 400)
 
