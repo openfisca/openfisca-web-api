@@ -27,7 +27,7 @@
 
 
 import collections
-import datetime
+from datetime import datetime
 
 import numpy as np
 from openfisca_core import periods, simulations
@@ -100,7 +100,7 @@ def normalize_param(name, value):
 
 
 def get_period(params):
-    now = datetime.datetime.now()
+    now = datetime.now()
     default = '{}-{}'.format(now.year, now.month)
 
     result = params.pop('period', default)
