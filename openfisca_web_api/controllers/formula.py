@@ -77,11 +77,10 @@ def api1_formula(req):
     if len(error) is not 0:
         return respond(req, dict(error = error), params)
 
-    simulation = create_simulation(params, period)
-    resulting_dated_holder = simulation.compute(column.name)
-    result = resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
-
-    return respond(req, dict(value = result), params)
+    return respond(req,
+        dict(value = compute(requested_formula_name, params, period)),
+        params
+        )
 
 
 # req: the original request we're responding to.
@@ -108,6 +107,12 @@ def normalize_param(key, value):
     return conv.pipe(
         column.input_to_dated_python    # if the column is not a date, this will be None and conv.pipe will be pass-through
         )(value)
+
+
+def compute(formula_name, params, period):
+    simulation = create_simulation(params, period)
+    resulting_dated_holder = simulation.compute(formula_name)
+    return resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
 
 
 def create_simulation(data, period):
