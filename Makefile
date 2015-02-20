@@ -12,8 +12,10 @@ clean-pyc:
 ctags:
 	ctags --recurse=yes --exclude=node_modules --exclude=openfisca_web_ui/static/dist .
 
-flake8: clean-pyc
-	flake8
+flake8:
+	@# Do not analyse .gitignored files.
+	@# `make` needs `$$` to output `$`. Ref: http://stackoverflow.com/questions/2382764.
+	flake8 `git ls-files | grep "\.py$$"`
 
 test: check-syntax-errors
 	nosetests $(TESTS_DIR) --stop --with-doctest
