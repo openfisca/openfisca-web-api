@@ -82,10 +82,10 @@ def test_not_a_formula_status_code():
 
 
 def test_not_a_formula_error_message():
-    assert_equal(
-        send(formula = INPUT_VARIABLE)['payload']['error']['message'],
-        'You requested an input variable, it cannot be computed'
-        )
+    message = send(formula = INPUT_VARIABLE)['payload']['error']['message']
+    assert_in(INPUT_VARIABLE, message)
+    assert_in('input variable', message)
+    assert_in('cannot be computed', message)
 
 
 def test_not_a_formula_value():
@@ -98,8 +98,8 @@ def test_invalid_formula_status_code():
 
 def test_invalid_formula_error_message():
     message = send(formula = INVALID_FORMULA)['payload']['error']['message']
-    assert_in('not known', message)
     assert_in(INVALID_FORMULA, message)
+    assert_in('does not exist', message)
 
 
 def test_invalid_formula_value():

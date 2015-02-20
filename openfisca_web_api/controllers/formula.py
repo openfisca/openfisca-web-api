@@ -37,50 +37,81 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api1_formula(req):
-    tax_benefit_system = model.tax_benefit_system
-    error = dict()
-
     params = dict(req.GET)
-    requested_formula_name = req.urlvars.get('name')
-    column = None
 
     try:
-        column = tax_benefit_system.column_by_name[requested_formula_name]
+        column = get_column_from_formula_name(req.urlvars.get('name'))
+        period = get_period(params)
+        params = normalize(params)
+        value  = compute(column.name, params, period)
+
+        return respond(req, dict(value = value), params)
+
+    except Exception as error:
+        return respond(req, dict(error = error.args[0]), params)
+
+
+def get_column_from_formula_name(formula_name):
+    result = model.tax_benefit_system.column_by_name.get(formula_name)
+    if result is None:
+        raise(Exception(dict(
+            code = 404,
+            message = u"You requested to compute variable '{}', but it does not exist".format(formula_name)
+            )))
+
+    if result.formula_class is None:
+        raise(Exception(dict(
+            code = 422,
+            message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed".format(formula_name)
+            )))
+
+    return result
+
+
+def normalize(params):
+    result = dict()
+
+    try:
+        for param_name, value in params.items():
+            result[param_name] = normalize_param(param_name, value)
     except KeyError:
-        error['message'] = u"You requested to compute variable '%s', but it is not known by OpenFisca" % requested_formula_name
-        error['code'] = 404
+        raise Exception(dict(
+            code = 400,
+            message = u"You passed parameter '{}', but it does not exist".format(param_name)
+            ))
 
-    if column is not None and column.formula_class is None:
-        error['message'] = u'You requested an input variable, it cannot be computed'
-        error['code'] = 422
+    return result
 
-    period = params.pop('period', '{}-{}'.format(datetime.datetime.now().year, datetime.datetime.now().month))
+
+def normalize_param(name, value):
+    column = model.tax_benefit_system.column_by_name[name]
+
+    result, error = conv.pipe(
+        column.input_to_dated_python    # if the column is not a date, this will be None and conv.pipe will be pass-through
+        )(value)
+
+    if error is not None:
+        raise Exception(dict(
+            code = 400,
+            message = u"Parameter '{}' could not be normalized: {}".format(name, error)
+            ))
+
+    return result
+
+
+def get_period(params):
+    now = datetime.datetime.now()
+    default = '{}-{}'.format(now.year, now.month)
+
+    result = params.pop('period', default)
+
     try:
-        period = periods.period(period)
+        return periods.period(result)
     except ValueError:
-        error['message'] = "You requested computation for period '{}', but it could not be parsed as a period".format(period)
-        error['code'] = 400
-
-    for param_name, value in params.items():
-        normalization_error_message = None
-
-        try:
-            params[param_name], normalization_error_message = normalize_param(param_name, value)
-        except KeyError:
-            normalization_error_message = u"You passed parameter '%s', but it does not exist" % param_name
-
-        if normalization_error_message is not None:
-            error['message'] = normalization_error_message
-            error['code'] = 400
-
-
-    if len(error) is not 0:
-        return respond(req, dict(error = error), params)
-
-    return respond(req,
-        dict(value = compute(requested_formula_name, params, period)),
-        params
-        )
+        raise(Exception(dict(
+            code = 400,
+            message = "You requested computation for period '{}', but it could not be parsed as a period".format(result)
+            )))
 
 
 # req: the original request we're responding to.
@@ -99,14 +130,6 @@ def respond(req, data, params):
         data,
         headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
         )
-
-
-def normalize_param(key, value):
-    column = model.tax_benefit_system.column_by_name[key]
-
-    return conv.pipe(
-        column.input_to_dated_python    # if the column is not a date, this will be None and conv.pipe will be pass-through
-        )(value)
 
 
 def compute(formula_name, params, period):
