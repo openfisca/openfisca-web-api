@@ -40,9 +40,9 @@ def api1_formula(req):
     params = dict(req.GET)
 
     try:
-        column = get_column_from_formula_name(req.urlvars.get('name'))
         period = get_period(params)
         params = normalize(params)
+        column = get_column_from_formula_name(req.urlvars.get('name'))
         value  = compute(column.name, params, period)
 
         return respond(req, dict(value = value), params)
