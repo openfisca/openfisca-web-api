@@ -36,7 +36,8 @@ import webob.dec
 import webob.exc
 
 
-N_ = lambda message: message
+def N_(message):
+    return message
 
 
 errors_title = {
