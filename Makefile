@@ -2,9 +2,11 @@ TESTS_DIR="openfisca_web_api/tests/"
 
 all: flake8 test
 
-check-syntax-errors: clean-pyc
+check-syntax-errors:
 	@# This is a hack around flake8 not displaying E910 errors with the select option.
-	test -z "`flake8 --first | grep E901`"
+	@# Do not analyse .gitignored files.
+	@# `make` needs `$$` to output `$`. Ref: http://stackoverflow.com/questions/2382764.
+	test -z "`flake8 --first $(shell git ls-files | grep "\.py$$") | grep E901`"
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm \{\} \;
