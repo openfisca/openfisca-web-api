@@ -72,19 +72,20 @@ def jsonify_value(value):
     return value
 
 
-# Defer with lambda for conf to load.
-make_str_to_reforms = lambda: pipe(
-    test_isinstance(list),
-    uniform_sequence(
-        pipe(
-            test_isinstance(basestring),
-            empty_to_none,
-            test_in((conf['reforms'] or {}).keys()),
+# Defer converter creation for conf to load.
+def make_str_to_reforms():
+    return pipe(
+        test_isinstance(list),
+        uniform_sequence(
+            pipe(
+                test_isinstance(basestring),
+                empty_to_none,
+                test_in((conf['reforms'] or {}).keys()),
+                ),
+            drop_none_items = True,
             ),
-        drop_none_items = True,
-        ),
-    empty_to_none,
-    )
+        empty_to_none,
+        )
 
 
 def module_and_function_names_to_function(values, state = None):
