@@ -196,7 +196,7 @@ def api1_simulate(req):
                 repair = data['validate'],
                 tax_benefit_system = base_tax_benefit_system,
                 )
-            )(data['scenarios'])
+            )(data['scenarios'], state = ctx)
         errors = {'scenarios': base_scenarios_errors} if base_scenarios_errors is not None else None
 
         if errors is None and data['reforms'] is not None:
@@ -205,7 +205,7 @@ def api1_simulate(req):
                     repair = data['validate'],
                     tax_benefit_system = reform_tax_benefit_system,
                     )
-                )(data['scenarios'])
+                )(data['scenarios'], state = ctx)
             errors = {'scenarios': reform_scenarios_errors} if reform_scenarios_errors is not None else None
 
     if errors is not None:
