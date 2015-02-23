@@ -132,7 +132,7 @@ def api1_formula(req):
         holder = entity.get_or_new_holder(column_name)
         holder.set_array(period, np.array([value], dtype = column.dtype))
 
-    requested_dated_holder = simulation.compute(requested_column.name)
+    requested_dated_holder = simulation.compute_add_divide(requested_column.name)
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
