@@ -35,7 +35,8 @@ from openfisca_core import periods, simulations
 from .. import contexts, conv, model, wsgihelpers
 
 
-N_ = lambda message: message
+def N_(message):
+    return message
 
 
 @wsgihelpers.wsgify

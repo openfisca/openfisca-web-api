@@ -10,4 +10,4 @@ install:
   - pip install flake8
   - pip install -r requirements.txt
   - pip install -e .[introspection,tests]
-script: make test
+script: make test-ci
