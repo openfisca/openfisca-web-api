@@ -37,6 +37,8 @@ def setup_module(module):
 def test_formula_revdisp():
     req = Request.blank('/api/1/formula/revdisp', method = 'GET')
     res = req.get_response(common.app)
-    res_json = json.loads(res.body)
-    assert isinstance(res_json['value'], float)
     assert res.status_code == 200
+    res_json = json.loads(res.body)
+    assert isinstance(res_json, dict), res_json
+    assert 'value' in res_json, res_json
+    assert isinstance(res_json['value'], float), res_json
