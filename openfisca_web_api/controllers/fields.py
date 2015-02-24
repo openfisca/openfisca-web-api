@@ -30,7 +30,7 @@ import collections
 import copy
 import datetime
 
-from openfisca_core import periods, reforms, simulations
+from openfisca_core import formulas, periods, reforms, simulations
 
 from .. import contexts, conv, model, wsgihelpers
 
@@ -162,7 +162,7 @@ def api1_fields(req):
         (name, column.to_json())
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
-        if column.formula_class is None
+        if issubclass(column.formula_class, formulas.SimpleFormula) and column.formula_class.function is None
         )
 
     columns_tree = collections.OrderedDict(
