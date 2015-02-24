@@ -45,7 +45,6 @@ def test_field_without_parameters():
     assert 'name' in res_json['value'], res_json
 
 
-
 def test_fields_without_parameters():
     req = Request.blank('/api/1/fields', method = 'GET')
     res = req.get_response(common.app)
