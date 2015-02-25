@@ -26,8 +26,7 @@
 """Formula controller"""
 
 
-import collections
-import datetime
+from datetime import datetime
 
 import numpy as np
 from openfisca_core import periods, simulations
@@ -35,91 +34,129 @@ from openfisca_core import periods, simulations
 from .. import contexts, conv, model, wsgihelpers
 
 
-def N_(message):
-    return message
-
-
 @wsgihelpers.wsgify
 def api1_formula(req):
-    ctx = contexts.Ctx(req)
-    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+    params = dict(req.GET)
 
-    tax_benefit_system = model.tax_benefit_system
+    try:
+        period = get_period(params)
+        params = normalize(params)
+        column = get_column_from_formula_name(req.urlvars.get('name'))
+        value = compute(column.name, params, period)
 
-    requested_column, error = conv.pipe(
-        conv.cleanup_line,
-        conv.test_in(tax_benefit_system.column_by_name),
-        conv.function(lambda column_name: tax_benefit_system.column_by_name[column_name]),
-        conv.test(lambda column: column.formula_class is not None, error = N_(u"Variable is not a formula")),
-        conv.not_none,
-        )(req.urlvars.get('name'), state = ctx)
+        return respond(req, dict(value = value), params)
+
+    except Exception as error:
+        return respond(req, dict(error = error.args[0]), params)
+
+
+def get_column_from_formula_name(formula_name):
+    result = model.tax_benefit_system.column_by_name.get(formula_name)
+    if result is None:
+        raise(Exception(dict(
+            code = 404,
+            message = u"You requested to compute variable '{}', but it does not exist"
+                      .format(formula_name)
+            )))
+
+    if result.formula_class.function is None:
+        raise(Exception(dict(
+            code = 422,
+            message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed"
+                      .format(formula_name)
+            )))
+
+    return result
+
+
+def normalize(params):
+    result = dict()
+
+    try:
+        for param_name, value in params.items():
+            result[param_name] = normalize_param(param_name, value)
+    except KeyError:
+        raise Exception(dict(
+            code = 400,
+            message = u"You passed parameter '{}', but it does not exist".format(param_name)
+            ))
+
+    return result
+
+
+def normalize_param(name, value):
+    column = model.tax_benefit_system.column_by_name[name]
+
+    result, error = conv.pipe(
+        column.input_to_dated_python  # if column is not a date, this will be None and conv.pipe will be pass-through
+        )(value)
+
     if error is not None:
-        return wsgihelpers.respond_json(ctx,
-            collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
-                error = collections.OrderedDict(sorted(dict(
-                    code = 400,  # Bad Request
-                    errors = [conv.jsonify_value(error)],
-                    message = ctx._(u'Invalid formula name in request URL'),
-                    ).iteritems())),
-                method = req.script_name,
-                params = req.body,
-                url = req.url.decode('utf-8'),
-                ).iteritems())),
-            headers = headers,
-            )
+        raise Exception(dict(
+            code = 400,
+            message = u"Parameter '{}' could not be normalized: {}".format(name, error)
+            ))
 
-    params = req.GET
-    inputs = dict(params)
-    fields = dict(
-        (column.name, column.input_to_dated_python)
-        for column in tax_benefit_system.column_by_name.itervalues()
-        )
-    fields['period'] = conv.pipe(
-        periods.json_or_python_to_period,
-        conv.default(periods.period('month', datetime.date.today())),
-        conv.function(lambda period: period.offset('first-of')),
-        )
-    data, errors = conv.pipe(
-        conv.struct(
-            fields,
-            drop_none_values = True,
-            ),
-        )(params, state = ctx)
-    if errors is not None:
-        return wsgihelpers.respond_json(ctx,
-            collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
-                context = inputs.get('context'),
-                error = collections.OrderedDict(sorted(dict(
-                    code = 400,  # Bad Request
-                    errors = [conv.jsonify_value(errors)],
-                    message = ctx._(u'Bad parameters in request'),
-                    ).iteritems())),
-                method = req.script_name,
-                params = inputs,
-                url = req.url.decode('utf-8'),
-                ).iteritems())),
-            headers = headers,
-            )
+    return result
 
-    period = data.pop('period')
-    simulation = simulations.Simulation(
+
+def get_period(params):
+    now = datetime.now()
+    default = '{}-{}'.format(now.year, now.month)
+
+    result = params.pop('period', default)
+
+    try:
+        return periods.period(result)
+    except ValueError:
+        raise(Exception(dict(
+            code = 400,
+            message = "You requested computation for period '{}', but it could not be parsed as a period".format(result)
+            )))
+
+
+# req: the original request we're responding to.
+# data: dict. Will be transformed to JSON and added to the response root.
+#       `data` will be mutated. Currently considered acceptable because responding marks process end.
+# params: dict. Parsed parameters. Will be echoed in the "params" key.
+def respond(req, data, params):
+    data.update(dict(
+        apiVersion = 1,
+        params = params
+        ))
+
+    ctx = contexts.Ctx(req)
+
+    return wsgihelpers.respond_json(
+        ctx,
+        data,
+        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+        )
+
+
+def compute(formula_name, params, period):
+    simulation = create_simulation(params, period)
+    resulting_dated_holder = simulation.compute(formula_name)
+    return resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
+
+
+def create_simulation(data, period):
+    result = simulations.Simulation(
         debug = False,
         period = period,
-        tax_benefit_system = tax_benefit_system,
+        tax_benefit_system = model.tax_benefit_system,
         )
     # Initialize entities, assuming there is only one person and one of each other entities ("familles",
     # "foyers fiscaux", etc).
     persons = None
-    for entity in simulation.entity_by_key_plural.itervalues():
+    for entity in result.entity_by_key_plural.itervalues():
         entity.count = 1
         entity.roles_count = 1
         entity.step_size = 1
         if entity.is_persons_entity:
             persons = entity
     # Link person to its entities using ID & role.
-    for entity in simulation.entity_by_key_plural.itervalues():
+    for entity in result.entity_by_key_plural.itervalues():
         if not entity.is_persons_entity:
             holder = persons.get_or_new_holder(entity.index_for_person_variable_name)
             holder.set_array(period, np.array([0]))
@@ -127,21 +164,9 @@ def api1_formula(req):
             holder.set_array(period, np.array([0]))
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
-        column = tax_benefit_system.column_by_name[column_name]
-        entity = simulation.entity_by_key_plural[column.entity_key_plural]
+        column = model.tax_benefit_system.column_by_name[column_name]
+        entity = result.entity_by_key_plural[column.entity_key_plural]
         holder = entity.get_or_new_holder(column_name)
         holder.set_array(period, np.array([value], dtype = column.dtype))
 
-    requested_dated_holder = simulation.compute_add_divide(requested_column.name)
-
-    return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            # context = data['context'],
-            method = req.script_name,
-            params = inputs,
-            url = req.url.decode('utf-8'),
-            value = requested_dated_holder.to_value_json()[0],  # We have only one person => Unwrap the array.
-            ).iteritems())),
-        headers = headers,
-        )
+    return result
