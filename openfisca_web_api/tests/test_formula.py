@@ -26,8 +26,7 @@
 import json
 
 from webob import Request
-from nose.tools import *
-from unittest.case import SkipTest
+from nose.tools import assert_equal, assert_in, assert_not_in, assert_is_instance, assert_not_equal
 
 from . import common
 

@@ -26,7 +26,6 @@
 """Formula controller"""
 
 
-import collections
 from datetime import datetime
 
 import numpy as np
@@ -43,7 +42,7 @@ def api1_formula(req):
         period = get_period(params)
         params = normalize(params)
         column = get_column_from_formula_name(req.urlvars.get('name'))
-        value  = compute(column.name, params, period)
+        value = compute(column.name, params, period)
 
         return respond(req, dict(value = value), params)
 
@@ -56,13 +55,15 @@ def get_column_from_formula_name(formula_name):
     if result is None:
         raise(Exception(dict(
             code = 404,
-            message = u"You requested to compute variable '{}', but it does not exist".format(formula_name)
+            message = u"You requested to compute variable '{}', but it does not exist"
+                      .format(formula_name)
             )))
 
     if result.formula_class.function is None:
         raise(Exception(dict(
             code = 422,
-            message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed".format(formula_name)
+            message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed"
+                      .format(formula_name)
             )))
 
     return result
@@ -87,7 +88,7 @@ def normalize_param(name, value):
     column = model.tax_benefit_system.column_by_name[name]
 
     result, error = conv.pipe(
-        column.input_to_dated_python    # if the column is not a date, this will be None and conv.pipe will be pass-through
+        column.input_to_dated_python  # if column is not a date, this will be None and conv.pipe will be pass-through
         )(value)
 
     if error is not None:
@@ -126,7 +127,8 @@ def respond(req, data, params):
 
     ctx = contexts.Ctx(req)
 
-    return wsgihelpers.respond_json(ctx,
+    return wsgihelpers.respond_json(
+        ctx,
         data,
         headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
         )
