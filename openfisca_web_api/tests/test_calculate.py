@@ -25,6 +25,7 @@
 
 import json
 
+from nose.tools import assert_equal
 from webob import Request
 from unittest.case import SkipTest
 
@@ -38,7 +39,7 @@ def setup_module(module):
 def test_calculate_without_body():
     req = Request.blank('/api/1/calculate', headers = (('Content-Type', 'application/json'),), method = 'POST')
     res = req.get_response(common.app)
-    assert res.status_code == 400
+    assert_equal(res.status_code, 400)
 
 
 def test_calculate_with_invalid_body():
@@ -49,7 +50,7 @@ def test_calculate_with_invalid_body():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert res.status_code == 400
+    assert_equal(res.status_code, 400)
 
 
 def test_calculate_with_test_case():
@@ -92,4 +93,4 @@ def test_calculate_with_test_case():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert res.status_code == 200, res
+    assert_equal(res.status_code, 200)

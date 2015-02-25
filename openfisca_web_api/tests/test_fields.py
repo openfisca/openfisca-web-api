@@ -25,6 +25,7 @@
 
 import json
 
+from nose.tools import assert_equal, assert_greater, assert_in, assert_is_instance
 from webob import Request
 
 from . import common
@@ -37,23 +38,23 @@ def setup_module(module):
 def test_field_without_parameters():
     req = Request.blank('/api/1/field', method = 'GET')
     res = req.get_response(common.app)
-    assert res.status_code == 200, res.status_code
+    assert_equal(res.status_code, 200)
     res_json = json.loads(res.body)
-    assert isinstance(res_json, dict), res_json
-    assert 'value' in res_json, res_json
-    assert isinstance(res_json['value'], dict), res_json
-    assert 'name' in res_json['value'], res_json
+    assert_is_instance(res_json, dict)
+    assert_in('value', res_json)
+    assert_is_instance(res_json['value'], dict)
+    assert_in('name', res_json['value'])
 
 
 def test_fields_without_parameters():
     req = Request.blank('/api/1/fields', method = 'GET')
     res = req.get_response(common.app)
-    assert res.status_code == 200, res.status_code
+    assert_equal(res.status_code, 200)
     res_json = json.loads(res.body)
-    assert isinstance(res_json, dict), res_json
-    assert 'columns' in res_json, res_json
-    assert 'columns_tree' in res_json, res_json
-    assert isinstance(res_json['columns'], dict), res_json
-    assert isinstance(res_json['columns_tree'], dict), res_json
-    assert len(res_json['columns']) > 0, res_json
-    assert len(res_json['columns_tree']) > 0, res_json
+    assert_is_instance(res_json, dict)
+    assert_in('columns', res_json)
+    assert_in('columns_tree', res_json)
+    assert_is_instance(res_json['columns'], dict)
+    assert_is_instance(res_json['columns_tree'], dict)
+    assert_greater(len(res_json['columns']), 0)
+    assert_greater(len(res_json['columns_tree']), 0)

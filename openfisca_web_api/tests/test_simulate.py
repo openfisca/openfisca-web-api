@@ -25,8 +25,9 @@
 
 import json
 
-from webob import Request
+from nose.tools import assert_equal
 from unittest.case import SkipTest
+from webob import Request
 
 from . import common
 
@@ -49,7 +50,7 @@ def test_simulate_with_invalid_body():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert res.status_code == 400
+    assert_equal(res.status_code, 400)
 
 
 def test_simulate_with_test_case():
@@ -91,4 +92,4 @@ def test_simulate_with_test_case():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert res.status_code == 200, res
+    assert_equal(res.status_code, 200)
