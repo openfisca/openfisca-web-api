@@ -59,7 +59,7 @@ def get_column_from_formula_name(formula_name):
             message = u"You requested to compute variable '{}', but it does not exist".format(formula_name)
             )))
 
-    if result.formula_class is None:
+    if result.formula_class.function is None:
         raise(Exception(dict(
             code = 422,
             message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed".format(formula_name)
