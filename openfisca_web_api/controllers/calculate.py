@@ -76,16 +76,16 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
             if variable_value_json is None:
                 continue
             variable_name = holder.column.name
-            test_case_entities = test_case[holder.entity.key_plural]
+            entity_members = test_case[holder.entity.key_plural]
             if isinstance(variable_value_json, dict):
-                for entity_index, test_case_entity in enumerate(test_case_entities):
-                    test_case_entity[variable_name] = {
-                        period: array_json[entity_index]
+                for entity_member_index, entity_member in enumerate(entity_members):
+                    entity_member[variable_name] = {
+                        period: array_json[entity_member_index]
                         for period, array_json in variable_value_json.iteritems()
                         }
             else:
-                for test_case_entity, cell_json in itertools.izip(test_case_entities, variable_value_json):
-                    test_case_entity[variable_name] = cell_json
+                for entity_member, cell_json in itertools.izip(entity_members, variable_value_json):
+                    entity_member[variable_name] = cell_json
         output_test_cases.append(test_case)
     return output_test_cases
 
