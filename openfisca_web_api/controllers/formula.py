@@ -39,12 +39,32 @@ def api1_formula(req):
     params = dict(req.GET)
 
     try:
-        period = get_period(params)
+        period = parse_period(params.pop('period', None))
         params = normalize(params)
         column = get_column_from_formula_name(req.urlvars.get('name'))
         value = compute(column.name, params, period)
 
         return respond(req, dict(value = value), params)
+
+    except Exception as error:
+        return respond(req, dict(error = error.args[0]), params)
+
+
+@wsgihelpers.wsgify
+def api2_formula(req):
+    params = dict(req.GET)
+
+    try:
+        params = normalize(params)
+        period = parse_period(req.urlvars.get('period'))
+        values = dict()
+
+        formula_names = req.urlvars.get('names').split('+')
+        for formula_name in formula_names:
+            column = get_column_from_formula_name(formula_name)
+            values[formula_name] = compute(column.name, params, period)
+
+        return respond(req, dict(period = period, values = values), params)
 
     except Exception as error:
         return respond(req, dict(error = error.args[0]), params)
@@ -100,18 +120,17 @@ def normalize_param(name, value):
     return result
 
 
-def get_period(params):
-    now = datetime.now()
-    default = '{}-{}'.format(now.year, now.month)
-
-    result = params.pop('period', default)
+def parse_period(period_descriptor):
+    if period_descriptor is None:
+        now = datetime.now()
+        period_descriptor = '{}-{}'.format(now.year, now.month)
 
     try:
-        return periods.period(result)
+        return periods.period(period_descriptor)
     except ValueError:
         raise(Exception(dict(
             code = 400,
-            message = "You requested computation for period '{}', but it could not be parsed as a period".format(result)
+            message = "You requested computation for period '{}', but it could not be parsed as a period".format(period_descriptor)
             )))
 
 
