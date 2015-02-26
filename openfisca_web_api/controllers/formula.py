@@ -130,7 +130,8 @@ def parse_period(period_descriptor):
     except ValueError:
         raise(Exception(dict(
             code = 400,
-            message = "You requested computation for period '{}', but it could not be parsed as a period".format(period_descriptor)
+            message = u"You requested computation for period '{}', but it could not be parsed as a period"
+                      .format(period_descriptor)
             )))
 
 
