@@ -26,7 +26,7 @@
 import json
 
 from webob import Request
-from nose.tools import assert_equal, assert_in, assert_not_in, assert_is_instance, assert_not_equal
+from nose.tools import assert_equal, assert_in, assert_is_instance, assert_not_equal
 
 from . import common
 
@@ -93,10 +93,6 @@ def test_not_a_formula_error_message():
     assert_in('cannot be computed', message)
 
 
-def test_not_a_formula_value():
-    assert_not_in('values', send(formula = INPUT_VARIABLE)['payload'])
-
-
 def test_invalid_formula_status_code():
     assert_equal(send(formula = INVALID_FORMULA)['status_code'], 404)
 
@@ -105,10 +101,6 @@ def test_invalid_formula_error_message():
     message = send(formula = INVALID_FORMULA)['payload']['error']['message']
     assert_in(INVALID_FORMULA, message)
     assert_in('does not exist', message)
-
-
-def test_invalid_formula_value():
-    assert_not_in('values', send(formula = INVALID_FORMULA)['payload'])
 
 
 def test_invalid_formula_params():
@@ -125,10 +117,6 @@ def test_invalid_formula_with_valid_formula_error_message():
     message = send(formula = VALID_FORMULA + '+' + INVALID_FORMULA)['payload']['error']['message']
     assert_in(INVALID_FORMULA, message)
     assert_in('does not exist', message)
-
-
-def test_invalid_formula_with_valid_formula_value():
-    assert_not_in('values', send(formula = VALID_FORMULA + '+' + INVALID_FORMULA)['payload'])
 
 
 def test_formula_value_without_params():
@@ -164,10 +152,6 @@ def test_bad_params_error_message():
     assert_in('does not exist', message)
 
 
-def test_bad_params_value():
-    assert_not_in('values', send(query_string = INVALID_QUERY_STRING)['payload'])
-
-
 def test_unnormalizable_params_status_code():
     assert_equal(send(query_string = '?birth=herp')['status_code'], 400)
 
@@ -177,10 +161,6 @@ def test_unnormalizable_params_error_message():
 
     assert_in('birth', message)
     assert_in('normalized', message)
-
-
-def test_unnormalizable_params_value():
-    assert_not_in('values', send(query_string = '?birth=herp')['payload'])
 
 
 def test_multiple_formulas_value_without_params():
@@ -209,7 +189,3 @@ def test_invalid_period_error_message():
 
     assert_in(INVALID_PERIOD, message)
     assert_in('could not be parsed', message)
-
-
-def test_invalid_period_value():
-    assert_not_in('values', send(period = INVALID_PERIOD)['payload'])

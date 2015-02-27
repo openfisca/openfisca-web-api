@@ -38,38 +38,40 @@ from .. import contexts, conv, model, wsgihelpers
 def api1_formula(req):
     API_VERSION = 1
     params = dict(req.GET)
+    data = dict()
 
     try:
         period = parse_period(params.pop('period', None))
         params = normalize(params)
         column = get_column_from_formula_name(req.urlvars.get('name'))
-        value = compute(column.name, params, period)
-
-        return respond(req, API_VERSION, dict(value = value), params)
-
+        data['value'] = compute(column.name, params, period)
     except Exception as error:
-        return respond(req, API_VERSION, dict(error = error.args[0]), params)
+        data['error'] = error.args[0]
+    finally:
+        return respond(req, API_VERSION, data, params)
 
 
 @wsgihelpers.wsgify
 def api2_formula(req):
     API_VERSION = '2.0.0-alpha.1'
     params = dict(req.GET)
+    data = dict()
 
     try:
         params = normalize(params)
-        period = parse_period(req.urlvars.get('period'))
-        values = dict()
-
         formula_names = req.urlvars.get('names').split('+')
+
+        data['values'] = dict()
+        data['period'] = parse_period(req.urlvars.get('period'))
+
         for formula_name in formula_names:
             column = get_column_from_formula_name(formula_name)
-            values[formula_name] = compute(column.name, params, period)
-
-        return respond(req, API_VERSION, dict(period = period, values = values), params)
+            data['values'][formula_name] = compute(column.name, params, data['period'])
 
     except Exception as error:
-        return respond(req, API_VERSION, dict(error = error.args[0]), params)
+        data['error'] = error.args[0]
+    finally:
+        return respond(req, API_VERSION, data, params)
 
 
 def get_column_from_formula_name(formula_name):
