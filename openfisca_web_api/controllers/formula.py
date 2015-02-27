@@ -36,6 +36,7 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api1_formula(req):
+    API_VERSION = 1
     params = dict(req.GET)
 
     try:
@@ -44,14 +45,15 @@ def api1_formula(req):
         column = get_column_from_formula_name(req.urlvars.get('name'))
         value = compute(column.name, params, period)
 
-        return respond(req, dict(value = value), params)
+        return respond(req, API_VERSION, dict(value = value), params)
 
     except Exception as error:
-        return respond(req, dict(error = error.args[0]), params)
+        return respond(req, API_VERSION, dict(error = error.args[0]), params)
 
 
 @wsgihelpers.wsgify
 def api2_formula(req):
+    API_VERSION = '2.0.0-alpha.1'
     params = dict(req.GET)
 
     try:
@@ -64,10 +66,10 @@ def api2_formula(req):
             column = get_column_from_formula_name(formula_name)
             values[formula_name] = compute(column.name, params, period)
 
-        return respond(req, dict(period = period, values = values), params)
+        return respond(req, API_VERSION, dict(period = period, values = values), params)
 
     except Exception as error:
-        return respond(req, dict(error = error.args[0]), params)
+        return respond(req, API_VERSION, dict(error = error.args[0]), params)
 
 
 def get_column_from_formula_name(formula_name):
@@ -136,12 +138,13 @@ def parse_period(period_descriptor):
 
 
 # req: the original request we're responding to.
+# version: a [semver](http://semver.org) identifier characterizing the version of the API.
 # data: dict. Will be transformed to JSON and added to the response root.
 #       `data` will be mutated. Currently considered acceptable because responding marks process end.
 # params: dict. Parsed parameters. Will be echoed in the "params" key.
-def respond(req, data, params):
+def respond(req, version, data, params):
     data.update(dict(
-        apiVersion = 1,
+        apiVersion = version,
         params = params
         ))
 

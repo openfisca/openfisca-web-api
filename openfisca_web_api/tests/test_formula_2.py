@@ -79,7 +79,7 @@ def test_formula_delete_status_code():
 
 
 def test_formula_api_version():
-    assert_equal(send()['payload']['apiVersion'], 1)
+    assert_equal(send()['payload']['apiVersion'], '2.0.0-alpha.1')
 
 
 def test_not_a_formula_status_code():
