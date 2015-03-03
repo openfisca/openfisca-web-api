@@ -36,18 +36,42 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api1_formula(req):
+    API_VERSION = 1
     params = dict(req.GET)
+    data = dict()
 
     try:
-        period = get_period(params)
+        period = parse_period(params.pop('period', None))
         params = normalize(params)
         column = get_column_from_formula_name(req.urlvars.get('name'))
-        value = compute(column.name, params, period)
+        data['value'] = compute(column.name, params, period)
+    except Exception as error:
+        data['error'] = error.args[0]
+    finally:
+        return respond(req, API_VERSION, data, params)
 
-        return respond(req, dict(value = value), params)
+
+@wsgihelpers.wsgify
+def api2_formula(req):
+    API_VERSION = '2.0.0-alpha.1'
+    params = dict(req.GET)
+    data = dict()
+
+    try:
+        params = normalize(params)
+        formula_names = req.urlvars.get('names').split('+')
+
+        data['values'] = dict()
+        data['period'] = parse_period(req.urlvars.get('period'))
+
+        for formula_name in formula_names:
+            column = get_column_from_formula_name(formula_name)
+            data['values'][formula_name] = compute(column.name, params, data['period'])
 
     except Exception as error:
-        return respond(req, dict(error = error.args[0]), params)
+        data['error'] = error.args[0]
+    finally:
+        return respond(req, API_VERSION, data, params)
 
 
 def get_column_from_formula_name(formula_name):
@@ -100,28 +124,29 @@ def normalize_param(name, value):
     return result
 
 
-def get_period(params):
-    now = datetime.now()
-    default = '{}-{}'.format(now.year, now.month)
-
-    result = params.pop('period', default)
+def parse_period(period_descriptor):
+    if period_descriptor is None:
+        now = datetime.now()
+        period_descriptor = '{}-{}'.format(now.year, now.month)
 
     try:
-        return periods.period(result)
+        return periods.period(period_descriptor)
     except ValueError:
         raise(Exception(dict(
             code = 400,
-            message = "You requested computation for period '{}', but it could not be parsed as a period".format(result)
+            message = u"You requested computation for period '{}', but it could not be parsed as a period"
+                      .format(period_descriptor)
             )))
 
 
 # req: the original request we're responding to.
+# version: a [semver](http://semver.org) identifier characterizing the version of the API.
 # data: dict. Will be transformed to JSON and added to the response root.
 #       `data` will be mutated. Currently considered acceptable because responding marks process end.
 # params: dict. Parsed parameters. Will be echoed in the "params" key.
-def respond(req, data, params):
+def respond(req, version, data, params):
     data.update(dict(
-        apiVersion = 1,
+        apiVersion = version,
         params = params
         ))
 
