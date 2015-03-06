@@ -103,16 +103,10 @@ def map_path_base_to_swagger(column_json):
 
 
 def map_parameters_to_swagger(column):
-    input_variables = []
-
-    try:
-        input_variables = model.input_variables_extractor.get_input_variables(column)
-    except Exception, e:
-        print(e)
-
+    input_variables = model.input_variables_extractor.get_input_variables(column)
     return [
         map_parameter_to_swagger(model.tax_benefit_system.column_by_name[variable_name])
-        for variable_name in input_variables
+        for variable_name in (input_variables or [])
         ]
 
 

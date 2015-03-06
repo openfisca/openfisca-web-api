@@ -36,6 +36,9 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api1_formula(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
     API_VERSION = 1
     params = dict(req.GET)
     data = dict()
@@ -46,13 +49,17 @@ def api1_formula(req):
         column = get_column_from_formula_name(req.urlvars.get('name'))
         data['value'] = compute(column.name, params, period)
     except Exception as error:
-        data['error'] = error.args[0]
+        print(error.args[0])  # TODO Return to user.
+        # data['error'] = error.args[0]
     finally:
-        return respond(req, API_VERSION, data, params)
+        return respond(req, API_VERSION, data, params, headers)
 
 
 @wsgihelpers.wsgify
 def api2_formula(req):
+    ctx = contexts.Ctx(req)
+    headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
     API_VERSION = '2.0.0-alpha.1'
     params = dict(req.GET)
     data = dict()
@@ -69,9 +76,10 @@ def api2_formula(req):
             data['values'][formula_name] = compute(column.name, params, data['period'])
 
     except Exception as error:
-        data['error'] = error.args[0]
+        print(error.args[0])  # TODO Return to user.
+        # data['error'] = error.args[0]
     finally:
-        return respond(req, API_VERSION, data, params)
+        return respond(req, API_VERSION, data, params, headers)
 
 
 def get_column_from_formula_name(formula_name):
@@ -144,7 +152,7 @@ def parse_period(period_descriptor):
 # data: dict. Will be transformed to JSON and added to the response root.
 #       `data` will be mutated. Currently considered acceptable because responding marks process end.
 # params: dict. Parsed parameters. Will be echoed in the "params" key.
-def respond(req, version, data, params):
+def respond(req, version, data, params, headers):
     data.update(dict(
         apiVersion = version,
         params = params
@@ -155,7 +163,7 @@ def respond(req, version, data, params):
     return wsgihelpers.respond_json(
         ctx,
         data,
-        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+        headers = headers,
         )
 
 
