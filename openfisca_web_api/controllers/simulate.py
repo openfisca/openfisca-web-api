@@ -51,7 +51,7 @@ def build_and_calculate_simulations(decomposition_json, scenarios, trace = False
         simulation = scenario.new_simulation(trace = trace)
         for node in decompositions.iter_decomposition_nodes(decomposition_json):
             if not node.get('children'):
-                simulation.calculate(node['code'])
+                simulation.calculate_add(node['code'])
         simulations.append(simulation)
     return simulations
 
