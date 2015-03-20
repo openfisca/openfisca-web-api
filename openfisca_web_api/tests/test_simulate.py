@@ -25,7 +25,7 @@
 
 import json
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in, assert_not_in
 from webob import Request
 
 from . import common
@@ -38,7 +38,7 @@ def setup_module(module):
 def test_simulate_without_body():
     req = Request.blank('/api/1/simulate', headers = (('Content-Type', 'application/json'),), method = 'POST')
     res = req.get_response(common.app)
-    assert res.status_code == 400
+    assert_equal(res.status_code, 400)
 
 
 def test_simulate_with_invalid_body():
@@ -90,3 +90,6 @@ def test_simulate_with_test_case():
         )
     res = req.get_response(common.app)
     assert_equal(res.status_code, 200)
+    res_body_json = json.loads(res.body)
+    assert_not_in('error', res_body_json)
+    assert_in('value', res_body_json)
