@@ -45,39 +45,6 @@ def N_(message):
     return message
 
 
-def build_and_calculate_simulations(decomposition_json, scenarios, trace = False):
-    simulations = []
-    for scenario in scenarios:
-        simulation = scenario.new_simulation(trace = trace)
-        for node in decompositions.iter_decomposition_nodes(decomposition_json):
-            if not node.get('children'):
-                simulation.calculate_add(node['code'])
-        simulations.append(simulation)
-    return simulations
-
-
-def fill_decomposition_json_with_values(response_json, simulations, tax_benefit_system):
-    for node in decompositions.iter_decomposition_nodes(response_json, children_first = True):
-        children = node.get('children')
-        if children:
-            node['values'] = map(lambda *l: sum(l), *(
-                child['values']
-                for child in children
-                ))
-        else:
-            node['values'] = values = []
-            for simulation in simulations:
-                holder = simulation.get_holder(node['code'])
-                column = holder.column
-                values.extend(
-                    column.transform_value_to_json(value)
-                    for value in holder.new_test_case_array(simulation.period).tolist()
-                    )
-        column = tax_benefit_system.column_by_name.get(node['code'])
-        if column is not None and column.url is not None:
-            node['url'] = column.url
-
-
 @wsgihelpers.wsgify
 def api1_simulate(req):
     ctx = contexts.Ctx(req)
@@ -282,35 +249,15 @@ def api1_simulate(req):
             )
 
     decomposition_json = model.get_cached_or_new_decomposition_json(tax_benefit_system = base_tax_benefit_system)
+    base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
+    base_response_json = decompositions.calculate(base_simulations, decomposition_json)
+
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(
             tax_benefit_system = reform_tax_benefit_system,
             )
-    base_simulations = build_and_calculate_simulations(
-        decomposition_json = decomposition_json,
-        scenarios = base_scenarios,
-        trace = data['trace'],
-        )
-    if data['reforms'] is not None:
-        reform_simulations = build_and_calculate_simulations(
-            decomposition_json = reform_decomposition_json,
-            scenarios = reform_scenarios,
-            trace = data['trace'],
-            )
-
-    base_response_json = copy.deepcopy(decomposition_json)
-    fill_decomposition_json_with_values(
-        response_json = base_response_json,
-        simulations = base_simulations,
-        tax_benefit_system = base_tax_benefit_system,
-        )
-    if data['reforms'] is not None:
-        reform_response_json = copy.deepcopy(reform_decomposition_json)
-        fill_decomposition_json_with_values(
-            response_json = reform_response_json,
-            simulations = reform_simulations,
-            tax_benefit_system = reform_tax_benefit_system,
-            )
+        reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
+        reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
 
     if data['trace']:
         simulations_variables_json = []
