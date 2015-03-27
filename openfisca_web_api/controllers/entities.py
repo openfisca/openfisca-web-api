@@ -34,12 +34,10 @@ from .. import contexts, conv, model, wsgihelpers
 
 
 def build_entity_data(entity_class):
-    entity_data = {
-        'isPersonsEntity': entity_class.is_persons_entity,
-        'label': entity_class.label,
-        'nameKey': entity_class.name_key,
-        }
-    if hasattr(entity_class, 'roles_key'):
+    entity_data = {'label': entity_class.label}
+    if entity_class.is_persons_entity:
+        entity_data['isPersonsEntity'] = entity_class.is_persons_entity
+    else:
         entity_data.update({
             'maxCardinalityByRoleKey': entity_class.max_cardinality_by_role_key,
             'roles': entity_class.roles_key,
