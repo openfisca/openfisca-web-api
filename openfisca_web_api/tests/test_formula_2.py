@@ -36,6 +36,7 @@ INPUT_VARIABLE = 'salaire_de_base'
 VALID_PERIOD = '2015-01'
 INVALID_PERIOD = 'herp'
 VALID_FORMULA = 'salaire_net_a_payer'
+DATED_FORMULA = 'allegement_fillon'
 VALID_OTHER_FORMULA = 'sal'
 INVALID_FORMULA = 'inexistent'
 PARAM_VALUE = 1300
@@ -80,6 +81,10 @@ def test_formula_delete_status_code():
 
 def test_formula_api_version():
     assert_equal(send()['payload']['apiVersion'], '2.0.0-alpha.1')
+
+
+def test_dated_formula_status_code():
+    assert_equal(send(formula = DATED_FORMULA)['status_code'], 200)
 
 
 def test_not_a_formula_status_code():
