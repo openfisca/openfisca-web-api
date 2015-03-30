@@ -24,7 +24,6 @@
 
 
 from webob import Request
-from unittest.case import SkipTest
 
 from . import common
 
@@ -34,8 +33,6 @@ def setup_module(module):
 
 
 def test_graph_without_parameters():
-    raise SkipTest('NoneType is not iterable. I do not know how to fix this.')
-
     req = Request.blank('/api/1/graph', method = 'GET')
     res = req.get_response(common.app)
     assert res.status_code == 200
