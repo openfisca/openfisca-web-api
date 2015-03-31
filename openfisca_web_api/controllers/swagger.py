@@ -27,8 +27,8 @@
 import datetime
 import pkg_resources
 
+from . import common
 from .. import contexts, model, wsgihelpers
-from openfisca_core import formulas
 
 
 PACKAGE_VERSION = pkg_resources.get_distribution('OpenFisca-Web-API').version
@@ -72,13 +72,8 @@ def build_paths():
             'get': map_path_to_swagger(column)
             }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if not is_input_variable(column)
+        if common.is_output_formula(column)
         }
-
-
-# Returns true if the given column is an input parameter.
-def is_input_variable(column):
-    return issubclass(column.formula_class, formulas.SimpleFormula) and column.formula_class.function is None
 
 
 def map_path_to_swagger(column):
