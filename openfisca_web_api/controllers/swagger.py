@@ -39,37 +39,40 @@ def api1_swagger(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
-    paths = {
+    return wsgihelpers.respond_json(ctx, build_json(), headers = headers)
+
+
+def build_json():
+    return {
+        'swagger': '2.0',
+        'basePath': SWAGGER_BASE_PATH,
+        'paths': build_paths(),
+        'info': {
+            'version': PACKAGE_VERSION,
+            'title': 'OpenFisca',
+            'description': '',
+            'termsOfService': 'http://github.com/openfisca/openfisca-web-api',
+            'contact': {
+                'name': 'OpenFisca team',
+                'email': 'contact@openfisca.fr',
+                'url': 'http://github.com/openfisca/openfisca-web-api/issues'
+                },
+            'license': {
+                'name': 'AGPL',
+                'url': 'https://www.gnu.org/licenses/agpl-3.0.html'
+                }
+            }
+        }
+
+
+def build_paths():
+    return {
         '/' + name: {
             'get': map_to_swagger(column)
             }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if column.formula_class is not None  # output variables only, not input parameters
         }
-
-    return wsgihelpers.respond_json(ctx,
-        {
-            'swagger': '2.0',
-            'basePath': SWAGGER_BASE_PATH,
-            'paths': paths,
-            'info': {
-                'version': PACKAGE_VERSION,
-                'title': 'OpenFisca',
-                'description': '',
-                'termsOfService': 'http://github.com/openfisca/openfisca-web-api',
-                'contact': {
-                    'name': 'OpenFisca team',
-                    'email': 'contact@openfisca.fr',
-                    'url': 'http://github.com/openfisca/openfisca-web-api/issues'
-                    },
-                'license': {
-                    'name': 'AGPL',
-                    'url': 'https://www.gnu.org/licenses/agpl-3.0.html'
-                    }
-                },
-            },
-        headers = headers,
-        )
 
 
 # Transforms the description of a column into a Swagger representation.
