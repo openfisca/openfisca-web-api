@@ -69,7 +69,7 @@ def build_json():
 def build_paths():
     return {
         '/' + name: {
-            'get': map_to_swagger(column)
+            'get': map_path_to_swagger(column)
             }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if not is_input_variable(column)
@@ -79,11 +79,6 @@ def build_paths():
 # Returns true if the given column is an input parameter.
 def is_input_variable(column):
     return issubclass(column.formula_class, formulas.SimpleFormula) and column.formula_class.function is None
-
-
-# Transforms the description of a column into a Swagger representation.
-def map_to_swagger(column):
-    return map_path_to_swagger(column)
 
 
 def map_path_to_swagger(column):
