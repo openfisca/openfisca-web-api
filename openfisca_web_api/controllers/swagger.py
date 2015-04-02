@@ -62,13 +62,23 @@ def build_json():
                 'name': 'AGPL',
                 'url': 'https://www.gnu.org/licenses/agpl-3.0.html'
                 }
+            },
+        'parameters': {
+            'periodParam': {
+                'name': 'period',
+                'in': 'path',
+                'required': True,   # Swagger spec: in path => required; pattern thus allows empty values
+                'description': 'The period for which the given taxes are to be computed',
+                'type': 'string',
+                'format': 'period'
+                }
             }
         }
 
 
 def build_paths():
     return {
-        '/' + name: {
+        '/{period}/' + name: {
             'get': map_path_to_swagger(column)
             }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
@@ -80,7 +90,7 @@ def map_path_to_swagger(column):
     result = map_path_base_to_swagger(column.to_json())
 
     try:
-        result['parameters'] = map_parameters_to_swagger(column)
+        result['parameters'] = get_parameters(column)
     except Exception, e:
         print('Error mapping parameters of formula "{}":'.format(column.to_json().get('name')))
         print(e)
@@ -103,6 +113,14 @@ def map_path_base_to_swagger(column_json):
     if column_json.get('url'):
         result['externalDocs'] = {'url': column_json.get('url')}
 
+    return result
+
+
+def get_parameters(column):
+    result = map_parameters_to_swagger(column)
+    result.append({
+        '$ref': '#/parameters/periodParam'
+        })
     return result
 
 
