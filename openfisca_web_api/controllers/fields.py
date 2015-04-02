@@ -190,7 +190,8 @@ def api1_fields(req):
                 (name, column.to_json())
                 for name, column in model.tax_benefit_system.column_by_name.iteritems()
                 if column.formula_class is not None
-                if not issubclass(column.formula_class, formulas.SimpleFormula) or column.formula_class.function is not None
+                if (not issubclass(column.formula_class, formulas.SimpleFormula) or
+                    column.formula_class.function is not None)
                 ),
             url = req.url.decode('utf-8'),
             ).iteritems())),
