@@ -29,8 +29,9 @@
 from datetime import datetime
 
 import numpy as np
-from openfisca_core import periods, simulations, formulas
+from openfisca_core import periods, simulations
 
+from . import common
 from .. import contexts, conv, model, wsgihelpers
 
 
@@ -83,7 +84,7 @@ def get_column_from_formula_name(formula_name):
                       .format(formula_name)
             )))
 
-    if issubclass(result.formula_class, formulas.SimpleFormula) and result.formula_class.function is None:
+    if common.is_input_variable(result):
         raise(Exception(dict(
             code = 422,
             message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed"
