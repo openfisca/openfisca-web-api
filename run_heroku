@@ -1,3 +1,0 @@
-#!/bin/bash
-python setup.py compile_catalog
-gunicorn --paster heroku.ini app:main

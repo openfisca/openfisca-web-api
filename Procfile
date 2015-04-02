@@ -1,1 +1,0 @@
-web: ./run_heroku
