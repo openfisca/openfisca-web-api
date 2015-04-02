@@ -30,8 +30,9 @@ import collections
 import copy
 import datetime
 
-from openfisca_core import formulas, periods, reforms, simulations
+from openfisca_core import periods, reforms, simulations
 
+from . import common
 from .. import contexts, conv, model, wsgihelpers
 
 
@@ -162,7 +163,7 @@ def api1_fields(req):
         (name, column.to_json())
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
-        if issubclass(column.formula_class, formulas.SimpleFormula) and column.formula_class.function is None
+        if common.is_input_variable(column)
         )
 
     columns_tree = collections.OrderedDict(
@@ -189,9 +190,7 @@ def api1_fields(req):
             prestations = collections.OrderedDict(
                 (name, column.to_json())
                 for name, column in model.tax_benefit_system.column_by_name.iteritems()
-                if column.formula_class is not None
-                if (not issubclass(column.formula_class, formulas.SimpleFormula) or
-                    column.formula_class.function is not None)
+                if common.is_output_formula(column)
                 ),
             url = req.url.decode('utf-8'),
             ).iteritems())),
