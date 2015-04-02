@@ -32,7 +32,7 @@ from .. import contexts, model, wsgihelpers
 
 
 PACKAGE_VERSION = pkg_resources.get_distribution('OpenFisca-Web-API').version
-SWAGGER_BASE_PATH = '/api/1/formula'
+SWAGGER_BASE_PATH = '/api/2/formula'
 
 
 @wsgihelpers.wsgify
