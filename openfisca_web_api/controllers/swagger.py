@@ -90,7 +90,10 @@ def build_paths():
 
 
 def map_path_to_swagger(column):
-    result = map_path_base_to_swagger(column.to_json())
+    column_json = column.to_json()
+
+    result = map_path_base_to_swagger(column_json)
+    result['responses'] = make_responses_for(column_json)
 
     try:
         result['parameters'] = get_parameters(column)
@@ -105,18 +108,54 @@ def map_path_base_to_swagger(column_json):
     result = {
         'summary': column_json.get('label'),
         'tags': [column_json.get('entity')],
-        'responses': {
-            200: {
-                'description': column_json.get('label'),
-                'schema': map_type_to_swagger(column_json.get('@type', ''))
-                }
-            }
         }
 
     if column_json.get('url'):
         result['externalDocs'] = {'url': column_json.get('url')}
 
     return result
+
+
+def make_responses_for(column_json):
+    return {
+            200: {
+                'description': column_json.get('label'),
+                'schema': make_response_schema_for(column_json)
+                }
+            }
+
+
+def make_response_schema_for(column_json):
+    return {
+        "type": "object",
+        "required": [
+            "apiVersion",
+            "values",
+            "params",
+            "period"
+            ],
+        "properties": {
+            "apiVersion": {
+                "type": "string",
+                "format": "semver"
+                },
+            "values": {
+                "type": "object",
+                "required": [
+                    column_json.get('name')
+                    ],
+                "properties": {
+                    column_json.get('name'): map_type_to_swagger(column_json.get('@type', 'string'))
+                    }
+                },
+            "params": {
+                "type": "object"
+                },
+            "period": {
+                "type": "array"
+                }
+            }
+        }
 
 
 def get_parameters(column):

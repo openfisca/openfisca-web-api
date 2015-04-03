@@ -41,16 +41,7 @@ def setup_module(module):
 def test_map_path_base_to_swagger_withour_url():
     expected = {
         "summary": "Nombre d'enfants à charge titulaires de la carte d'invalidité",
-        "tags": ["foy"],
-        "responses": {
-            200: {
-                "description": "Nombre d'enfants à charge titulaires de la carte d'invalidité",
-                "schema": {
-                    "type": "integer",
-                    "format": "int32"
-                    }
-                }
-            }
+        "tags": ["foy"]
         }
 
     actual = map_path_base_to_swagger({
@@ -72,15 +63,6 @@ def test_map_path_base_to_swagger_with_url():
         "externalDocs": {
             "url": "http://www.legifrance.gouv.fr/affichCode.do?"
                    "cidTexte=LEGITEXT000006069577&idSectionTA=LEGISCTA000025049019"
-            },
-        "responses": {
-            200: {
-                "description": "Contribution exceptionnelle sur les hauts revenus",
-                "schema": {
-                    "type": "number",
-                    "format": "float"
-                    }
-                }
             }
         }
 
@@ -100,15 +82,7 @@ def test_map_path_base_to_swagger_with_url():
 def test_map_path_base_to_swagger_with_enum():
     expected = {
         "summary": "Catégorie de taille d'entreprise (pour calcul des cotisations sociales)",
-        "tags": ["ind"],
-        "responses": {
-            200: {
-                "description": "Catégorie de taille d'entreprise (pour calcul des cotisations sociales)",
-                "schema": {
-                    "type": "string"
-                    }
-                }
-            }
+        "tags": ["ind"]
         }
 
     actual = map_path_base_to_swagger({
