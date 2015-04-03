@@ -118,11 +118,42 @@ def map_path_base_to_swagger(column_json):
 
 def make_responses_for(column_json):
     return {
-            200: {
-                'description': column_json.get('label'),
-                'schema': make_response_schema_for(column_json)
+        200: {
+            'description': column_json.get('label'),
+            'schema': make_response_schema_for(column_json)
+            },
+        400: {
+            'description': 'At least one of the sent parameters could not be parsed.',
+            'schema': {
+                'type': 'object',
+                'required': [
+                    'params',
+                    'error',
+                    'apiVersion'
+                    ],
+                'properties': {
+                    'params': {
+                        'type': 'object'
+                        },
+                    'error': {
+                        'type': 'object',
+                        'required': [
+                            'message'
+                            ],
+                        'properties': {
+                            'message': {
+                                'type': 'string'
+                                }
+                            }
+                        },
+                    'apiVersion': {
+                        'type': 'string',
+                        'format': 'semver'
+                        }
+                    }
                 }
             }
+        }
 
 
 def make_response_schema_for(column_json):
