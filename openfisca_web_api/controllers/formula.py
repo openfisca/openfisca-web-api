@@ -126,9 +126,7 @@ def normalize_param(name, value):
 
 
 def parse_period(period_descriptor):
-    if period_descriptor is None:
-        now = datetime.now()
-        period_descriptor = '{}-{}'.format(now.year, now.month)
+    period_descriptor = period_descriptor or default_period()
 
     try:
         return periods.period(period_descriptor)
@@ -138,6 +136,11 @@ def parse_period(period_descriptor):
             message = u"You requested computation for period '{}', but it could not be parsed as a period"
                       .format(period_descriptor)
             )))
+
+
+def default_period():
+    now = datetime.now()
+    return '{}-{:02d}'.format(now.year, now.month)
 
 
 # req: the original request we're responding to.

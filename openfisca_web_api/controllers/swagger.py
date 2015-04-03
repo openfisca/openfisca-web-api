@@ -28,6 +28,7 @@ import datetime
 import pkg_resources
 
 from . import common
+from .formula import default_period
 from .. import contexts, model, wsgihelpers
 
 
@@ -68,6 +69,7 @@ def build_json():
                 'name': 'period',
                 'in': 'path',
                 'required': True,   # Swagger spec: in path => required; pattern thus allows empty values
+                'default': default_period(),
                 'description': 'The period for which the given taxes are to be computed',
                 'type': 'string',
                 'format': 'period',
