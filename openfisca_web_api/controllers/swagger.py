@@ -70,7 +70,8 @@ def build_json():
                 'required': True,   # Swagger spec: in path => required; pattern thus allows empty values
                 'description': 'The period for which the given taxes are to be computed',
                 'type': 'string',
-                'format': 'period'
+                'format': 'period',
+                'pattern': '^([12]\d{3}(\-\d{2}){0,2})?$'
                 }
             }
         }
