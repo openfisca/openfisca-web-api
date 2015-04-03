@@ -49,7 +49,7 @@ def test_metadata_description():
     assert_in('```', actual['info']['description'], 'Description should be Markdown')
 
 
-def test_map_path_base_to_swagger_withour_url():
+def test_map_path_base_to_swagger_without_url():
     expected = {
         "summary": "Nombre d'enfants à charge titulaires de la carte d'invalidité",
         "tags": ["foy"]
