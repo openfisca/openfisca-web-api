@@ -54,6 +54,31 @@ def api1_formula(req):
 
 @wsgihelpers.wsgify
 def api2_formula(req):
+    """
+A simple `GET`-, URL-based API to OpenFisca, making the assumption of computing formulas for a single person.
+
+Combination
+-----------
+
+You can compute several formulas at once by combining the paths and joining them with `+`.
+
+Example:
+```
+/salsuperbrut+salaire_net_a_payer?salaire_de_base=1440
+```
+
+This will compute both `salsuperbrut` and `salaire_net_a_payer` in a single request.
+
+
+URL size limit
+--------------
+
+Using combination with a lot of parameters may lead to long URLs.
+If used within the browser, make sure the resulting URL is kept
+[under 2047 characters](http://stackoverflow.com/questions/417142)
+for cross-browser compatibility, by splitting combined requests.
+On a server, just test what your library handles.
+"""
     API_VERSION = '2.0.0-alpha.1'
     params = dict(req.GET)
     data = dict()

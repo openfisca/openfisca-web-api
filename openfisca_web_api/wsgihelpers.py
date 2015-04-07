@@ -31,6 +31,7 @@ The main decorator :class:`wsgify` turns a function into a WSGI application.
 
 import collections
 import json
+from functools import update_wrapper
 
 import webob.dec
 import webob.exc
@@ -48,7 +49,10 @@ errors_title = {
     }
 
 
-wsgify = webob.dec.wsgify
+def wsgify(func, *args, **kwargs):
+    result = webob.dec.wsgify(func, *args, **kwargs)
+    update_wrapper(result, func)
+    return result
 
 
 def handle_cross_origin_resource_sharing(ctx):

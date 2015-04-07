@@ -27,7 +27,7 @@
 import datetime
 import pkg_resources
 
-from . import common
+from . import common, formula
 from .formula import default_period
 from .. import contexts, model, wsgihelpers
 
@@ -52,7 +52,7 @@ def build_json():
         'info': {
             'version': PACKAGE_VERSION,
             'title': 'OpenFisca',
-            'description': '',
+            'description': formula.api2_formula.__doc__,
             'termsOfService': 'http://github.com/openfisca/openfisca-web-api',
             'contact': {
                 'name': 'OpenFisca team',
