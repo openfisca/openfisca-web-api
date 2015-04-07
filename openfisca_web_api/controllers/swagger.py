@@ -45,10 +45,15 @@ def api1_swagger(req):
 
 
 def build_json():
+    result = build_metadata()
+    result['paths'] = build_paths()
+    return result
+
+
+def build_metadata():
     return {
         'swagger': '2.0',
         'basePath': SWAGGER_BASE_PATH,
-        'paths': build_paths(),
         'info': {
             'version': PACKAGE_VERSION,
             'title': 'OpenFisca',

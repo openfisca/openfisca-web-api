@@ -22,10 +22,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_in
 
 from .. import model
 from ..controllers.swagger import (
+    build_metadata,
     map_path_base_to_swagger,
     map_type_to_swagger,
     map_parameters_to_swagger,
@@ -36,6 +37,16 @@ from . import common
 
 def setup_module(module):
     common.get_or_load_app()
+
+
+def test_metadata_version():
+    actual = build_metadata()
+    assert_equal('2.0', actual['swagger'])
+
+
+def test_metadata_description():
+    actual = build_metadata()
+    assert_in('```', actual['info']['description'], 'Description should be Markdown')
 
 
 def test_map_path_base_to_swagger_withour_url():
