@@ -25,7 +25,7 @@
 
 import json
 
-from nose.tools import assert_equal, assert_greater, assert_in, assert_is_instance
+from nose.tools import assert_equal, assert_in, assert_is_instance
 from webob import Request
 
 from . import common
