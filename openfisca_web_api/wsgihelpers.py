@@ -31,6 +31,7 @@ The main decorator :class:`wsgify` turns a function into a WSGI application.
 
 import collections
 import json
+import datetime
 
 import webob.dec
 import webob.exc
@@ -127,9 +128,16 @@ def respond_json(ctx, data, code = None, headers = None, jsonp = None):
     #     text = json.dumps(data, encoding = 'utf-8', ensure_ascii = False, indent = 2)
     # except UnicodeDecodeError:
     #     text = json.dumps(data, ensure_ascii = True, indent = 2)
-    text = json.dumps(data)
+    text = json.dumps(data, default = convert_date_to_json)
     text = unicode(text)
     if jsonp:
         text = u'{0}({1})'.format(jsonp, text)
     response.text = text
     return response
+
+
+def convert_date_to_json(obj):
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()
+    else:
+        return json.JSONEncoder().default(obj)
