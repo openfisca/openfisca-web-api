@@ -19,7 +19,7 @@ flake8:
 	@# `make` needs `$$` to output `$`. Ref: http://stackoverflow.com/questions/2382764.
 	flake8 `git ls-files | grep "\.py$$"`
 
-test: check-syntax-errors
+test: check-syntax-errors flake8
 	nosetests $(TESTS_DIR) --stop --with-doctest
 
 test-ci: check-syntax-errors flake8
