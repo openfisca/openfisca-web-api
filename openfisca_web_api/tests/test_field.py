@@ -44,3 +44,4 @@ def test_field_without_parameters():
     assert_in('value', res_json)
     assert_is_instance(res_json['value'], dict)
     assert_in('name', res_json['value'])
+    assert_is_instance(res_json['value']['name'], basestring)
