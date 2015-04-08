@@ -37,6 +37,8 @@ VALID_PERIOD = '2015-01'
 INVALID_PERIOD = 'herp'
 VALID_FORMULA = 'salaire_net_a_payer'
 DATED_FORMULA = 'allegement_fillon'
+DATE_PARAM = 'apprentissage_contrat_debut'
+DATE_PARAM_VALUE = VALID_PERIOD + '-03'
 VALID_OTHER_FORMULA = 'sal'
 INVALID_FORMULA = 'inexistent'
 PARAM_VALUE = 1300
@@ -150,6 +152,11 @@ def test_formula_echo_params_without_params():
 def test_formula_echo_params_with_params():
     params = send(query_string = VALID_QUERY_STRING)['payload']['params']
     assert_equal({INPUT_VARIABLE: PARAM_VALUE}, params)
+
+
+def test_echo_params_date():
+    params = send(query_string = DATE_PARAM + '=' + DATE_PARAM_VALUE)['payload']['params']
+    assert_equal({DATE_PARAM: DATE_PARAM_VALUE}, params)
 
 
 def test_bad_params_status_code():
