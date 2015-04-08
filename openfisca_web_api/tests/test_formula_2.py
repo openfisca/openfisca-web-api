@@ -40,15 +40,15 @@ DATED_FORMULA = 'allegement_fillon'
 VALID_OTHER_FORMULA = 'sal'
 INVALID_FORMULA = 'inexistent'
 PARAM_VALUE = 1300
-VALID_QUERY_STRING = '?{0}={1}'.format(INPUT_VARIABLE, PARAM_VALUE)
-INVALID_QUERY_STRING = '?{0}={1}'.format(INVALID_FORMULA, PARAM_VALUE)
+VALID_QUERY_STRING = '{0}={1}'.format(INPUT_VARIABLE, PARAM_VALUE)
+INVALID_QUERY_STRING = '{0}={1}'.format(INVALID_FORMULA, PARAM_VALUE)
 
 
 def send(formula = VALID_FORMULA, method = 'GET', period = '', query_string = ''):
     if period:
         period += '/'
 
-    target = TARGET_URL + period + formula + query_string
+    target = TARGET_URL + period + formula + '?' + query_string
 
     req = Request.blank(target, method = method)
     res = req.get_response(common.app)
@@ -165,11 +165,11 @@ def test_bad_params_error_message():
 
 
 def test_unnormalizable_params_status_code():
-    assert_equal(send(query_string = '?birth=herp')['status_code'], 400)
+    assert_equal(send(query_string = 'birth=herp')['status_code'], 400)
 
 
 def test_unnormalizable_params_error_message():
-    message = send(query_string = '?birth=herp')['payload']['error']['message']
+    message = send(query_string = 'birth=herp')['payload']['error']['message']
 
     assert_in('birth', message)
     assert_in('normalized', message)
