@@ -184,7 +184,8 @@ def respond(req, version, data, params):
     return wsgihelpers.respond_json(
         ctx,
         data,
-        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx),
+        json_dumps_default = wsgihelpers.convert_date_to_json,
         )
 
 
