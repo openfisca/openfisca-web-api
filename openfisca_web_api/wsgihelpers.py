@@ -80,7 +80,7 @@ def handle_cross_origin_resource_sharing(ctx):
     return headers
 
 
-def respond_json(ctx, data, code = None, headers = None, json_dumps_default = None, jsonp = None):
+def respond_json(ctx, data, code = None, headers = [], json_dumps_default = None, jsonp = None):
     """Return a JSON response.
 
     This function is optimized for JSON following
@@ -103,8 +103,6 @@ def respond_json(ctx, data, code = None, headers = None, json_dumps_default = No
                 )
     else:
         error = None
-    if headers is None:
-        headers = []
     if jsonp:
         content_type = 'application/javascript; charset=utf-8'
     else:
