@@ -95,7 +95,15 @@ On a server, just test what your library handles.
             data['values'][formula_name] = compute(column.name, params, data['period'])
 
     except Exception as error:
-        data['error'] = error.args[0]
+        if isinstance(error.args[0], dict):  # we raised it ourselves, in this controller
+            error = error.args[0]
+        else:
+            error = dict(
+                message = unicode(error),
+                code = 500
+                )
+
+        data['error'] = error
     finally:
         return respond(req, API_VERSION, data, params)
 
