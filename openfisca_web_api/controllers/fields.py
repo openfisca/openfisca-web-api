@@ -33,6 +33,13 @@ from . import common
 from .. import contexts, conv, model, wsgihelpers
 
 
+def build_prestation_json(column):
+    input_variables = model.get_cached_input_variables(column)
+    prestation_json = column.to_json()
+    prestation_json['input_variables'] = list(input_variables)
+    return prestation_json
+
+
 @wsgihelpers.wsgify
 def api1_fields(req):
     ctx = contexts.Ctx(req)
@@ -74,7 +81,6 @@ def api1_fields(req):
         if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
         if common.is_input_variable(column)
         )
-
     columns_tree = collections.OrderedDict(
         (
             dict(
@@ -87,6 +93,11 @@ def api1_fields(req):
             )
         for entity, tree in model.tax_benefit_system.columns_name_tree_by_entity.iteritems()
         )
+    prestations = collections.OrderedDict(
+        (name, build_prestation_json(column))
+        for name, column in model.tax_benefit_system.column_by_name.iteritems()
+        if common.is_output_formula(column)
+        )
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
@@ -96,11 +107,7 @@ def api1_fields(req):
             context = data['context'],
             method = req.script_name,
             params = inputs,
-            prestations = collections.OrderedDict(
-                (name, column.to_json())
-                for name, column in model.tax_benefit_system.column_by_name.iteritems()
-                if common.is_output_formula(column)
-                ),
+            prestations = prestations,
             url = req.url.decode('utf-8'),
             ).iteritems())),
         headers = headers,
