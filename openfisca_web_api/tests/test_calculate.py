@@ -91,3 +91,64 @@ def test_calculate_with_test_case():
         )
     res = req.get_response(common.app)
     assert_equal(res.status_code, 200)
+
+
+def test_calculate_with_labels():
+    # First test returning numeric values of enumerations.
+    test_case = {
+        'scenarios': [
+            {
+                'test_case': {
+                    'familles': [
+                        {
+                            'parents': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'foyers_fiscaux': [
+                        {
+                            'declarants': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'individus': [
+                        {'id': 'ind0', 'type_sal': 'prive_non_cadre'},
+                        {'id': 'ind1', 'type_sal': 'prive_cadre'},
+                        ],
+                    'menages': [
+                        {
+                            'conjoint': 'ind1',
+                            'personne_de_reference': 'ind0',
+                            },
+                        ],
+                    },
+                'period': '2013',
+                },
+            ],
+        'variables': ['type_sal'],
+        }
+    req = Request.blank(
+        '/api/1/calculate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 200)
+    res_body_json = json.loads(res.body)
+    individus = res_body_json['value'][0]['individus']
+    assert_equal(individus[0]['type_sal']['2013'], 0)
+    assert_equal(individus[1]['type_sal']['2013'], 1)
+
+    # Then test returning labels of enumerations.
+    test_case['labels'] = True
+    req = Request.blank(
+        '/api/1/calculate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 200)
+    res_body_json = json.loads(res.body)
+    individus = res_body_json['value'][0]['individus']
+    assert_equal(individus[0]['type_sal']['2013'], 'prive_non_cadre')
+    assert_equal(individus[1]['type_sal']['2013'], 'prive_cadre')

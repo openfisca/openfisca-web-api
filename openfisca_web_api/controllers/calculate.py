@@ -56,7 +56,8 @@ def build_and_calculate_simulations(variables, scenarios, trace = False):
     return simulations
 
 
-def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, tax_benefit_system, variables):
+def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, tax_benefit_system, use_label,
+        variables):
     output_test_cases = []
     for scenario, simulation in itertools.izip(scenarios, simulations):
         if intermediate_variables:
@@ -72,7 +73,7 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
                 ]
         test_case = scenario.to_json()['test_case']
         for holder in holders:
-            variable_value_json = holder.to_value_json()
+            variable_value_json = holder.to_value_json(use_label = use_label)
             if variable_value_json is None:
                 continue
             variable_name = holder.column.name
@@ -168,6 +169,11 @@ def api1_calculate(req):
             base_reforms = str_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             intermediate_variables = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            labels = conv.pipe(  # Return labels (of enumerations) instead of numeric values.
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
                 conv.default(False),
@@ -343,6 +349,7 @@ def api1_calculate(req):
         scenarios = base_scenarios,
         simulations = base_simulations,
         tax_benefit_system = base_tax_benefit_system,
+        use_label = data['labels'],
         variables = data['variables'],
         )
     if data['reforms'] is not None:
@@ -351,6 +358,7 @@ def api1_calculate(req):
             scenarios = reform_scenarios,
             simulations = reform_simulations,
             tax_benefit_system = reform_tax_benefit_system,
+            use_label = data['labels'],
             variables = data['variables'],
             )
 
