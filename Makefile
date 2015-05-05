@@ -14,10 +14,10 @@ flake8:
 	flake8 `git ls-files | grep "\.py$$"`
 
 test: flake8
-	nosetests $(TESTS_DIR) --stop --with-doctest
+	nosetests $(TESTS_DIR) --exe --stop --with-doctest
 
 test-ci: flake8
-	nosetests $(TESTS_DIR) --with-doctest
+	nosetests $(TESTS_DIR) --exe --with-doctest
 
 test-with-coverage:
-	nosetests $(TESTS_DIR) --stop --with-coverage --cover-package=openfisca_core --cover-erase --cover-branches --cover-html
+	nosetests $(TESTS_DIR) --exe --stop --with-coverage --cover-package=openfisca_core --cover-erase --cover-branches --cover-html
