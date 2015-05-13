@@ -36,17 +36,34 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api1_graph(req):
-    assert model.input_variables_extractor is not None
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
+
     params = req.GET
     inputs = dict(
         context = params.get('context'),
         reforms = params.getall('reform'),
         variable = params.get('variable'),
         )
+
+    if model.input_variables_extractor is None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = 1,
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 501,
+                    errors = [ctx._(u'openfisca_parsers is not installed on this instance of the API')],
+                    message = ctx._(u'Not implemented'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
 
     str_to_reforms = conv.make_str_to_reforms()
 

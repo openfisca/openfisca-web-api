@@ -27,7 +27,7 @@
 
 
 from . import calculate, entities, field, fields, formula, graph, reforms, simulate, swagger
-from .. import model, urls
+from .. import urls
 
 
 router = None
@@ -43,11 +43,10 @@ def make_router():
         ('GET', '^/api/1/fields/?$', fields.api1_fields),
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', formula.api1_formula),
         ('GET', '^/api/2/formula/(?:(?P<period>[A-Za-z0-9:-]*)/)?(?P<names>[A-Za-z0-9_+-]+)/?$', formula.api2_formula),
+        ('GET', '^/api/1/graph/?$', graph.api1_graph),
         ('GET', '^/api/1/reforms/?$', reforms.api1_reforms),
         ('POST', '^/api/1/simulate/?$', simulate.api1_simulate),
         ('GET', '^/api/1/swagger$', swagger.api1_swagger),
         ]
-    if model.input_variables_extractor is not None:
-        routings.append(('GET', '^/api/1/graph/?$', graph.api1_graph))
     router = urls.make_router(*routings)
     return router
