@@ -34,9 +34,10 @@ from .. import contexts, conv, model, wsgihelpers
 
 
 def build_prestation_json(column):
-    input_variables = model.get_cached_input_variables(column)
     prestation_json = column.to_json()
-    prestation_json['input_variables'] = list(input_variables)
+    if model.input_variables_extractor is not None:
+        input_variables = model.get_cached_input_variables(column)
+        prestation_json['input_variables'] = list(input_variables)
     return prestation_json
 
 
