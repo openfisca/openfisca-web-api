@@ -39,7 +39,7 @@ VALID_FORMULA = 'salaire_net_a_payer'
 DATED_FORMULA = 'allegement_fillon'
 DATE_PARAM = 'apprentissage_contrat_debut'
 DATE_PARAM_VALUE = VALID_PERIOD + '-03'
-VALID_OTHER_FORMULA = 'sal'
+VALID_OTHER_FORMULA = 'salaire_imposable'
 INVALID_FORMULA = 'inexistent'
 PARAM_VALUE = 1300
 VALID_QUERY_STRING = '{0}={1}'.format(INPUT_VARIABLE, PARAM_VALUE)
