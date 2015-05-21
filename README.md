@@ -17,6 +17,16 @@ Please consult http://www.openfisca.fr/documentation
 
 Please consult http://www.openfisca.fr/installation if you want to develop with OpenFisca on your computer.
 
+## Introspection with parsers
+
+[OpenFisca Parsers](https://github.com/openfisca/openfisca-parsers) is an optional dependency.
+If it is installed, the following endpoints will be enhanced:
+
+- field: endpoint enriched with input variables
+- fields: endpoint enriched with input variables
+- graph: endpoint created
+- graph: endpoint enriched with input variables
+
 ## Docker containers
 
 Docker containers are available:
