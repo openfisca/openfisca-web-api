@@ -119,7 +119,13 @@ def api1_graph(req):
     edges = []
     nodes = []
     visited = set()
-    simulation.graph(data['variable'], edges, model.input_variables_extractor, nodes, visited)
+    simulation.graph(
+        column_name = data['variable'],
+        edges = edges,
+        get_input_variables = model.get_cached_input_variables,
+        nodes = nodes,
+        visited = visited,
+        )
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(

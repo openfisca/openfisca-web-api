@@ -31,7 +31,6 @@ import datetime
 
 from openfisca_core import periods, reforms, simulations
 
-from . import common
 from .. import contexts, conv, environment, model, wsgihelpers
 
 
@@ -108,12 +107,8 @@ def api1_field(req):
         )
     holder = simulation.get_or_new_holder(data['variable'])
     value_json = holder.to_field_json(
-        input_variables_extractor = model.input_variables_extractor if data['input_variables'] else None,
+        get_input_variables = model.get_cached_input_variables if data['input_variables'] else None,
         )
-    column = tax_benefit_system.column_by_name[data['variable']]
-    if common.is_output_formula(column) and model.input_variables_extractor is not None:
-        input_variables = model.get_cached_input_variables(column)
-        value_json['input_variables'] = list(input_variables)
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(

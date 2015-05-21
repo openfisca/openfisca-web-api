@@ -27,7 +27,7 @@
 import datetime
 import pkg_resources
 
-from . import common, formula
+from . import formula
 from .formula import default_period
 from .. import contexts, model, wsgihelpers
 
@@ -90,7 +90,7 @@ def build_paths():
             'get': map_path_to_swagger(column)
             }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if common.is_output_formula(column)
+        if column.is_output_formula()
         }
 
 

@@ -29,16 +29,7 @@
 import collections
 import copy
 
-from . import common
 from .. import contexts, conv, model, wsgihelpers
-
-
-def build_prestation_json(column):
-    prestation_json = column.to_json()
-    if model.input_variables_extractor is not None:
-        input_variables = model.get_cached_input_variables(column)
-        prestation_json['input_variables'] = list(input_variables)
-    return prestation_json
 
 
 @wsgihelpers.wsgify
@@ -80,7 +71,7 @@ def api1_fields(req):
         (name, column.to_json())
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
-        if common.is_input_variable(column)
+        if column.is_input_variable()
         )
     columns_tree = collections.OrderedDict(
         (
@@ -95,9 +86,9 @@ def api1_fields(req):
         for entity, tree in model.tax_benefit_system.columns_name_tree_by_entity.iteritems()
         )
     prestations = collections.OrderedDict(
-        (name, build_prestation_json(column))
+        (name, column.to_json(get_input_variables = model.get_cached_input_variables))
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if common.is_output_formula(column)
+        if column.is_output_formula()
         )
 
     return wsgihelpers.respond_json(ctx,
