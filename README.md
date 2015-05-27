@@ -15,7 +15,31 @@ Please consult http://www.openfisca.fr/documentation
 
 ## Installation
 
-Please consult http://www.openfisca.fr/installation if you want to develop with OpenFisca on your computer.
+An opened instance of the OpenFisca API is hosted online at http://api.openfisca.fr/.
+You need to install this Python package if you want to contribute to its source code or run a local instance
+on your computer.
+
+Clone the OpenFisca-Web-API Git repository on your machine and install the Python package.
+Assuming you are in your working directory:
+
+```
+git clone https://github.com/openfisca/openfisca-web-api.git
+cd openfisca-web-api
+pip install --editable .[dev] --user
+python setup.py compile_catalog
+```
+
+Run the Python HTTP server:
+
+    paster serve --reload development-france.ini
+
+To stop the server, interrupt the command with Ctrl-C.
+
+To check if it's OK, open the following URL in your browser:
+http://localhost:2000/ (2000 is the port number defined in the development-france.ini config file).
+You should see a JSON response telling that the path is not found (which is normal as no endpoint corresponds to "/"):
+
+    {"apiVersion": "1.0", "error": {"message": "Path not found: /", "code": 404}}
 
 ## Docker containers
 
