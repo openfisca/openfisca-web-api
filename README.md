@@ -15,9 +15,9 @@ Please consult http://www.openfisca.fr/documentation
 
 ## Installation
 
-An opened instance of the OpenFisca API is hosted online at http://api.openfisca.fr/.
-You need to install this Python package if you want to contribute to its source code or run a local instance
-on your computer.
+> An unrestricted instance of the OpenFisca API is hosted online at http://api.openfisca.fr/.
+> You need to install this Python package if you want to contribute to its source code or run a local instance
+> on your computer.
 
 Clone the OpenFisca-Web-API Git repository on your machine and install the Python package.
 Assuming you are in your working directory:
