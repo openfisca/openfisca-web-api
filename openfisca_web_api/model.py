@@ -36,7 +36,7 @@ from . import conv
 build_reform_function_by_key = None
 decomposition_json_by_file_path_cache = {}
 input_variables_extractor = None
-input_variables_by_column_name_cache = {}
+input_variables_and_parameters_by_column_name_cache = {}
 reform_by_key = None
 TaxBenefitSystem = None
 tax_benefit_system = None
@@ -59,11 +59,11 @@ def get_cached_or_new_decomposition_json(tax_benefit_system, xml_file_name = Non
     return decomposition_json
 
 
-def get_cached_input_variables(column):
+def get_cached_input_variables_and_parameters(column):
     """This function uses input_variables_extractor and expects the caller to check it is not None."""
-    global input_variables_by_column_name_cache
-    input_variables = input_variables_by_column_name_cache.get(column.name)
-    if input_variables is None:
-        input_variables = input_variables_extractor.get_input_variables(column)
-        input_variables_by_column_name_cache[column.name] = input_variables
-    return input_variables
+    global input_variables_and_parameters_by_column_name_cache
+    input_variables_and_parameters = input_variables_and_parameters_by_column_name_cache.get(column.name)
+    if input_variables_and_parameters is None:
+        input_variables_and_parameters = input_variables_extractor.get_input_variables_and_parameters(column)
+        input_variables_and_parameters_by_column_name_cache[column.name] = input_variables_and_parameters
+    return input_variables_and_parameters

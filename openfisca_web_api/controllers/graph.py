@@ -122,7 +122,7 @@ def api1_graph(req):
     simulation.graph(
         column_name = data['variable'],
         edges = edges,
-        get_input_variables = model.get_cached_input_variables,
+        get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
         nodes = nodes,
         visited = visited,
         )

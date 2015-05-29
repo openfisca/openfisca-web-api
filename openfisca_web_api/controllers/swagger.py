@@ -203,7 +203,7 @@ def get_parameters(column):
 
 
 def map_parameters_to_swagger(column):
-    input_variables = model.get_cached_input_variables(column)
+    input_variables, parameters = model.get_cached_input_variables_and_parameters(column)
 
     return [
         map_parameter_to_swagger(model.tax_benefit_system.column_by_name[variable_name])

@@ -107,7 +107,8 @@ def api1_field(req):
         )
     holder = simulation.get_or_new_holder(data['variable'])
     value_json = holder.to_field_json(
-        get_input_variables = model.get_cached_input_variables if data['input_variables'] else None,
+        get_input_variables_and_parameters = (model.get_cached_input_variables_and_parameters if data['input_variables']
+            else None),
         )
 
     return wsgihelpers.respond_json(ctx,

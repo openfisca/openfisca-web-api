@@ -86,7 +86,7 @@ def api1_fields(req):
         for entity, tree in model.tax_benefit_system.columns_name_tree_by_entity.iteritems()
         )
     prestations = collections.OrderedDict(
-        (name, column.to_json(get_input_variables = model.get_cached_input_variables))
+        (name, column.to_json(get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters))
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if column.is_output_formula()
         )
