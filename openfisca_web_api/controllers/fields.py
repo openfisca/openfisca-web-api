@@ -88,7 +88,7 @@ def api1_fields(req):
     prestations = collections.OrderedDict(
         (name, column.to_json(get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters))
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if column.is_output_formula()
+        if column.is_formula()
         )
 
     return wsgihelpers.respond_json(ctx,
