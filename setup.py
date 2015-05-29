@@ -70,7 +70,7 @@ setup(
     include_package_data = True,
     install_requires = [
         'Babel >= 0.9.4',
-        'Biryani[datetimeconv] >= 0.10.3',
+        'Biryani >= 0.10.4',
         'OpenFisca-Core >= 0.5dev',
         'WebError >= 0.10',
         'WebOb >= 1.1',
@@ -80,5 +80,6 @@ setup(
         ]},
     # package_data = {'openfisca_web_api': ['i18n/*/LC_MESSAGES/*.mo']},
     packages = find_packages(),
+    test_suite = 'nose.collector',
     zip_safe = False,
     )
