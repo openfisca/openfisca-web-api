@@ -32,6 +32,12 @@ import copy
 from .. import contexts, conv, model, wsgihelpers
 
 
+def get_column_json(column):
+    column_json = column.to_json()
+    column_json['entity'] = column.entity  # Overwrite with symbol instead of key plural for compatibility.
+    return column_json
+
+
 @wsgihelpers.wsgify
 def api1_fields(req):
     ctx = contexts.Ctx(req)
@@ -68,7 +74,7 @@ def api1_fields(req):
             )
 
     columns = collections.OrderedDict(
-        (name, column.to_json())
+        (name, get_column_json(column))
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if name not in ('idfam', 'idfoy', 'idmen', 'noi', 'quifam', 'quifoy', 'quimen')
         if column.is_input_variable()
@@ -86,7 +92,7 @@ def api1_fields(req):
         for entity, tree in model.tax_benefit_system.columns_name_tree_by_entity.iteritems()
         )
     prestations = collections.OrderedDict(
-        (name, column.to_json(get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters))
+        (name, get_column_json(column))
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
         if column.is_formula()
         )

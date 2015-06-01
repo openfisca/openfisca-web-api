@@ -40,7 +40,6 @@ def api1_field(req):
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
-
     params = req.GET
     inputs = dict(
         context = params.get('context'),
@@ -101,15 +100,20 @@ def api1_field(req):
             headers = headers,
             )
 
-    simulation = simulations.Simulation(
-        period = periods.period(datetime.date.today().year),
-        tax_benefit_system = tax_benefit_system,
-        )
-    holder = simulation.get_or_new_holder(data['variable'])
-    value_json = holder.to_field_json(
-        get_input_variables_and_parameters = (model.get_cached_input_variables_and_parameters if data['input_variables']
-            else None),
-        )
+    variable_name = data['variable']
+    column = tax_benefit_system.column_by_name[variable_name]
+    value_json = column.to_json()
+    if data['input_variables'] and column.is_formula():
+        simulation = simulations.Simulation(
+            period = periods.period(datetime.date.today().year),
+            tax_benefit_system = tax_benefit_system,
+            )
+        holder = simulation.get_or_new_holder(variable_name)
+        value_json['formula'] = holder.formula.to_json(
+            get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
+            with_input_variables_details = True,
+            )
+    value_json['entity'] = column.entity  # Overwrite with symbol instead of key plural for compatibility.
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
