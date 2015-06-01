@@ -61,6 +61,7 @@ def get_cached_or_new_decomposition_json(tax_benefit_system, xml_file_name = Non
 
 def get_cached_input_variables_and_parameters(column):
     """This function uses input_variables_extractor and expects the caller to check it is not None."""
+    assert input_variables_extractor is not None
     global input_variables_and_parameters_by_column_name_cache
     input_variables_and_parameters = input_variables_and_parameters_by_column_name_cache.get(column.name)
     if input_variables_and_parameters is None:
