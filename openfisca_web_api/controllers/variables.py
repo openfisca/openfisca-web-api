@@ -61,9 +61,9 @@ def api1_variables(req):
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
             country_package_git_head_sha = environment.country_package_git_head_sha,
-            variables = variables_json,
             method = req.script_name,
             url = req.url.decode('utf-8'),
+            variables = variables_json,
             ).iteritems())),
         headers = headers,
         )
