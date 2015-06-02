@@ -31,7 +31,7 @@ import datetime
 
 from openfisca_core import periods, reforms, simulations
 
-from .. import contexts, conv, environment, model, wsgihelpers
+from .. import contexts, conv, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -119,7 +119,6 @@ def api1_field(req):
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
             context = data['context'],
-            git_commit_sha = environment.country_package_last_commit_sha,
             method = req.script_name,
             params = inputs,
             url = req.url.decode('utf-8'),
