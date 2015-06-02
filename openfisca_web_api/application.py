@@ -50,7 +50,7 @@ def x_api_version_header_setter(app):
     def set_x_api_version_header(environ, start_response):
         req = webob.Request(environ)
         res = req.get_response(app)
-        res.headers.update({'X-API-Version': environment.last_commit_sha})
+        res.headers.update({'X-API-Version': environment.git_head_sha})
         return res(environ, start_response)
 
     return set_x_api_version_header

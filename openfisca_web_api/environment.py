@@ -47,15 +47,15 @@ from . import conv, model
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
-country_package_last_commit_sha = None
-last_commit_sha = None
+country_package_git_head_sha = None
+git_head_sha = None
 
 
 class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.
     pass
 
 
-def get_git_last_commit_sha(cwd = os.path.dirname(__file__)):
+def get_git_head_sha(cwd = os.path.dirname(__file__)):
     output = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=cwd)
     return output.rstrip('\n')
 
@@ -160,10 +160,10 @@ def load_environment(global_conf, app_conf):
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
 
     # Store Git last commit SHA
-    global last_commit_sha
-    last_commit_sha = get_git_last_commit_sha()
-    global country_package_last_commit_sha
-    country_package_last_commit_sha = get_git_last_commit_sha(cwd = country_package.__path__[0])
+    global git_head_sha
+    git_head_sha = get_git_head_sha()
+    global country_package_git_head_sha
+    country_package_git_head_sha = get_git_head_sha(cwd = country_package.__path__[0])
 
     # Load reform modules and store build_reform functions.
     model.build_reform_function_by_key = build_reform_function_by_key = conv.check(
