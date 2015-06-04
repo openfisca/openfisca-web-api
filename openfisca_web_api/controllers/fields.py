@@ -99,6 +99,7 @@ def api1_fields(req):
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
+            apiStatus = u'deprecated',
             apiVersion = 1,
             columns = columns,
             columns_tree = columns_tree,

@@ -117,6 +117,7 @@ def api1_field(req):
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
+            apiStatus = u'deprecated',
             apiVersion = 1,
             context = data['context'],
             method = req.script_name,
