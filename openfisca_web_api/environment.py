@@ -26,11 +26,13 @@
 """Environment configuration"""
 
 
+import collections
 import datetime
 import importlib
 import json
 import logging
 import os
+import pkg_resources
 import subprocess
 import sys
 import weakref
@@ -43,7 +45,7 @@ except ImportError:
     input_variables_extractors = None
 
 import openfisca_web_api
-from . import conv, model
+from . import conf, conv, model
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
@@ -58,6 +60,15 @@ class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictio
 def get_git_head_sha(cwd = os.path.dirname(__file__)):
     output = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=cwd)
     return output.rstrip('\n')
+
+
+def get_parameters_file_path():
+    country_package_dir_path = pkg_resources.get_distribution(conf['country_package']).location
+    parameters_file_absolute_path = model.tax_benefit_system.legislation_xml_file_path
+    parameters_file_path = parameters_file_absolute_path[len(country_package_dir_path):]
+    if parameters_file_path.startswith('/'):
+        parameters_file_path = parameters_file_path[1:]
+    return parameters_file_path
 
 
 def load_environment(global_conf, app_conf):
@@ -182,3 +193,39 @@ def load_environment(global_conf, app_conf):
                 ),
             )(build_reform_function_by_key)
         )
+
+    # Store parameters_file_path cache
+    model.parameters_file_path = get_parameters_file_path()
+
+    # Store parameters_json cache
+    parameters_json = []
+    walk_legislation_json(
+        tax_benefit_system.legislation_json,
+        descriptions = [],
+        parameters_json = parameters_json,
+        path_fragments = [],
+        )
+    model.parameters_json = parameters_json
+
+
+def walk_legislation_json(node_json, descriptions, parameters_json, path_fragments):
+    children_json = node_json.get('children') or None
+    if children_json is None:
+        parameter_json = node_json.copy()  # No need to deepcopy since it is a leaf.
+        description = u' ; '.join(
+            fragment
+            for fragment in descriptions + [node_json.get('description')]
+            if fragment
+            )
+        parameter_json['description'] = description
+        parameter_json['name'] = u'.'.join(path_fragments)
+        parameter_json = collections.OrderedDict(sorted(parameter_json.iteritems()))
+        parameters_json.append(parameter_json)
+    else:
+        for child_name, child_json in children_json.iteritems():
+            walk_legislation_json(
+                child_json,
+                descriptions = descriptions + [node_json.get('description')],
+                parameters_json = parameters_json,
+                path_fragments = path_fragments + [child_name],
+                )

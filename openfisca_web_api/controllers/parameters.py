@@ -28,29 +28,7 @@
 
 import collections
 
-from .. import contexts, model, wsgihelpers
-
-
-def walk_legislation_json(node_json, descriptions, parameters_json, path_fragments):
-    children_json = node_json.get('children') or None
-    if children_json is None:
-        parameter_json = node_json.copy()  # No need to deepcopy since it is a leaf.
-        description = u' ; '.join(
-            fragment
-            for fragment in descriptions + [node_json.get('description')]
-            if fragment
-            )
-        parameter_json['description'] = description
-        parameter_json['name'] = u'.'.join(path_fragments)
-        parameters_json.append(parameter_json)
-    else:
-        for child_name, child_json in children_json.iteritems():
-            walk_legislation_json(
-                child_json,
-                descriptions = descriptions + [node_json.get('description')],
-                parameters_json = parameters_json,
-                path_fragments = path_fragments + [child_name],
-                )
+from .. import contexts, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -60,21 +38,14 @@ def api1_parameters(req):
 
     assert req.method == 'GET', req.method
 
-    legislation_json = model.tax_benefit_system.legislation_json
-    parameters_json = []
-    walk_legislation_json(
-        legislation_json,
-        descriptions = [],
-        parameters_json = parameters_json,
-        path_fragments = [],
-        )
-
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
+            country_package_git_head_sha = environment.country_package_git_head_sha,
             currency = model.tax_benefit_system.CURRENCY,
             method = req.script_name,
-            parameters = parameters_json,
+            parameters = model.parameters_json,
+            parameters_file_path = model.parameters_file_path,
             url = req.url.decode('utf-8'),
             ).iteritems())),
         headers = headers,
