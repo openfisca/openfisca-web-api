@@ -72,6 +72,7 @@ def api1_parameters(req):
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
+            currency = model.tax_benefit_system.CURRENCY,
             method = req.script_name,
             parameters = parameters_json,
             url = req.url.decode('utf-8'),
