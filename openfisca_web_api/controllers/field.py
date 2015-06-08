@@ -103,7 +103,7 @@ def api1_field(req):
     variable_name = data['variable']
     column = tax_benefit_system.column_by_name[variable_name]
     value_json = column.to_json()
-    if data['input_variables'] and column.is_formula():
+    if data['input_variables'] and not column.is_input_variable():
         simulation = simulations.Simulation(
             period = periods.period(datetime.date.today().year),
             tax_benefit_system = tax_benefit_system,

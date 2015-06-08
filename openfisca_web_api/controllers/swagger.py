@@ -90,7 +90,7 @@ def build_paths():
             'get': map_path_to_swagger(column)
             }
         for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if column.is_formula()
+        if not column.is_input_variable()
         }
 
 

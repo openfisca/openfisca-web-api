@@ -45,7 +45,7 @@ def api1_variables(req):
     variables_json = []
     for variable_name, column in model.tax_benefit_system.column_by_name.iteritems():
         variable_json = column.to_json()
-        if column.is_formula():
+        if not column.is_input_variable():
             if simulation is None:
                 simulation = simulations.Simulation(
                     period = periods.period(datetime.date.today().year),
