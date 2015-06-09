@@ -205,7 +205,7 @@ def load_environment(global_conf, app_conf):
         parameters_json = parameters_json,
         path_fragments = [],
         )
-    model.parameters_json = parameters_json
+    model.parameters_json_cache = parameters_json
 
 
 def walk_legislation_json(node_json, descriptions, parameters_json, path_fragments):
