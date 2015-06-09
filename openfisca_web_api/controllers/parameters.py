@@ -28,7 +28,7 @@
 
 import collections
 
-from .. import contexts, environment, model, wsgihelpers
+from .. import contexts, conv, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -37,6 +37,58 @@ def api1_parameters(req):
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
+    params = req.GET
+    inputs = dict(
+        names = params.getall('name'),
+        )
+
+    parameters_name = [
+        parameter_json['name']
+        for parameter_json in model.parameters_json_cache
+        ]
+
+    data, errors = conv.pipe(
+        conv.struct(
+            dict(
+                names = conv.pipe(
+                    conv.uniform_sequence(
+                        conv.pipe(
+                            conv.empty_to_none,
+                            conv.test_in(parameters_name, error = u'Parameter does not exist'),
+                            ),
+                        drop_none_items = True,
+                        ),
+                    conv.empty_to_none,
+                    ),
+                ),
+            default = 'drop',
+            ),
+        )(inputs, state = ctx)
+
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = 1,
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [conv.jsonify_value(errors)],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
+    if data['names'] is None:
+        parameters_json = model.parameters_json_cache
+    else:
+        parameters_json = [
+            parameter_json
+            for parameter_json in model.parameters_json_cache
+            if parameter_json['name'] in data['names']
+            ]
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
@@ -44,7 +96,7 @@ def api1_parameters(req):
             country_package_git_head_sha = environment.country_package_git_head_sha,
             currency = model.tax_benefit_system.CURRENCY,
             method = req.script_name,
-            parameters = model.parameters_json,
+            parameters = parameters_json,
             parameters_file_path = model.parameters_file_path,
             url = req.url.decode('utf-8'),
             ).iteritems())),
