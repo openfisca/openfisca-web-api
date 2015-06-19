@@ -57,7 +57,7 @@ def api1_field(req):
                 input_variables = conv.pipe(
                     conv.test_isinstance((bool, int, basestring)),
                     conv.anything_to_bool,
-                    conv.default(False),
+                    conv.default(True),
                     ),
                 reforms = str_to_reforms,
                 variable = conv.noop,  # Real conversion is done once tax-benefit system is known.
