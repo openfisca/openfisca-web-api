@@ -77,7 +77,6 @@ setup(
     message_extractors = {'openfisca_web_api': [
         ('**.py', 'python', None),
         ]},
-    # package_data = {'openfisca_web_api': ['i18n/*/LC_MESSAGES/*.mo']},
     packages = find_packages(),
     test_suite = 'nose.collector',
     zip_safe = False,
