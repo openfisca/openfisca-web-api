@@ -71,6 +71,7 @@ setup(
         'Babel >= 0.9.4',
         'Biryani >= 0.10.4',
         'OpenFisca-Core >= 0.5dev',
+        'PasteDeploy',
         'WebError >= 0.10',
         'WebOb >= 1.1',
         ],
