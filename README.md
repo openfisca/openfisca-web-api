@@ -25,9 +25,12 @@ Assuming you are in your working directory:
 ```
 git clone https://github.com/openfisca/openfisca-web-api.git
 cd openfisca-web-api
-pip install --editable .[dev] --user
+pip install -r requirements.txt --user
+pip install --editable .[dev,introspection] --user
 python setup.py compile_catalog
 ```
+
+> "dev" and "introspection" are optional requirements, but we recommend to install them.
 
 Run the Python HTTP server:
 
@@ -36,20 +39,16 @@ Run the Python HTTP server:
 To stop the server, interrupt the command with Ctrl-C.
 
 To check if it's OK, open the following URL in your browser:
-http://localhost:2000/ (2000 is the port number defined in the development-france.ini config file).
-You should see a JSON response telling that the path is not found (which is normal as no endpoint corresponds to "/"):
+[http://localhost:2000/], 2000 is the port number defined in the development-france.ini config file.
+You should see this JSON response:
 
-    {"apiVersion": "1.0", "error": {"message": "Path not found: /", "code": 404}}
+    {"apiVersion": 1, "message": "Welcome, this is OpenFisca Web API.", "method": "/"}
 
 ## Introspection with parsers
 
 [OpenFisca Parsers](https://github.com/openfisca/openfisca-parsers) is an optional dependency.
-If it is installed, the following endpoints will be enhanced:
-
-- field: endpoint enriched with input variables
-- fields: endpoint enriched with input variables
-- graph: endpoint created
-- graph: endpoint enriched with input variables
+If it is installed, the following endpoints will be enhanced with input variables and legislation parameters:
+field, fields, graph, parameters and variables.
 
 ## Docker containers
 
