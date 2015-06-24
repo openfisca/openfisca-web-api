@@ -103,8 +103,8 @@ def map_path_to_swagger(column):
     try:
         result['parameters'] = get_parameters(column)
     except Exception, e:
-        print('Error mapping parameters of formula "{}":'.format(column.to_json().get('name')))
-        print(e)
+        print('Error mapping parameters of formula "{}":'.format(column.to_json().get('name')))  # noqa
+        print(e)  # noqa
 
     return result
 
