@@ -56,8 +56,19 @@ def build_and_calculate_simulations(variables, scenarios, trace = False):
     return simulations
 
 
-def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, tax_benefit_system, use_label,
-        variables):
+def build_vectors(simulations, use_label, variables):
+    output_vectors = []
+    for simulation in simulations:
+        output_vectors.append(
+            {
+                variable: simulation.get_holder(variable).to_value_json(use_label = use_label)
+                for variable in variables
+                }
+            )
+    return output_vectors
+
+
+def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, use_label, variables):
     output_test_cases = []
     for scenario, simulation in itertools.izip(scenarios, simulations):
         if intermediate_variables:
@@ -177,6 +188,11 @@ def api1_calculate(req):
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
                 conv.default(False),
+                ),
+            output_format = conv.pipe(
+                conv.test_isinstance(basestring),
+                conv.test_in(['test_case', 'vector']),
+                conv.default('test_case'),
                 ),
             reforms = str_to_reforms,
             scenarios = conv.pipe(
@@ -344,23 +360,35 @@ def api1_calculate(req):
             variables = data['variables'],
             )
 
-    base_output_test_cases = fill_test_cases_with_values(
-        intermediate_variables = data['intermediate_variables'],
-        scenarios = base_scenarios,
-        simulations = base_simulations,
-        tax_benefit_system = base_tax_benefit_system,
-        use_label = data['labels'],
-        variables = data['variables'],
-        )
-    if data['reforms'] is not None:
-        reform_output_test_cases = fill_test_cases_with_values(
+    if data['output_format'] == 'test_case':
+        base_value = fill_test_cases_with_values(
             intermediate_variables = data['intermediate_variables'],
-            scenarios = reform_scenarios,
-            simulations = reform_simulations,
-            tax_benefit_system = reform_tax_benefit_system,
+            scenarios = base_scenarios,
+            simulations = base_simulations,
             use_label = data['labels'],
             variables = data['variables'],
             )
+        if data['reforms'] is not None:
+            reform_value = fill_test_cases_with_values(
+                intermediate_variables = data['intermediate_variables'],
+                scenarios = reform_scenarios,
+                simulations = reform_simulations,
+                use_label = data['labels'],
+                variables = data['variables'],
+                )
+    else:
+        assert data['output_format'] == 'vector'
+        base_value = build_vectors(
+            simulations = base_simulations,
+            use_label = data['labels'],
+            variables = data['variables'],
+            )
+        if data['reforms'] is not None:
+            reform_value = build_vectors(
+                simulations = reform_simulations,
+                use_label = data['labels'],
+                variables = data['variables'],
+                )
 
     if data['trace']:
         simulations_variables_json = []
@@ -409,11 +437,11 @@ def api1_calculate(req):
         suggestions = suggestions,
         tracebacks = tracebacks_json,
         url = req.url.decode('utf-8'),
-        value = reform_output_test_cases if data['reforms'] is not None else base_output_test_cases,
+        value = reform_value if data['reforms'] is not None else base_value,
         variables = simulations_variables_json,
         )
     if data['reforms'] is not None:
-        response_data['base_value'] = base_output_test_cases
+        response_data['base_value'] = base_value
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(response_data.iteritems())),
         headers = headers,

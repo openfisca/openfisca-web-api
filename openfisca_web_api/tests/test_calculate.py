@@ -25,7 +25,7 @@
 
 import json
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_is_instance
 from webob import Request
 
 from . import common
@@ -152,3 +152,53 @@ def test_calculate_with_labels():
     individus = res_body_json['value'][0]['individus']
     assert_equal(individus[0]['type_sal']['2013'], 'prive_non_cadre')
     assert_equal(individus[1]['type_sal']['2013'], 'prive_cadre')
+
+
+def test_calculate_with_output_format_vector():
+    test_case = {
+        'output_format': 'vector',
+        'scenarios': [
+            {
+                'test_case': {
+                    'familles': [
+                        {
+                            'parents': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'foyers_fiscaux': [
+                        {
+                            'declarants': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'individus': [
+                        {'id': 'ind0'},
+                        {'id': 'ind1'},
+                        ],
+                    'menages': [
+                        {
+                            'conjoint': 'ind1',
+                            'personne_de_reference': 'ind0',
+                            },
+                        ],
+                    },
+                'period': '2013',
+                },
+            ],
+        'variables': ['irpp'],
+        }
+
+    # Then test returning labels of enumerations.
+    test_case['labels'] = True
+    req = Request.blank(
+        '/api/1/calculate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 200)
+    res_body_json = json.loads(res.body)
+    value = res_body_json['value']
+    assert_is_instance(value, list)
+    assert_is_instance(value[0], dict)
+    assert_equal(value[0].keys()[0], 'irpp')
