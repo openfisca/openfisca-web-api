@@ -57,15 +57,13 @@ def build_and_calculate_simulations(variables, scenarios, trace = False):
 
 
 def build_vectors(simulations, use_label, variables):
-    output_vectors = []
-    for simulation in simulations:
-        output_vectors.append(
-            {
-                variable: simulation.get_holder(variable).to_value_json(use_label = use_label)
-                for variable in variables
-                }
-            )
-    return output_vectors
+    return [
+        {
+            variable: simulation.get_holder(variable).to_value_json(use_label = use_label)
+            for variable in variables
+            }
+        for simulation in simulations
+        ]
 
 
 def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, use_label, variables):
