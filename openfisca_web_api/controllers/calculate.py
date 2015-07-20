@@ -46,12 +46,12 @@ def N_(message):
     return message
 
 
-def build_and_calculate_simulations(variables, scenarios, trace = False):
+def build_and_calculate_simulations(variables_name, scenarios, trace = False):
     simulations = []
     for scenario in scenarios:
         simulation = scenario.new_simulation(trace = trace)
-        for variable in variables:
-            simulation.calculate(variable)
+        for variable_name in variables_name:
+            simulation.calculate_output(variable_name)
         simulations.append(simulation)
     return simulations
 
@@ -349,13 +349,13 @@ def api1_calculate(req):
     base_simulations = build_and_calculate_simulations(
         scenarios = base_scenarios,
         trace = data['intermediate_variables'] or data['trace'],
-        variables = data['variables'],
+        variables_name = data['variables'],
         )
     if data['reforms'] is not None:
         reform_simulations = build_and_calculate_simulations(
             scenarios = reform_scenarios,
             trace = data['intermediate_variables'] or data['trace'],
-            variables = data['variables'],
+            variables_name = data['variables'],
             )
 
     if data['output_format'] == 'test_case':
