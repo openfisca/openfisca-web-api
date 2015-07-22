@@ -222,7 +222,7 @@ def api1_simulate(req):
         if data['validate']:
             original_test_case = scenario.test_case
             scenario.test_case = copy.deepcopy(original_test_case)
-        suggestion = scenario.suggest()
+        suggestion = scenario.suggest()  # This modifies scenario.test_case!
         if data['validate']:
             scenario.test_case = original_test_case
         if suggestion is not None:
