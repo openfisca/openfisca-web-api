@@ -56,7 +56,7 @@ def build_and_calculate_simulations(variables, scenarios, trace = False):
     return simulations
 
 
-def build_vectors(simulations, use_label, variables):
+def build_output_variables(simulations, use_label, variables):
     return [
         {
             variable: simulation.get_holder(variable).to_value_json(use_label = use_label)
@@ -189,7 +189,7 @@ def api1_calculate(req):
                 ),
             output_format = conv.pipe(
                 conv.test_isinstance(basestring),
-                conv.test_in(['test_case', 'vector']),
+                conv.test_in(['test_case', 'variables']),
                 conv.default('test_case'),
                 ),
             reforms = str_to_reforms,
@@ -375,14 +375,14 @@ def api1_calculate(req):
                 variables = data['variables'],
                 )
     else:
-        assert data['output_format'] == 'vector'
-        base_value = build_vectors(
+        assert data['output_format'] == 'variables'
+        base_value = build_output_variables(
             simulations = base_simulations,
             use_label = data['labels'],
             variables = data['variables'],
             )
         if data['reforms'] is not None:
-            reform_value = build_vectors(
+            reform_value = build_output_variables(
                 simulations = reform_simulations,
                 use_label = data['labels'],
                 variables = data['variables'],

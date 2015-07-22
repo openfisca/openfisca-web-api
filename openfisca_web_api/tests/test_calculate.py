@@ -154,9 +154,9 @@ def test_calculate_with_labels():
     assert_equal(individus[1]['type_sal']['2013'], 'prive_cadre')
 
 
-def test_calculate_with_output_format_vector():
+def test_calculate_with_output_format_variables():
     test_case = {
-        'output_format': 'vector',
+        'output_format': 'variables',
         'scenarios': [
             {
                 'test_case': {
