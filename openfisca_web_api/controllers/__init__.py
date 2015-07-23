@@ -55,7 +55,7 @@ def make_router():
     global router
     routings = [
         ('GET', '^/$', index),
-        ('GET', '^/api/1/?$', index),
+        ('GET', '^/api/?$', index),
         ('POST', '^/api/1/calculate/?$', calculate.api1_calculate),
         ('GET', '^/api/1/entities/?$', entities.api1_entities),
         ('GET', '^/api/1/field/?$', field.api1_field),
