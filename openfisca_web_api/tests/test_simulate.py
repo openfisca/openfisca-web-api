@@ -68,7 +68,7 @@ def test_simulate_with_test_case():
                             },
                         ],
                     'individus': [
-                        {'id': 'ind0', 'sali': 15000},
+                        {'id': 'ind0', 'salaire_imposable': 15000},
                         {'id': 'ind1'},
                         ],
                     'menages': [
