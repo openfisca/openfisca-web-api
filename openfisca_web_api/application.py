@@ -26,10 +26,15 @@
 """Middleware initialization"""
 
 
+import json
+import logging
 import webob
 from weberror.errormiddleware import ErrorMiddleware
 
 from . import conf, controllers, environment, urls
+
+
+log = logging.getLogger(__name__)
 
 
 def environment_setter(app):
@@ -43,6 +48,19 @@ def environment_setter(app):
             return wsgi_exception(environ, start_response)
 
     return set_environment
+
+
+def exception_to_json(app):
+    """WSGI middleware that catches all exceptions and responds a JSON with the message."""
+    def respond_json_exception(environ, start_response):
+        try:
+            return app(environ, start_response)
+        except Exception as exc:
+            log.exception(exc)
+            start_response('500 Internal Server Error', [('content-type', 'application/json; charset=utf-8')])
+            return [json.dumps({'error': u'Internal Server Error'})]
+
+    return respond_json_exception
 
 
 def x_api_version_header_setter(app):
@@ -79,6 +97,9 @@ def make_app(global_conf, **app_conf):
 
     # Set X-API-Version response header
     app = x_api_version_header_setter(app)
+
+    # Respond JSON exception
+    app = exception_to_json(app)
 
     # CUSTOM MIDDLEWARE HERE (filtered by error handling middlewares)
 
