@@ -31,7 +31,7 @@ import datetime
 
 from openfisca_core import periods, simulations
 
-from .. import contexts, environment, model, wsgihelpers
+from .. import contexts, conv, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -40,10 +40,36 @@ def api1_variables(req):
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
+    params = req.GET
+    inputs = dict(
+        names = params.getall('name'),
+        )
+
+    tax_benefit_system = model.tax_benefit_system
+    tax_benefit_system_variables_name = tax_benefit_system.column_by_name.keys()
+
+    data, errors = conv.pipe(
+        conv.struct(
+            dict(
+                names = conv.pipe(
+                    conv.uniform_sequence(
+                        conv.pipe(
+                            conv.empty_to_none,
+                            conv.test_in(tax_benefit_system_variables_name, error = u'Variable does not exist'),
+                            ),
+                        drop_none_items = True,
+                        ),
+                    conv.empty_to_none,
+                    ),
+                ),
+            default = 'drop',
+            ),
+        )(inputs, state = ctx)
 
     simulation = None
     variables_json = []
-    for variable_name, column in model.tax_benefit_system.column_by_name.iteritems():
+    for variable_name in data['names'] or tax_benefit_system_variables_name:
+        column = tax_benefit_system.column_by_name[variable_name]
         variable_json = column.to_json()
         if not column.is_input_variable():
             if simulation is None:
