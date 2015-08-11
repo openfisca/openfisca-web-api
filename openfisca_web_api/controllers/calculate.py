@@ -403,7 +403,6 @@ def api1_calculate(req):
                         simulation_variables_json[variable_name] = variable_value_json
                 column = holder.column
                 input_variables_infos = step.get('input_variables_infos')
-                used_periods = step.get('used_periods')
                 traceback_json.append(dict(
                     cell_type = column.val_type,
                     default_input_variables = step.get('default_input_variables', False),
@@ -416,10 +415,6 @@ def api1_calculate(req):
                     label = column.label,
                     name = variable_name,
                     period = str(period) if period is not None else None,
-                    used_periods = [
-                        str(used_period)
-                        for used_period in used_periods
-                        ] if used_periods is not None else None,
                     ))
             simulations_variables_json.append(simulation_variables_json)
             tracebacks_json.append(traceback_json)
