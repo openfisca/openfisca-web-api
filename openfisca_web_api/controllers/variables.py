@@ -71,6 +71,9 @@ def api1_variables(req):
     for variable_name in data['names'] or tax_benefit_system_variables_name:
         column = tax_benefit_system.column_by_name[variable_name]
         variable_json = column.to_json()
+        label = variable_json.get('label')
+        if label is not None and label == variable_name:
+            del variable_json['label']
         if not column.is_input_variable():
             if simulation is None:
                 simulation = simulations.Simulation(

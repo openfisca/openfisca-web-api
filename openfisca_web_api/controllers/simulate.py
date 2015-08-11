@@ -283,7 +283,7 @@ def api1_simulate(req):
                         for variable_name, variable_period in input_variables_infos
                         ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
-                    label = column.label,
+                    label = column.label if column.label != variable_name else None,
                     name = variable_name,
                     period = str(period) if period is not None else None,
                     ))
