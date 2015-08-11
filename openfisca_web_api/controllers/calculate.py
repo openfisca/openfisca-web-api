@@ -404,7 +404,7 @@ def api1_calculate(req):
                 column = holder.column
                 input_variables_infos = step.get('input_variables_infos')
                 traceback_json.append(dict(
-                    cell_type = column.val_type,
+                    cell_type = column.val_type,  # Unification with OpenFisca Julia name.
                     default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
                     input_variables = [
