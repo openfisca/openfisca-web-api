@@ -28,6 +28,8 @@
 
 import collections
 
+from openfisca_core import legislations, periods
+
 from .. import contexts, conv, environment, model, wsgihelpers
 
 
@@ -39,6 +41,7 @@ def api1_parameters(req):
     assert req.method == 'GET', req.method
     params = req.GET
     inputs = dict(
+        instant = params.get('instant'),
         names = params.getall('name'),
         )
 
@@ -50,6 +53,11 @@ def api1_parameters(req):
     data, errors = conv.pipe(
         conv.struct(
             dict(
+                instant = conv.pipe(
+                    conv.empty_to_none,
+                    conv.test_isinstance(basestring),
+                    conv.function(lambda str: periods.instant(str)),
+                    ),
                 names = conv.pipe(
                     conv.uniform_sequence(
                         conv.pipe(
@@ -81,20 +89,43 @@ def api1_parameters(req):
             headers = headers,
             )
 
-    if data['names'] is None:
-        parameters_json = model.parameters_json_cache
+    tax_benefit_system = model.tax_benefit_system
+
+    if data['instant'] is None:
+        if data['names'] is None:
+            parameters_json = model.parameters_json_cache
+        else:
+            parameters_json = [
+                parameter_json
+                for parameter_json in model.parameters_json_cache
+                if parameter_json['name'] in data['names']
+                ]
     else:
-        parameters_json = [
-            parameter_json
-            for parameter_json in model.parameters_json_cache
-            if parameter_json['name'] in data['names']
-            ]
+        instant = data['instant']
+        parameters_json = []
+        dated_legislation_json = legislations.generate_dated_legislation_json(
+            tax_benefit_system.legislation_json,
+            instant,
+            )
+        for name in data['names']:
+            name_fragments = name.split('.')
+            parameter_json = dated_legislation_json
+            for name_fragment in name_fragments:
+                parameter_json = parameter_json['children'][name_fragment]
+            parameter_json['name'] = name
+            parameter_json_in_cache = [
+                parameter_json1
+                for parameter_json1 in model.parameters_json_cache
+                if parameter_json1['name'] == name
+                ][0]
+            parameter_json['description'] = parameter_json_in_cache['description']
+            parameters_json.append(parameter_json)
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
             country_package_git_head_sha = environment.country_package_git_head_sha,
-            currency = model.tax_benefit_system.CURRENCY,
+            currency = tax_benefit_system.CURRENCY,
             method = req.script_name,
             parameters = parameters_json,
             parameters_file_path = model.parameters_file_path,
