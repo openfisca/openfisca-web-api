@@ -54,9 +54,16 @@ Example: http://api.openfisca.fr/api/1/graph?variable=zone_apl
 
 Get information about legislation parameters.
 
-TODO
+* URL path: `/api/1/parameters`
+* GET parameters:
+  * `instant` (a [JSON instant](#instants), default: null): if given, returns the legislation parameters at this instant. If a period is given, the API will take its start instant.
+  * `name` (string, repeated, default: null, one of available [parameter names](http://legislation.openfisca.fr/parameters)): the name(s) of the parameters to return. If null all the known parameters are returned.
+* JSON response structure:
+  * `parameters` (list of objects): a list of [JSON parameters](#parameters)
 
-Example: http://api-test.openfisca.fr/api/1/parameters
+Examples:
+* http://api-test.openfisca.fr/api/1/parameters
+* http://api-test.openfisca.fr/api/1/parameters?name=
 
 ## reforms
 
@@ -77,7 +84,7 @@ based on [decomp.xml](https://github.com/openfisca/openfisca-france/blob/master/
   * `Content-Type: application/json`
 * JSON request structure:
   * `context` (string, default: null): returned as is in the JSON response
-  * `scenarios` (list of objects): a list of [scenarios](#scenarios)
+  * `scenarios` (list of objects): a list of [JSON scenarios](#scenarios)
   * `trace` (boolean, default: false): when true a traceback
   * `validate` (boolean, default: false): when true the simulation isn't launched, but the scenarios are [validated](#scenarios-validation)
 * JSON response structure:
@@ -115,6 +122,14 @@ A JSON axis is an object structured this way:
 TODO
 
 ### Perpendicular axes
+
+TODO
+
+## instants
+
+TODO
+
+## parameters
 
 TODO
 
