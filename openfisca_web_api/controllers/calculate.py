@@ -402,6 +402,7 @@ def api1_calculate(req):
                         simulation_variables_json[variable_name] = variable_value_json
                 column = holder.column
                 input_variables_infos = step.get('input_variables_infos')
+                parameters_infos = step.get('parameters_infos')
                 traceback_json.append(dict(
                     cell_type = column.val_type,  # Unification with OpenFisca Julia name.
                     default_input_variables = step.get('default_input_variables', False),
@@ -413,6 +414,10 @@ def api1_calculate(req):
                     is_computed = step.get('is_computed', False),
                     label = column.label if column.label != variable_name else None,
                     name = variable_name,
+                    parameters = [
+                        (parameter_name, str(parameter_period), parameter_value)
+                        for parameter_name, parameter_period, parameter_value in parameters_infos
+                        ] if parameters_infos else None,
                     period = str(period) if period is not None else None,
                     ))
             simulations_variables_json.append(simulation_variables_json)
