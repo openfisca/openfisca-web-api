@@ -108,6 +108,22 @@ def module_and_function_names_to_function(values, state = None):
 str_to_module_and_function_names = function(lambda value: value.rsplit('.', 1))
 
 
+def make_validate_variable(base_reforms, reforms, base_tax_benefit_system, reform_tax_benefit_system):
+    def validate_variable(value, state = None):
+        if value is None:
+            return value, None
+        if state is None:
+            state = default_state
+        if reforms is None:
+            return test_in(base_tax_benefit_system.column_by_name)(value)
+        else:
+            is_valid = value in base_tax_benefit_system.column_by_name and \
+                value in reform_tax_benefit_system.column_by_name
+            return value, None if is_valid else \
+                u'variable "{}" must belong to base tax_benefit_system and reform tax_benefit_system'.format(value)
+    return validate_variable
+
+
 # Level 2 converters
 
 module_function_str_to_function = pipe(
