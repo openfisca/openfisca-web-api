@@ -33,6 +33,7 @@ import copy
 import itertools
 import multiprocessing
 import os
+import time
 
 from openfisca_core import reforms
 
@@ -102,6 +103,8 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
 
 @wsgihelpers.wsgify
 def api1_calculate(req):
+    total_start_time = time.time()
+
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
@@ -203,6 +206,11 @@ def api1_calculate(req):
                     error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
                 ),
+            time = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
             trace = conv.pipe(
                 conv.test_isinstance((bool, int)),
                 conv.anything_to_bool,
@@ -231,6 +239,8 @@ def api1_calculate(req):
         )(inputs, state = ctx)
 
     if errors is None:
+        compose_reforms_start_time = time.time()
+
         country_tax_benefit_system = model.tax_benefit_system
         base_tax_benefit_system = reforms.compose_reforms(
             base_tax_benefit_system = country_tax_benefit_system,
@@ -241,6 +251,11 @@ def api1_calculate(req):
                 base_tax_benefit_system = base_tax_benefit_system,
                 build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
                 )
+
+        compose_reforms_end_time = time.time()
+        compose_reforms_time = compose_reforms_end_time - compose_reforms_start_time
+
+        build_scenarios_start_time = time.time()
 
         base_scenarios, base_scenarios_errors = conv.uniform_sequence(
             base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
@@ -258,6 +273,9 @@ def api1_calculate(req):
                     )
                 )(data['scenarios'], state = ctx)
             errors = {'scenarios': reform_scenarios_errors} if reform_scenarios_errors is not None else None
+
+        build_scenarios_end_time = time.time()
+        build_scenarios_time = build_scenarios_end_time - build_scenarios_start_time
 
         if errors is None:
             data, errors = conv.struct(
@@ -329,22 +347,32 @@ def api1_calculate(req):
 
     if data['validate']:
         # Only a validation is requested. Don't launch simulation
-        return wsgihelpers.respond_json(ctx,
-            collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
-                context = inputs.get('context'),
-                method = req.script_name,
-                params = inputs,
-                repaired_scenarios = [
-                    scenario.to_json()
-                    for scenario in scenarios
-                    ],
-                suggestions = suggestions,
-                url = req.url.decode('utf-8'),
+        total_end_time = time.time()
+        total_time = total_end_time - total_start_time
+        response_data = dict(
+            apiVersion = 1,
+            context = inputs.get('context'),
+            method = req.script_name,
+            params = inputs,
+            repaired_scenarios = [
+                scenario.to_json()
+                for scenario in scenarios
+                ],
+            suggestions = suggestions,
+            url = req.url.decode('utf-8'),
+            )
+        if data['time']:
+            response_data['time'] = collections.OrderedDict(sorted(dict(
+                build_scenarios_time = build_scenarios_time,
+                compose_reforms_time = compose_reforms_time,
+                total_time = total_time,
                 ).iteritems())),
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(response_data.iteritems())),
             headers = headers,
             )
 
+    simulation_calculate_start_time = time.time()
     base_simulations = build_and_calculate_simulations(
         scenarios = base_scenarios,
         trace = data['intermediate_variables'] or data['trace'],
@@ -356,6 +384,8 @@ def api1_calculate(req):
             trace = data['intermediate_variables'] or data['trace'],
             variables_name = data['variables'],
             )
+    simulation_calculate_end_time = time.time()
+    simulation_calculate_time = simulation_calculate_end_time - simulation_calculate_start_time
 
     if data['output_format'] == 'test_case':
         base_value = fill_test_cases_with_values(
@@ -439,6 +469,18 @@ def api1_calculate(req):
         )
     if data['reforms'] is not None:
         response_data['base_value'] = base_value
+
+    total_end_time = time.time()
+    total_time = total_end_time - total_start_time
+
+    if data['time']:
+        response_data['time'] = collections.OrderedDict(sorted(dict(
+            build_scenarios_time = build_scenarios_time,
+            compose_reforms_time = compose_reforms_time,
+            simulation_calculate_time = simulation_calculate_time,
+            total_time = total_time,
+            ).iteritems()))
+
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(response_data.iteritems())),
         headers = headers,
