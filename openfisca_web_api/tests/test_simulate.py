@@ -89,7 +89,7 @@ def test_simulate_with_test_case():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert_equal(res.status_code, 200)
+    assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
     assert_not_in('error', res_body_json)
     assert_in('value', res_body_json)

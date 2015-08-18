@@ -38,7 +38,7 @@ def setup_module(module):
 def test_fields_without_parameters():
     req = Request.blank('/api/1/fields', method = 'GET')
     res = req.get_response(common.app)
-    assert_equal(res.status_code, 200)
+    assert_equal(res.status_code, 200, res.body)
     res_json = json.loads(res.body)
     assert_is_instance(res_json, dict)
     assert_in('columns', res_json)

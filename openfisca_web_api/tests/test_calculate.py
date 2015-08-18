@@ -90,7 +90,7 @@ def test_calculate_with_test_case():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert_equal(res.status_code, 200)
+    assert_equal(res.status_code, 200, res.body)
 
 
 def test_calculate_with_labels():
@@ -132,7 +132,7 @@ def test_calculate_with_labels():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert_equal(res.status_code, 200)
+    assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
     individus = res_body_json['value'][0]['individus']
     assert_equal(individus[0]['type_sal']['2013'], 0)
@@ -147,7 +147,7 @@ def test_calculate_with_labels():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert_equal(res.status_code, 200)
+    assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
     individus = res_body_json['value'][0]['individus']
     assert_equal(individus[0]['type_sal']['2013'], 'prive_non_cadre')
@@ -196,7 +196,7 @@ def test_calculate_with_output_format_variables():
         method = 'POST',
         )
     res = req.get_response(common.app)
-    assert_equal(res.status_code, 200)
+    assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
     value = res_body_json['value']
     assert_is_instance(value, list)
