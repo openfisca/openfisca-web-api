@@ -22,9 +22,11 @@ The OpenFisca project provides two free and unrestricted instances of the API:
 However you can install and run your own instance of the API on your own machine/server.
 See [installation](#installation) section.
 
-## API endpoints
+## See also
 
-See [endpoints.md](endpoints.md)
+* [endpoints](docs/endpoints.md)
+* [reforms](docs/reforms.md)
+* [code architecture](docs/code-architecture.md)
 
 ## Installation
 
@@ -78,22 +80,3 @@ version 3 or later (see COPYING).
 
 Feel free to join the OpenFisca development team on [GitHub](https://github.com/openfisca) or contact us by email at
 contact@openfisca.fr
-
-## Code architecture
-
-Each API endpoint (`calculate`, `simulate`, etc.) source code has its own controller (a function responding to a HTTP request) in `openfisca_web_api/controllers`.
-
-Each controller function consists basically of 3 steps:
-* reading and validating user input (with `req.params`)
-* doing some computations
-* returning the results in JSON (with `wsgihelpers.respond_json`)
-
-The configuration of the application is stored in `development-<country>.ini` files, `<country>` being either
-`france` or `tunisia`.
-The configuration is validated once when the application starts. The validation code is in `openfisca_web_api/environment.py` at the beginning of the `load_environment` function.
-
-The tests are in `openfisca_web_api/tests`.
-
-The function `make_app` in `openfisca_web_api/application.py` returns a [WSGI](http://wsgi.readthedocs.org/) application. It is the main entry point of the application and is declared in `setup.py`.
-
-All conversion and validation steps are done using the [Biryani](https://biryani.readthedocs.org) library.
