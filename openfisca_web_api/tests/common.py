@@ -30,7 +30,7 @@ from paste.deploy import loadapp
 
 
 app = None
-CONF_FILE_NAME = 'development-france.ini'
+CONF_FILE_NAME = 'test.ini'
 
 
 def get_or_load_app():
