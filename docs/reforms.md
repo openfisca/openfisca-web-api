@@ -80,6 +80,18 @@ Then with the excellent [httpie](http://httpie.org) tool:
 
     http :2000/api/1/calculate < landais_piketty_saez_test_1.json
 
-You should have no error.
+You should have no error and the `value` key should be:
+
+```
+"value": [
+    {
+        "charge_loyer": {
+            "2014": [
+                0.0
+            ]
+        }
+    }
+]
+```
 
 See also [OpenFisca-Web-API endpoints doc](https://github.com/openfisca/openfisca-web-api/blob/next/endpoints.md) to know more about the JSON input request format.
