@@ -202,3 +202,43 @@ def test_calculate_with_output_format_variables():
     assert_is_instance(value, list)
     assert_is_instance(value[0], dict)
     assert_equal(value[0].keys()[0], 'irpp')
+
+
+def test_calculate_with_reform():
+    test_case = {
+        'base_reforms': ['trannoy_wasmer'],
+        'scenarios': [
+            {
+                'test_case': {
+                    'familles': [
+                        {
+                            'parents': ['ind0'],
+                            },
+                        ],
+                    'foyers_fiscaux': [
+                        {
+                            'declarants': ['ind0'],
+                            },
+                        ],
+                    'individus': [
+                        {'id': 'ind0'},
+                        ],
+                    'menages': [
+                        {
+                            'personne_de_reference': 'ind0',
+                            },
+                        ],
+                    },
+                'period': '2013',
+                },
+            ],
+        'variables': ['charge_loyer'],
+        }
+    req = Request.blank(
+        '/api/1/calculate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 200, res.body)
