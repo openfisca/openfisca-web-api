@@ -280,12 +280,13 @@ def api1_calculate(req):
         if errors is None:
             data, errors = conv.struct(
                 dict(
-                    variables = conv.uniform_sequence(conv.make_validate_variable(
-                        base_reforms = data['base_reforms'],
-                        reforms = data['reforms'],
-                        base_tax_benefit_system = base_tax_benefit_system,
-                        reform_tax_benefit_system = reform_tax_benefit_system if data['reforms'] else None,
-                        )),
+                    variables = conv.uniform_sequence(
+                        conv.make_validate_variable(
+                            base_tax_benefit_system = base_tax_benefit_system,
+                            reform_tax_benefit_system = reform_tax_benefit_system if data['reforms'] else None,
+                            reforms = data['reforms'],
+                            ),
+                        ),
                     ),
                 default = conv.noop,
                 )(data, state = ctx)

@@ -108,19 +108,22 @@ def module_and_function_names_to_function(values, state = None):
 str_to_module_and_function_names = function(lambda value: value.rsplit('.', 1))
 
 
-def make_validate_variable(base_reforms, reforms, base_tax_benefit_system, reform_tax_benefit_system):
+def make_validate_variable(reforms, base_tax_benefit_system, reform_tax_benefit_system):
     def validate_variable(value, state = None):
         if value is None:
             return value, None
         if state is None:
             state = default_state
         if reforms is None:
-            return test_in(base_tax_benefit_system.column_by_name)(value)
+            return test_in(
+                base_tax_benefit_system.column_by_name,
+                error = u'Variable "{}" is unknown in base tax and benefit system'.format(value),
+                )(value)
         else:
             is_valid = value in base_tax_benefit_system.column_by_name and \
                 value in reform_tax_benefit_system.column_by_name
             return value, None if is_valid else \
-                u'variable "{}" must belong to base tax_benefit_system and reform tax_benefit_system'.format(value)
+                u'Variable "{}" must exist in both base and reform tax and benefit system'.format(value)
     return validate_variable
 
 
