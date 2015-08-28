@@ -34,6 +34,7 @@ from . import common
 TARGET_URL = '/api/2/formula/'
 INPUT_VARIABLE = 'salaire_de_base'
 VALID_PERIOD = '2015-01'
+VALID_DAY = VALID_PERIOD + '-01'
 INVALID_PERIOD = 'herp'
 VALID_FORMULA = 'salaire_net_a_payer'
 DATED_FORMULA = 'allegement_fillon'
@@ -209,4 +210,17 @@ def test_invalid_period_error_message():
 
     assert_in(INVALID_PERIOD, message)
     assert_in('could not be parsed', message)
+    assert_not_in('{', message)  # serialisation failed
+
+
+def test_invalid_period_day_status_code():
+    assert_equal(send(period = VALID_DAY)['status_code'], 400)
+
+
+def test_invalid_period_day_error_message():
+    message = send(period = VALID_DAY)['payload']['error']['message']
+
+    assert_in(VALID_DAY, message)
+    assert_in('year', message)
+    assert_in('month', message)
     assert_not_in('{', message)  # serialisation failed
