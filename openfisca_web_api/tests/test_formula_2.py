@@ -83,7 +83,7 @@ def test_formula_delete_status_code():
 
 
 def test_formula_api_version():
-    assert_equal(send()['payload']['apiVersion'], '2.0.0-alpha.1')
+    assert_equal(send()['payload']['apiVersion'], '2.1.0')
 
 
 def test_dated_formula_status_code():

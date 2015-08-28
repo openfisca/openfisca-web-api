@@ -78,7 +78,7 @@ If used within the browser, make sure the resulting URL is kept
 for cross-browser compatibility, by splitting combined requests.
 On a server, just test what your library handles.
 """
-    API_VERSION = '2.0.0-alpha.1'
+    API_VERSION = '2.1.0'
     params = dict(req.GET)
     data = dict()
 
