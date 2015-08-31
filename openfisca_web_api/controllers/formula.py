@@ -78,7 +78,7 @@ If used within the browser, make sure the resulting URL is kept
 for cross-browser compatibility, by splitting combined requests.
 On a server, just test what your library handles.
 """
-    API_VERSION = '2.0.0-alpha.1'
+    API_VERSION = '2.1.0'
     params = dict(req.GET)
     data = dict()
 
@@ -161,13 +161,21 @@ def parse_period(period_descriptor):
     period_descriptor = period_descriptor or default_period()
 
     try:
-        return periods.period(period_descriptor)
+        result = periods.period(period_descriptor)
     except ValueError:
         raise(Exception(dict(
             code = 400,
             message = u"You requested computation for period '{}', but it could not be parsed as a period"
                       .format(period_descriptor)
             )))
+
+    if result.unit not in ['year', 'month']:
+        raise Exception(dict(
+            code = 400,
+            message = u"You passed period '{}', but it is not a month nor a year".format(period_descriptor)
+            ))
+
+    return result
 
 
 def default_period():
@@ -224,11 +232,22 @@ def create_simulation(data, period):
             holder.set_array(period, np.array([0]))
             holder = persons.get_or_new_holder(entity.role_for_person_variable_name)
             holder.set_array(period, np.array([0]))
+
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
         column = model.tax_benefit_system.column_by_name[column_name]
         entity = result.entity_by_key_plural[column.entity_key_plural]
         holder = entity.get_or_new_holder(column_name)
-        holder.set_array(period, np.array([value], dtype = column.dtype))
+
+        if period.unit == 'year':
+            holder.set_array(period, np.array([value], dtype = column.dtype))
+        elif period.unit == 'month':
+            # Inject inputs for all months of year
+            year = period.start.year
+            month_index = 1
+            while month_index <= 12:
+                month = periods.period('{}-{:02d}'.format(year, month_index))
+                holder.set_array(month, np.array([value], dtype = column.dtype))
+                month_index += 1
 
     return result
