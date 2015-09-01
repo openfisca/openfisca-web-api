@@ -29,7 +29,6 @@
 import collections
 import datetime
 import importlib
-import json
 import logging
 import os
 import pkg_resources
@@ -123,24 +122,19 @@ def load_environment(global_conf, app_conf):
     CountryTaxBenefitSystem = country_package.init_country()
 
     class Scenario(CountryTaxBenefitSystem.Scenario):
-        instance_and_error_couple_by_json_str_cache = weakref.WeakValueDictionary()  # class attribute
+        instance_and_error_couple_cache = {} if conf['debug'] else weakref.WeakValueDictionary()  # class attribute
 
         @classmethod
-        def cached_or_new(cls):
-            return conv.check(cls.json_to_cached_or_new_instance)(None)
-
-        @classmethod
-        def make_json_to_cached_or_new_instance(cls, repair, tax_benefit_system):
+        def make_json_to_cached_or_new_instance(cls, ctx, repair, tax_benefit_system):
             def json_to_cached_or_new_instance(value, state = None):
-                json_str = json.dumps(value, separators = (',', ':')) if value is not None else None
-                instance_and_error_couple = cls.instance_and_error_couple_by_json_str_cache.get(json_str)
+                key = (unicode(ctx.lang), unicode(value), repair, tax_benefit_system)
+                instance_and_error_couple = cls.instance_and_error_couple_cache.get(key)
                 if instance_and_error_couple is None:
                     instance_and_error_couple = cls.make_json_to_instance(repair, tax_benefit_system)(
                         value, state = state or conv.default_state)
                     # Note: Call to ValueAndError() is needed below, otherwise it raises TypeError: cannot create
                     # weak reference to 'tuple' object.
-                    cls.instance_and_error_couple_by_json_str_cache[json_str] = ValueAndError(
-                        instance_and_error_couple)
+                    cls.instance_and_error_couple_cache[key] = ValueAndError(instance_and_error_couple)
                 return instance_and_error_couple
 
             return json_to_cached_or_new_instance

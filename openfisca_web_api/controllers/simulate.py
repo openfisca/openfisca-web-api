@@ -160,6 +160,7 @@ def api1_simulate(req):
 
         base_scenarios, base_scenarios_errors = conv.uniform_sequence(
             base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                ctx = ctx,
                 repair = data['validate'],
                 tax_benefit_system = base_tax_benefit_system,
                 )
@@ -169,6 +170,7 @@ def api1_simulate(req):
         if errors is None and data['reforms'] is not None:
             reform_scenarios, reform_scenarios_errors = conv.uniform_sequence(
                 reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                    ctx = ctx,
                     repair = data['validate'],
                     tax_benefit_system = reform_tax_benefit_system,
                     )
