@@ -436,7 +436,7 @@ def api1_calculate(req):
                 column = holder.column
                 input_variables_infos = step.get('input_variables_infos')
                 parameters_infos = step.get('parameters_infos')
-                traceback_json.append(dict(
+                traceback_json.append(collections.OrderedDict(sorted(dict(
                     cell_type = column.val_type,  # Unification with OpenFisca Julia name.
                     default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
@@ -447,19 +447,16 @@ def api1_calculate(req):
                     is_computed = step.get('is_computed', False),
                     label = column.label if column.label != variable_name else None,
                     name = variable_name,
-                    parameters = [
-                        (parameter_name, str(parameter_period), parameter_value)
-                        for parameter_name, parameter_period, parameter_value in parameters_infos
-                        ] if parameters_infos else None,
+                    parameters = parameters_infos or None,
                     period = str(period) if period is not None else None,
-                    ))
+                    ).iteritems())))
             simulations_variables_json.append(simulation_variables_json)
             tracebacks_json.append(traceback_json)
     else:
         simulations_variables_json = None
         tracebacks_json = None
 
-    response_data = dict(
+    response_data = collections.OrderedDict(sorted(dict(
         apiVersion = 1,
         context = data['context'],
         method = req.script_name,
@@ -469,7 +466,7 @@ def api1_calculate(req):
         url = req.url.decode('utf-8'),
         value = reform_value if data['reforms'] is not None else base_value,
         variables = simulations_variables_json,
-        )
+        ).iteritems()))
     if data['reforms'] is not None:
         response_data['base_value'] = base_value
 
@@ -484,7 +481,4 @@ def api1_calculate(req):
             total_time = total_time,
             ).iteritems()))
 
-    return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(response_data.iteritems())),
-        headers = headers,
-        )
+    return wsgihelpers.respond_json(ctx, response_data, headers = headers)
