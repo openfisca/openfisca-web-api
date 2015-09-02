@@ -28,8 +28,6 @@
 
 import collections
 
-from openfisca_core import reforms
-
 from .. import contexts, conv, model, wsgihelpers
 
 
@@ -89,9 +87,9 @@ def api1_entities(req):
             )
 
     country_tax_benefit_system = model.tax_benefit_system
-    tax_benefit_system = reforms.compose_reforms(
-        base_tax_benefit_system = country_tax_benefit_system,
-        build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
+    tax_benefit_system = model.get_cached_composed_reform(
+        reform_keys = data['reforms'],
+        tax_benefit_system = country_tax_benefit_system,
         ) if data['reforms'] is not None else country_tax_benefit_system
 
     entities_class = tax_benefit_system.entity_class_by_key_plural.itervalues()

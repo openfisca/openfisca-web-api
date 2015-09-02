@@ -26,7 +26,7 @@
 import os
 import xml.etree
 
-from openfisca_core import decompositionsxml
+from openfisca_core import decompositionsxml, reforms
 
 from . import conv
 
@@ -35,13 +35,31 @@ from . import conv
 
 build_reform_function_by_key = None
 decomposition_json_by_file_path_cache = {}
-input_variables_extractor = None
 input_variables_and_parameters_by_column_name_cache = {}
+input_variables_extractor = None
 parameters_file_path = None
 parameters_json_cache = None
-reform_by_key = None
-TaxBenefitSystem = None
+reform_by_full_key = None
 tax_benefit_system = None
+TaxBenefitSystem = None
+
+
+def get_cached_composed_reform(reform_keys, tax_benefit_system):
+    full_key = '.'.join(
+        [tax_benefit_system.full_key] + reform_keys
+        if isinstance(tax_benefit_system, reforms.AbstractReform)
+        else reform_keys
+        )
+    composed_reform = reform_by_full_key.get(full_key)
+    if composed_reform is None:
+        build_reform_functions = [build_reform_function_by_key[reform_key] for reform_key in reform_keys]
+        composed_reform = reforms.compose_reforms(
+            build_functions_and_keys = zip(build_reform_functions, reform_keys),
+            tax_benefit_system = tax_benefit_system,
+            )
+        assert full_key == composed_reform.full_key
+        reform_by_full_key[full_key] = composed_reform
+    return composed_reform
 
 
 def get_cached_or_new_decomposition_json(tax_benefit_system, xml_file_name = None):

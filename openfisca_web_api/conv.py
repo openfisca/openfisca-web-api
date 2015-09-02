@@ -30,8 +30,6 @@ import collections
 
 from openfisca_core.conv import *  # noqa
 
-from . import conf
-
 
 def N_(message):
     return message
@@ -40,21 +38,12 @@ def N_(message):
 # Level 1 converters
 
 
-ini_items_list_to_ordered_dict = pipe(
+ini_str_to_list = pipe(
     cleanup_line,
     function(lambda value: value.split('\n')),
     uniform_sequence(
-        pipe(
-            cleanup_line,
-            function(lambda value: value.split('=')),
-            uniform_sequence(cleanup_line),
-            ),
+        cleanup_line,
         ),
-    test(
-        lambda values: len(list(set(value[0] for value in values))) == len(values),
-        error = N_(u'Key duplicates found in items list'),
-        ),
-    function(collections.OrderedDict),
     )
 
 
@@ -72,36 +61,47 @@ def jsonify_value(value):
     return value
 
 
-# Defer converter creation for conf to load.
 def make_str_to_reforms():
-    return pipe(
-        test_isinstance(list),
-        uniform_sequence(
-            pipe(
-                test_isinstance(basestring),
-                empty_to_none,
-                test_in((conf['reforms'] or {}).keys()),
+    # Defer converter creation for model to load.
+    from . import model
+
+    def str_to_reforms(value, state = None):
+        if value is None:
+            return value, None
+        if state is None:
+            state = default_state
+        if model.build_reform_function_by_key is None:
+            return value, state._(u'No reform was declared to the API')
+        declared_reforms_key = model.build_reform_function_by_key.keys()
+        return pipe(
+            test_isinstance(list),
+            uniform_sequence(
+                pipe(
+                    test_isinstance(basestring),
+                    empty_to_none,
+                    test_in(declared_reforms_key),
+                    ),
+                drop_none_items = True,
                 ),
-            drop_none_items = True,
-            ),
-        empty_to_none,
-        )
+            empty_to_none,
+            )(value)
+    return str_to_reforms
 
 
 def module_and_function_names_to_function(values, state = None):
     import importlib
     if values is None:
         return values, None
+    if state is None:
+        state = default_state
     module_name, function_name = values
     try:
         module = importlib.import_module(module_name)
-    except ImportError as exc:
-        return values, unicode(exc)
+    except ImportError:
+        return values, {0: state._(u'Module "{}" not found'.format(module_name))}
     function = getattr(module, function_name, None)
-    if state is None:
-        state = default_state
     if function is None:
-        return values, state._(u'Function "{}" not found in module "{}"'.format(function_name, module))
+        return values, {1: state._(u'Function "{}" not found in module "{}"'.format(function_name, module))}
     return function, None
 
 
@@ -129,7 +129,7 @@ def make_validate_variable(reforms, base_tax_benefit_system, reform_tax_benefit_
 
 # Level 2 converters
 
-module_function_str_to_function = pipe(
+module_and_function_str_to_function = pipe(
     str_to_module_and_function_names,
     module_and_function_names_to_function,
     )

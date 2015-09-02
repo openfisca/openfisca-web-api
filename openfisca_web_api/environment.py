@@ -98,7 +98,7 @@ def load_environment(global_conf, app_conf):
                 ),
             'package_name': conv.default('openfisca-web-api'),
             'realm': conv.default(u'OpenFisca Web API'),
-            'reforms': conv.ini_items_list_to_ordered_dict,  # Another validation is done below.
+            'reforms': conv.ini_str_to_list,  # Another validation is done below.
             },
         default = 'drop',
         ))(conf))
@@ -148,6 +148,29 @@ def load_environment(global_conf, app_conf):
 
     tax_benefit_system.prefill_cache()
 
+    # Initialize reforms
+    build_reform_functions = conv.check(
+        conv.uniform_sequence(
+            conv.module_and_function_str_to_function,
+            )
+        )(conf['reforms'])
+    if build_reform_functions is not None:
+        api_reforms = [
+            build_reform(tax_benefit_system)
+            for build_reform in build_reform_functions
+            ]
+        api_reforms = conv.check(
+            conv.uniform_sequence(conv.test_isinstance(reforms.AbstractReform))
+            )(api_reforms)
+        model.build_reform_function_by_key = {
+            reform.key: build_reform
+            for build_reform, reform in zip(build_reform_functions, api_reforms)
+            }
+        model.reform_by_full_key = {
+            reform.full_key: reform
+            for reform in api_reforms
+            }
+
     # Cache default decomposition.
     model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
@@ -169,24 +192,6 @@ def load_environment(global_conf, app_conf):
     git_head_sha = get_git_head_sha()
     global country_package_git_head_sha
     country_package_git_head_sha = get_git_head_sha(cwd = country_package.__path__[0])
-
-    # Load reform modules and store build_reform functions.
-    model.build_reform_function_by_key = build_reform_function_by_key = conv.check(
-        conv.uniform_mapping(
-            conv.noop,
-            conv.module_function_str_to_function,
-            )(conf['reforms'])
-        )
-    # Check that each reform builds and cache instances. Must not be used with composed reforms.
-    model.reform_by_key = conv.check(
-        conv.uniform_mapping(
-            conv.noop,
-            conv.pipe(
-                conv.function(lambda build_reform: build_reform(tax_benefit_system)),
-                conv.test_isinstance(reforms.AbstractReform),
-                ),
-            )(build_reform_function_by_key)
-        )
 
     # Store parameters_file_path cache
     model.parameters_file_path = get_parameters_file_path()
