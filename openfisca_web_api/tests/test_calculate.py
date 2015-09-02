@@ -187,8 +187,6 @@ def test_calculate_with_output_format_variables():
         'variables': ['irpp'],
         }
 
-    # Then test returning labels of enumerations.
-    test_case['labels'] = True
     req = Request.blank(
         '/api/1/calculate',
         body = json.dumps(test_case),
