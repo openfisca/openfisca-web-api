@@ -364,16 +364,16 @@ def api1_calculate(req):
             )
         if data['time']:
             response_data['time'] = collections.OrderedDict(sorted(dict(
-                build_scenarios_time = build_scenarios_time,
-                compose_reforms_time = compose_reforms_time,
-                total_time = total_time,
+                build_scenarios = build_scenarios_time,
+                compose_reforms = compose_reforms_time,
+                total = total_time,
                 ).iteritems())),
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(response_data.iteritems())),
             headers = headers,
             )
 
-    simulation_calculate_start_time = time.time()
+    calculate_simulation_start_time = time.time()
     base_simulations = build_and_calculate_simulations(
         scenarios = base_scenarios,
         trace = data['intermediate_variables'] or data['trace'],
@@ -385,8 +385,8 @@ def api1_calculate(req):
             trace = data['intermediate_variables'] or data['trace'],
             variables_name = data['variables'],
             )
-    simulation_calculate_end_time = time.time()
-    simulation_calculate_time = simulation_calculate_end_time - simulation_calculate_start_time
+    calculate_simulation_end_time = time.time()
+    calculate_simulation_time = calculate_simulation_end_time - calculate_simulation_start_time
 
     if data['output_format'] == 'test_case':
         base_value = fill_test_cases_with_values(
@@ -473,10 +473,10 @@ def api1_calculate(req):
 
     if data['time']:
         response_data['time'] = collections.OrderedDict(sorted(dict(
-            build_scenarios_time = build_scenarios_time,
-            compose_reforms_time = compose_reforms_time,
-            simulation_calculate_time = simulation_calculate_time,
-            total_time = total_time,
+            build_scenarios = build_scenarios_time,
+            compose_reforms = compose_reforms_time,
+            calculate_simulation = calculate_simulation_time,
+            total = total_time,
             ).iteritems()))
 
     return wsgihelpers.respond_json(ctx, response_data, headers = headers)
