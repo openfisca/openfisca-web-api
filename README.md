@@ -27,6 +27,7 @@ See [installation](#installation) section.
 * [endpoints](docs/endpoints.md)
 * [reforms](docs/reforms.md)
 * [code architecture](docs/code-architecture.md)
+* [profiling](docs/profiling.md)
 
 ## Installation
 
