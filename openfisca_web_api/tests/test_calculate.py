@@ -242,3 +242,55 @@ def test_calculate_with_reform():
         )
     res = req.get_response(common.app)
     assert_equal(res.status_code, 200, res.body)
+
+
+def test_calculate_with_trace():
+    test_case = {
+        'scenarios': [
+            {
+                'test_case': {
+                    'familles': [
+                        {
+                            'parents': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'foyers_fiscaux': [
+                        {
+                            'declarants': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'individus': [
+                        {'id': 'ind0'},
+                        {'id': 'ind1'},
+                        ],
+                    'menages': [
+                        {
+                            'conjoint': 'ind1',
+                            'personne_de_reference': 'ind0',
+                            },
+                        ],
+                    },
+                'period': '2014',
+                },
+            ],
+        'trace': True,
+        'variables': ['irpp'],
+        }
+
+    req = Request.blank(
+        '/api/1/calculate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 200, res.body)
+    res_body_json = json.loads(res.body)
+    tracebacks = res_body_json['tracebacks']
+    assert_is_instance(tracebacks, list)
+    first_scenario_tracebacks = tracebacks[0]
+    assert_is_instance(first_scenario_tracebacks, list)
+    first_traceback = first_scenario_tracebacks[0]
+    assert_is_instance(first_traceback, dict)
+    traceback_with_parameters = next(item for item in first_scenario_tracebacks if item.get('parameters'))
+    assert_is_instance(traceback_with_parameters['parameters'], list)
