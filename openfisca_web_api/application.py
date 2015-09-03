@@ -28,13 +28,31 @@
 
 import json
 import logging
-import webob
+import sys
+
+try:
+    import ipdb
+except ImportError:
+    ipdb = None
 from weberror.errormiddleware import ErrorMiddleware
+import webob
 
 from . import conf, controllers, environment, urls
 
-
 log = logging.getLogger(__name__)
+
+
+def launch_debugger_on_exception(app):
+    """WSGI middleware that catches all exceptions and launches a debugger."""
+    def _launch_debugger_on_exception(environ, start_response):
+        try:
+            return app(environ, start_response)
+        except Exception as exc:
+            log.exception(exc)
+            e, m, tb = sys.exc_info()
+            ipdb.post_mortem(tb)
+            raise
+    return _launch_debugger_on_exception
 
 
 def environment_setter(app):
@@ -98,12 +116,12 @@ def make_app(global_conf, **app_conf):
     # Set X-API-Version response header
     app = x_api_version_header_setter(app)
 
-    # Respond JSON exception
-    app = exception_to_json(app)
-
     # CUSTOM MIDDLEWARE HERE (filtered by error handling middlewares)
 
     # Handle Python exceptions
+    if conf['debug'] and ipdb is not None:
+        app = launch_debugger_on_exception(app)
+    app = exception_to_json(app)
     if not conf['debug']:
         app = ErrorMiddleware(app, global_conf, **conf['errorware'])
 
