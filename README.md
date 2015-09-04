@@ -1,6 +1,8 @@
 # OpenFisca Web-API
 
-[![Build Status via Travis CI](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
+[![Build Status](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
+
+[More build status](http://www.openfisca.fr/build-status)
 
 ## Presentation
 
@@ -9,9 +11,26 @@ This is the source code of the Web-API module.
 
 Please consult http://www.openfisca.fr/presentation
 
-## Documentation
+## Public API instance
 
-Please consult http://www.openfisca.fr/documentation
+The OpenFisca project provides two free and unrestricted instances of the API:
+
+* http://api.openfisca.fr/ which is the production one, running the code corresponding to the `prod` git branches
+  of the [OpenFisca-Core](https://github.com/openfisca/openfisca-core),
+  [OpenFisca-France](https://github.com/openfisca/openfisca-france) and OpenFisca-Web-API (this one).
+* http://api-test.openfisca.fr/ which is the development one, running the code corresponding to the `next` git branches
+  of the same projects as above.
+
+However you can install and run your own instance of the API on your own machine/server.
+See [installation](#installation) section.
+
+## See also
+
+* [endpoints](docs/endpoints.md)
+* [reforms](docs/reforms.md)
+* [code architecture](docs/code-architecture.md)
+* [debugging](docs/debugging.md)
+* [profiling](docs/profiling.md)
 
 ## Installation
 
@@ -19,27 +38,41 @@ Please consult http://www.openfisca.fr/documentation
 > You need to install this Python package if you want to contribute to its source code or run a local instance
 > on your computer.
 
+Requirements:
+
+* [OpenFisca-Core](https://github.com/openfisca/openfisca-core)
+* [OpenFisca-France](https://github.com/openfisca/openfisca-france)
+* [OpenFisca-Parsers](https://github.com/openfisca/openfisca-parsers)
+
 Clone the OpenFisca-Web-API Git repository on your machine and install the Python package.
-Assuming you are in your working directory:
+
+Assuming you are in an `openfisca` working directory:
 
 ```
 git clone https://github.com/openfisca/openfisca-web-api.git
 cd openfisca-web-api
-pip install --editable .[dev] --user
+git checkout next
+pip install --editable . --user # Microsoft Windows users must not use the `--user` option
 python setup.py compile_catalog
 ```
 
-Run the Python HTTP server:
+## Run the HTTP server
 
     paster serve --reload development-france.ini
 
 To stop the server, interrupt the command with Ctrl-C.
 
 To check if it's OK, open the following URL in your browser:
-http://localhost:2000/ (2000 is the port number defined in the development-france.ini config file).
-You should see a JSON response telling that the path is not found (which is normal as no endpoint corresponds to "/"):
+http://localhost:2000/, 2000 is the port number defined in the development-france.ini config file.
+You should see this JSON response:
 
-    {"apiVersion": "1.0", "error": {"message": "Path not found: /", "code": 404}}
+    {"apiVersion": 1, "message": "Welcome, this is OpenFisca Web API.", "method": "/"}
+
+## Introspection with parsers
+
+[OpenFisca Parsers](https://github.com/openfisca/openfisca-parsers) is an optional dependency.
+If it is installed, the following endpoints will be enhanced with input variables and legislation parameters:
+field, fields, graph, parameters and variables.
 
 ## Docker containers
 

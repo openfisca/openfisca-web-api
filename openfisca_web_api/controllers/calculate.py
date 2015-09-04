@@ -33,8 +33,7 @@ import copy
 import itertools
 import multiprocessing
 import os
-
-from openfisca_core import reforms
+import time
 
 from .. import conf, contexts, conv, model, wsgihelpers
 
@@ -46,17 +45,27 @@ def N_(message):
     return message
 
 
-def build_and_calculate_simulations(variables, scenarios, trace = False):
+def build_and_calculate_simulations(variables_name, scenarios, trace = False):
     simulations = []
     for scenario in scenarios:
         simulation = scenario.new_simulation(trace = trace)
-        for variable in variables:
-            simulation.calculate(variable)
+        for variable_name in variables_name:
+            simulation.calculate_output(variable_name)
         simulations.append(simulation)
     return simulations
 
 
-def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, tax_benefit_system, variables):
+def build_output_variables(simulations, use_label, variables):
+    return [
+        {
+            variable: simulation.get_holder(variable).to_value_json(use_label = use_label)
+            for variable in variables
+            }
+        for simulation in simulations
+        ]
+
+
+def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, use_label, variables):
     output_test_cases = []
     for scenario, simulation in itertools.izip(scenarios, simulations):
         if intermediate_variables:
@@ -72,7 +81,7 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
                 ]
         test_case = scenario.to_json()['test_case']
         for holder in holders:
-            variable_value_json = holder.to_value_json()
+            variable_value_json = holder.to_value_json(use_label = use_label)
             if variable_value_json is None:
                 continue
             variable_name = holder.column.name
@@ -92,6 +101,8 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
 
 @wsgihelpers.wsgify
 def api1_calculate(req):
+    total_start_time = time.time()
+
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
@@ -172,6 +183,16 @@ def api1_calculate(req):
                 conv.anything_to_bool,
                 conv.default(False),
                 ),
+            labels = conv.pipe(  # Return labels (of enumerations) instead of numeric values.
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
+                ),
+            output_format = conv.pipe(
+                conv.test_isinstance(basestring),
+                conv.test_in(['test_case', 'variables']),
+                conv.default('test_case'),
+                ),
             reforms = str_to_reforms,
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
@@ -182,6 +203,11 @@ def api1_calculate(req):
                 conv.test(lambda scenarios: len(scenarios) <= 100,
                     error = N_(u"There can't be more than 100 scenarios")),
                 conv.not_none,
+                ),
+            time = conv.pipe(
+                conv.test_isinstance((bool, int)),
+                conv.anything_to_bool,
+                conv.default(False),
                 ),
             trace = conv.pipe(
                 conv.test_isinstance((bool, int)),
@@ -211,19 +237,27 @@ def api1_calculate(req):
         )(inputs, state = ctx)
 
     if errors is None:
+        compose_reforms_start_time = time.time()
+
         country_tax_benefit_system = model.tax_benefit_system
-        base_tax_benefit_system = reforms.compose_reforms(
-            base_tax_benefit_system = country_tax_benefit_system,
-            build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['base_reforms']],
+        base_tax_benefit_system = model.get_cached_composed_reform(
+            reform_keys = data['base_reforms'],
+            tax_benefit_system = country_tax_benefit_system,
             ) if data['base_reforms'] is not None else country_tax_benefit_system
         if data['reforms'] is not None:
-            reform_tax_benefit_system = reforms.compose_reforms(
-                base_tax_benefit_system = base_tax_benefit_system,
-                build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
+            reform_tax_benefit_system = model.get_cached_composed_reform(
+                reform_keys = data['reforms'],
+                tax_benefit_system = base_tax_benefit_system,
                 )
+
+        compose_reforms_end_time = time.time()
+        compose_reforms_time = compose_reforms_end_time - compose_reforms_start_time
+
+        build_scenarios_start_time = time.time()
 
         base_scenarios, base_scenarios_errors = conv.uniform_sequence(
             base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                ctx = ctx,
                 repair = data['validate'],
                 tax_benefit_system = base_tax_benefit_system,
                 )
@@ -233,20 +267,24 @@ def api1_calculate(req):
         if errors is None and data['reforms'] is not None:
             reform_scenarios, reform_scenarios_errors = conv.uniform_sequence(
                 reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                    ctx = ctx,
                     repair = data['validate'],
                     tax_benefit_system = reform_tax_benefit_system,
                     )
                 )(data['scenarios'], state = ctx)
             errors = {'scenarios': reform_scenarios_errors} if reform_scenarios_errors is not None else None
 
+        build_scenarios_end_time = time.time()
+        build_scenarios_time = build_scenarios_end_time - build_scenarios_start_time
+
         if errors is None:
             data, errors = conv.struct(
                 dict(
                     variables = conv.uniform_sequence(
-                        conv.test_in(
-                            base_tax_benefit_system.column_by_name
-                            if data['reforms'] is None
-                            else reform_tax_benefit_system.column_by_name,
+                        conv.make_validate_variable(
+                            base_tax_benefit_system = base_tax_benefit_system,
+                            reform_tax_benefit_system = reform_tax_benefit_system if data['reforms'] else None,
+                            reforms = data['reforms'],
                             ),
                         ),
                     ),
@@ -300,7 +338,7 @@ def api1_calculate(req):
         if data['validate']:
             original_test_case = scenario.test_case
             scenario.test_case = copy.deepcopy(original_test_case)
-        suggestion = scenario.suggest()
+        suggestion = scenario.suggest()  # This modifies scenario.test_case!
         if data['validate']:
             scenario.test_case = original_test_case
         if suggestion is not None:
@@ -310,49 +348,75 @@ def api1_calculate(req):
 
     if data['validate']:
         # Only a validation is requested. Don't launch simulation
-        return wsgihelpers.respond_json(ctx,
-            collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
-                context = inputs.get('context'),
-                method = req.script_name,
-                params = inputs,
-                repaired_scenarios = [
-                    scenario.to_json()
-                    for scenario in scenarios
-                    ],
-                suggestions = suggestions,
-                url = req.url.decode('utf-8'),
+        total_end_time = time.time()
+        total_time = total_end_time - total_start_time
+        response_data = dict(
+            apiVersion = 1,
+            context = inputs.get('context'),
+            method = req.script_name,
+            params = inputs,
+            repaired_scenarios = [
+                scenario.to_json()
+                for scenario in scenarios
+                ],
+            suggestions = suggestions,
+            url = req.url.decode('utf-8'),
+            )
+        if data['time']:
+            response_data['time'] = collections.OrderedDict(sorted(dict(
+                build_scenarios = build_scenarios_time,
+                compose_reforms = compose_reforms_time,
+                total = total_time,
                 ).iteritems())),
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(response_data.iteritems())),
             headers = headers,
             )
 
+    calculate_simulation_start_time = time.time()
     base_simulations = build_and_calculate_simulations(
         scenarios = base_scenarios,
         trace = data['intermediate_variables'] or data['trace'],
-        variables = data['variables'],
+        variables_name = data['variables'],
         )
     if data['reforms'] is not None:
         reform_simulations = build_and_calculate_simulations(
             scenarios = reform_scenarios,
             trace = data['intermediate_variables'] or data['trace'],
-            variables = data['variables'],
+            variables_name = data['variables'],
             )
+    calculate_simulation_end_time = time.time()
+    calculate_simulation_time = calculate_simulation_end_time - calculate_simulation_start_time
 
-    base_output_test_cases = fill_test_cases_with_values(
-        intermediate_variables = data['intermediate_variables'],
-        scenarios = base_scenarios,
-        simulations = base_simulations,
-        tax_benefit_system = base_tax_benefit_system,
-        variables = data['variables'],
-        )
-    if data['reforms'] is not None:
-        reform_output_test_cases = fill_test_cases_with_values(
+    if data['output_format'] == 'test_case':
+        base_value = fill_test_cases_with_values(
             intermediate_variables = data['intermediate_variables'],
-            scenarios = reform_scenarios,
-            simulations = reform_simulations,
-            tax_benefit_system = reform_tax_benefit_system,
+            scenarios = base_scenarios,
+            simulations = base_simulations,
+            use_label = data['labels'],
             variables = data['variables'],
             )
+        if data['reforms'] is not None:
+            reform_value = fill_test_cases_with_values(
+                intermediate_variables = data['intermediate_variables'],
+                scenarios = reform_scenarios,
+                simulations = reform_simulations,
+                use_label = data['labels'],
+                variables = data['variables'],
+                )
+    else:
+        assert data['output_format'] == 'variables'
+        base_value = build_output_variables(
+            simulations = base_simulations,
+            use_label = data['labels'],
+            variables = data['variables'],
+            )
+        if data['reforms'] is not None:
+            reform_value = build_output_variables(
+                simulations = reform_simulations,
+                use_label = data['labels'],
+                variables = data['variables'],
+                )
 
     if data['trace']:
         simulations_variables_json = []
@@ -369,9 +433,9 @@ def api1_calculate(req):
                         simulation_variables_json[variable_name] = variable_value_json
                 column = holder.column
                 input_variables_infos = step.get('input_variables_infos')
-                used_periods = step.get('used_periods')
-                traceback_json.append(dict(
-                    cell_type = column.val_type,
+                parameters_infos = step.get('parameters_infos')
+                traceback_json.append(collections.OrderedDict(sorted(dict(
+                    cell_type = column.val_type,  # Unification with OpenFisca Julia name.
                     default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
                     input_variables = [
@@ -379,21 +443,18 @@ def api1_calculate(req):
                         for input_variable_name, input_variable_period in input_variables_infos
                         ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
-                    label = column.label,
+                    label = column.label if column.label != variable_name else None,
                     name = variable_name,
+                    parameters = parameters_infos or None,
                     period = str(period) if period is not None else None,
-                    used_periods = [
-                        str(used_period)
-                        for used_period in used_periods
-                        ] if used_periods is not None else None,
-                    ))
+                    ).iteritems())))
             simulations_variables_json.append(simulation_variables_json)
             tracebacks_json.append(traceback_json)
     else:
         simulations_variables_json = None
         tracebacks_json = None
 
-    response_data = dict(
+    response_data = collections.OrderedDict(sorted(dict(
         apiVersion = 1,
         context = data['context'],
         method = req.script_name,
@@ -401,12 +462,21 @@ def api1_calculate(req):
         suggestions = suggestions,
         tracebacks = tracebacks_json,
         url = req.url.decode('utf-8'),
-        value = reform_output_test_cases if data['reforms'] is not None else base_output_test_cases,
+        value = reform_value if data['reforms'] is not None else base_value,
         variables = simulations_variables_json,
-        )
+        ).iteritems()))
     if data['reforms'] is not None:
-        response_data['base_value'] = base_output_test_cases
-    return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(response_data.iteritems())),
-        headers = headers,
-        )
+        response_data['base_value'] = base_value
+
+    total_end_time = time.time()
+    total_time = total_end_time - total_start_time
+
+    if data['time']:
+        response_data['time'] = collections.OrderedDict(sorted(dict(
+            build_scenarios = build_scenarios_time,
+            compose_reforms = compose_reforms_time,
+            calculate_simulation = calculate_simulation_time,
+            total = total_time,
+            ).iteritems()))
+
+    return wsgihelpers.respond_json(ctx, response_data, headers = headers)

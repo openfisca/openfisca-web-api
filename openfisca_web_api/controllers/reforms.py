@@ -66,16 +66,22 @@ def api1_reforms(req):
             headers = headers,
             )
 
+    build_reform_function_by_key = model.build_reform_function_by_key
+    declared_reforms_key = build_reform_function_by_key.keys() \
+        if build_reform_function_by_key is not None \
+        else None
+    reforms = collections.OrderedDict(sorted({
+        reform_key: reform.name
+        for reform_key, reform in model.reform_by_full_key.iteritems()
+        }.iteritems())) if declared_reforms_key is not None else None
+
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
             context = data['context'],
             method = req.script_name,
             params = inputs,
-            reforms = collections.OrderedDict(sorted({
-                reform_key: reform.name
-                for reform_key, reform in model.reform_by_key.iteritems()
-                }.iteritems())) if model.reform_by_key is not None else None,
+            reforms = reforms,
             url = req.url.decode('utf-8'),
             ).iteritems())),
         headers = headers,

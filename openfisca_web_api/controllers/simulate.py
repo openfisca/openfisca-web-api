@@ -33,7 +33,7 @@ import copy
 import multiprocessing
 import os
 
-from openfisca_core import decompositions, reforms
+from openfisca_core import decompositions
 
 from .. import conf, contexts, conv, model, wsgihelpers
 
@@ -148,18 +148,19 @@ def api1_simulate(req):
 
     if errors is None:
         country_tax_benefit_system = model.tax_benefit_system
-        base_tax_benefit_system = reforms.compose_reforms(
-            base_tax_benefit_system = country_tax_benefit_system,
-            build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['base_reforms']],
+        base_tax_benefit_system = model.get_cached_composed_reform(
+            reform_keys = data['base_reforms'],
+            tax_benefit_system = country_tax_benefit_system,
             ) if data['base_reforms'] is not None else country_tax_benefit_system
         if data['reforms'] is not None:
-            reform_tax_benefit_system = reforms.compose_reforms(
-                base_tax_benefit_system = base_tax_benefit_system,
-                build_reform_list = [model.build_reform_function_by_key[reform_key] for reform_key in data['reforms']],
+            reform_tax_benefit_system = model.get_cached_composed_reform(
+                reform_keys = data['reforms'],
+                tax_benefit_system = base_tax_benefit_system,
                 )
 
         base_scenarios, base_scenarios_errors = conv.uniform_sequence(
             base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                ctx = ctx,
                 repair = data['validate'],
                 tax_benefit_system = base_tax_benefit_system,
                 )
@@ -169,6 +170,7 @@ def api1_simulate(req):
         if errors is None and data['reforms'] is not None:
             reform_scenarios, reform_scenarios_errors = conv.uniform_sequence(
                 reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                    ctx = ctx,
                     repair = data['validate'],
                     tax_benefit_system = reform_tax_benefit_system,
                     )
@@ -222,7 +224,7 @@ def api1_simulate(req):
         if data['validate']:
             original_test_case = scenario.test_case
             scenario.test_case = copy.deepcopy(original_test_case)
-        suggestion = scenario.suggest()
+        suggestion = scenario.suggest()  # This modifies scenario.test_case!
         if data['validate']:
             scenario.test_case = original_test_case
         if suggestion is not None:
@@ -274,9 +276,8 @@ def api1_simulate(req):
                         simulation_variables_json[variable_name] = variable_value_json
                 input_variables_infos = step.get('input_variables_infos')
                 column = holder.column
-                used_periods = step.get('used_periods')
                 traceback_json.append(dict(
-                    cell_type = column.val_type,
+                    cell_type = column.val_type,  # Unification with OpenFisca Julia name.
                     default_input_variables = step.get('default_input_variables', False),
                     entity = column.entity,
                     input_variables = [
@@ -284,13 +285,9 @@ def api1_simulate(req):
                         for variable_name, variable_period in input_variables_infos
                         ] if input_variables_infos else None,
                     is_computed = step.get('is_computed', False),
-                    label = column.label,
+                    label = column.label if column.label != variable_name else None,
                     name = variable_name,
                     period = str(period) if period is not None else None,
-                    used_periods = [
-                        str(used_period)
-                        for used_period in used_periods
-                        ] if used_periods is not None else None,
                     ))
             simulations_variables_json.append(simulation_variables_json)
             tracebacks_json.append(traceback_json)

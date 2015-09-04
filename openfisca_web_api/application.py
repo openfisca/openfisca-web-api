@@ -26,10 +26,33 @@
 """Middleware initialization"""
 
 
-import webob
+import json
+import logging
+import sys
+
+try:
+    import ipdb
+except ImportError:
+    ipdb = None
 from weberror.errormiddleware import ErrorMiddleware
+import webob
 
 from . import conf, controllers, environment, urls
+
+log = logging.getLogger(__name__)
+
+
+def launch_debugger_on_exception(app):
+    """WSGI middleware that catches all exceptions and launches a debugger."""
+    def _launch_debugger_on_exception(environ, start_response):
+        try:
+            return app(environ, start_response)
+        except Exception as exc:
+            log.exception(exc)
+            e, m, tb = sys.exc_info()
+            ipdb.post_mortem(tb)
+            raise
+    return _launch_debugger_on_exception
 
 
 def environment_setter(app):
@@ -45,12 +68,25 @@ def environment_setter(app):
     return set_environment
 
 
+def exception_to_json(app):
+    """WSGI middleware that catches all exceptions and responds a JSON with the message."""
+    def respond_json_exception(environ, start_response):
+        try:
+            return app(environ, start_response)
+        except Exception as exc:
+            log.exception(exc)
+            start_response('500 Internal Server Error', [('content-type', 'application/json; charset=utf-8')])
+            return [json.dumps({'error': u'Internal Server Error'})]
+
+    return respond_json_exception
+
+
 def x_api_version_header_setter(app):
     """WSGI middleware that sets response X-API-Version header."""
     def set_x_api_version_header(environ, start_response):
         req = webob.Request(environ)
         res = req.get_response(app)
-        res.headers.update({'X-API-Version': environment.last_commit_sha})
+        res.headers.update({'X-API-Version': environment.git_head_sha})
         return res(environ, start_response)
 
     return set_x_api_version_header
@@ -83,6 +119,9 @@ def make_app(global_conf, **app_conf):
     # CUSTOM MIDDLEWARE HERE (filtered by error handling middlewares)
 
     # Handle Python exceptions
+    if conf['debug'] and ipdb is not None:
+        app = launch_debugger_on_exception(app)
+    app = exception_to_json(app)
     if not conf['debug']:
         app = ErrorMiddleware(app, global_conf, **conf['errorware'])
 

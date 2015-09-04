@@ -23,7 +23,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-"""Graph controller"""
+"""Field controller"""
 
 
 import collections
@@ -35,35 +35,18 @@ from .. import contexts, conv, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
-def api1_graph(req):
+def api1_field(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
     assert req.method == 'GET', req.method
-
     params = req.GET
     inputs = dict(
         context = params.get('context'),
+        input_variables = params.get('input_variables'),
         reforms = params.getall('reform'),
         variable = params.get('variable'),
         )
-
-    if model.input_variables_extractor is None:
-        return wsgihelpers.respond_json(ctx,
-            collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
-                context = inputs.get('context'),
-                error = collections.OrderedDict(sorted(dict(
-                    code = 501,
-                    errors = [ctx._(u'openfisca_parsers is not installed on this instance of the API')],
-                    message = ctx._(u'Not implemented'),
-                    ).iteritems())),
-                method = req.script_name,
-                params = inputs,
-                url = req.url.decode('utf-8'),
-                ).iteritems())),
-            headers = headers,
-            )
 
     str_to_reforms = conv.make_str_to_reforms()
 
@@ -71,6 +54,11 @@ def api1_graph(req):
         conv.struct(
             dict(
                 context = conv.noop,  # For asynchronous calls
+                input_variables = conv.pipe(
+                    conv.test_isinstance((bool, int, basestring)),
+                    conv.anything_to_bool,
+                    conv.default(True),
+                    ),
                 reforms = str_to_reforms,
                 variable = conv.noop,  # Real conversion is done once tax-benefit system is known.
                 ),
@@ -112,30 +100,30 @@ def api1_graph(req):
             headers = headers,
             )
 
-    simulation = simulations.Simulation(
-        period = periods.period(datetime.date.today().year),
-        tax_benefit_system = tax_benefit_system,
-        )
-    edges = []
-    nodes = []
-    visited = set()
-    simulation.graph(
-        column_name = data['variable'],
-        edges = edges,
-        get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
-        nodes = nodes,
-        visited = visited,
-        )
+    variable_name = data['variable']
+    column = tax_benefit_system.column_by_name[variable_name]
+    value_json = column.to_json()
+    if data['input_variables'] and not column.is_input_variable():
+        simulation = simulations.Simulation(
+            period = periods.period(datetime.date.today().year),
+            tax_benefit_system = tax_benefit_system,
+            )
+        holder = simulation.get_or_new_holder(variable_name)
+        value_json['formula'] = holder.formula.to_json(
+            get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
+            with_input_variables_details = True,
+            )
+    value_json['entity'] = column.entity  # Overwrite with symbol instead of key plural for compatibility.
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
+            apiStatus = u'deprecated',
             apiVersion = 1,
             context = data['context'],
-            edges = edges,
             method = req.script_name,
-            nodes = nodes,
             params = inputs,
             url = req.url.decode('utf-8'),
+            value = value_json,
             ).iteritems())),
         headers = headers,
         )

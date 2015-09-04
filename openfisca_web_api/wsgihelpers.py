@@ -30,7 +30,9 @@ The main decorator :class:`wsgify` turns a function into a WSGI application.
 
 
 import collections
+import datetime
 import json
+from functools import update_wrapper
 
 import webob.dec
 import webob.exc
@@ -48,7 +50,10 @@ errors_title = {
     }
 
 
-wsgify = webob.dec.wsgify
+def wsgify(func, *args, **kwargs):
+    result = webob.dec.wsgify(func, *args, **kwargs)
+    update_wrapper(result, func)
+    return result
 
 
 def handle_cross_origin_resource_sharing(ctx):
@@ -75,7 +80,7 @@ def handle_cross_origin_resource_sharing(ctx):
     return headers
 
 
-def respond_json(ctx, data, code = None, headers = None, jsonp = None):
+def respond_json(ctx, data, code = None, headers = [], json_dumps_default = None, jsonp = None):
     """Return a JSON response.
 
     This function is optimized for JSON following
@@ -98,8 +103,6 @@ def respond_json(ctx, data, code = None, headers = None, jsonp = None):
                 )
     else:
         error = None
-    if headers is None:
-        headers = []
     if jsonp:
         content_type = 'application/javascript; charset=utf-8'
     else:
@@ -127,9 +130,19 @@ def respond_json(ctx, data, code = None, headers = None, jsonp = None):
     #     text = json.dumps(data, encoding = 'utf-8', ensure_ascii = False, indent = 2)
     # except UnicodeDecodeError:
     #     text = json.dumps(data, ensure_ascii = True, indent = 2)
-    text = json.dumps(data)
+    if json_dumps_default is None:
+        text = json.dumps(data)
+    else:
+        text = json.dumps(data, default = json_dumps_default)
     text = unicode(text)
     if jsonp:
         text = u'{0}({1})'.format(jsonp, text)
     response.text = text
     return response
+
+
+def convert_date_to_json(obj):
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()
+    else:
+        return json.JSONEncoder().default(obj)

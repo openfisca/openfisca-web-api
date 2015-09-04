@@ -29,7 +29,7 @@
 from datetime import datetime
 
 import numpy as np
-from openfisca_core import periods, simulations, formulas
+from openfisca_core import periods, simulations
 
 from .. import contexts, conv, model, wsgihelpers
 
@@ -53,7 +53,32 @@ def api1_formula(req):
 
 @wsgihelpers.wsgify
 def api2_formula(req):
-    API_VERSION = '2.0.0-alpha.1'
+    """
+A simple `GET`-, URL-based API to OpenFisca, making the assumption of computing formulas for a single person.
+
+Combination
+-----------
+
+You can compute several formulas at once by combining the paths and joining them with `+`.
+
+Example:
+```
+/salsuperbrut+salaire_net_a_payer?salaire_de_base=1440
+```
+
+This will compute both `salsuperbrut` and `salaire_net_a_payer` in a single request.
+
+
+URL size limit
+--------------
+
+Using combination with a lot of parameters may lead to long URLs.
+If used within the browser, make sure the resulting URL is kept
+[under 2047 characters](http://stackoverflow.com/questions/417142)
+for cross-browser compatibility, by splitting combined requests.
+On a server, just test what your library handles.
+"""
+    API_VERSION = '2.1.0'
     params = dict(req.GET)
     data = dict()
 
@@ -69,7 +94,15 @@ def api2_formula(req):
             data['values'][formula_name] = compute(column.name, params, data['period'])
 
     except Exception as error:
-        data['error'] = error.args[0]
+        if isinstance(error.args[0], dict):  # we raised it ourselves, in this controller
+            error = error.args[0]
+        else:
+            error = dict(
+                message = unicode(error),
+                code = 500
+                )
+
+        data['error'] = error
     finally:
         return respond(req, API_VERSION, data, params)
 
@@ -83,7 +116,7 @@ def get_column_from_formula_name(formula_name):
                       .format(formula_name)
             )))
 
-    if issubclass(result.formula_class, formulas.SimpleFormula) and result.formula_class.function is None:
+    if result.is_input_variable():
         raise(Exception(dict(
             code = 422,
             message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed"
@@ -125,18 +158,29 @@ def normalize_param(name, value):
 
 
 def parse_period(period_descriptor):
-    if period_descriptor is None:
-        now = datetime.now()
-        period_descriptor = '{}-{}'.format(now.year, now.month)
+    period_descriptor = period_descriptor or default_period()
 
     try:
-        return periods.period(period_descriptor)
+        result = periods.period(period_descriptor)
     except ValueError:
         raise(Exception(dict(
             code = 400,
             message = u"You requested computation for period '{}', but it could not be parsed as a period"
                       .format(period_descriptor)
             )))
+
+    if result.unit not in ['year', 'month']:
+        raise Exception(dict(
+            code = 400,
+            message = u"You passed period '{}', but it is not a month nor a year".format(period_descriptor)
+            ))
+
+    return result
+
+
+def default_period():
+    now = datetime.now()
+    return '{}-{:02d}'.format(now.year, now.month)
 
 
 # req: the original request we're responding to.
@@ -155,7 +199,8 @@ def respond(req, version, data, params):
     return wsgihelpers.respond_json(
         ctx,
         data,
-        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx),
+        json_dumps_default = wsgihelpers.convert_date_to_json,
         )
 
 
@@ -187,11 +232,22 @@ def create_simulation(data, period):
             holder.set_array(period, np.array([0]))
             holder = persons.get_or_new_holder(entity.role_for_person_variable_name)
             holder.set_array(period, np.array([0]))
+
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
         column = model.tax_benefit_system.column_by_name[column_name]
         entity = result.entity_by_key_plural[column.entity_key_plural]
         holder = entity.get_or_new_holder(column_name)
-        holder.set_array(period, np.array([value], dtype = column.dtype))
+
+        if period.unit == 'year':
+            holder.set_array(period, np.array([value], dtype = column.dtype))
+        elif period.unit == 'month':
+            # Inject inputs for all months of year
+            year = period.start.year
+            month_index = 1
+            while month_index <= 12:
+                month = periods.period('{}-{:02d}'.format(year, month_index))
+                holder.set_array(month, np.array([value], dtype = column.dtype))
+                month_index += 1
 
     return result
