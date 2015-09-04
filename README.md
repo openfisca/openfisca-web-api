@@ -1,6 +1,8 @@
 # OpenFisca Web-API
 
-[![Build Status via Travis CI](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
+[![Build Status](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
+
+[More build status](http://www.openfisca.fr/build-status)
 
 ## Presentation
 
