@@ -58,6 +58,9 @@ setup(
         'dev': [
             'PasteScript',
             ],
+        'france': [
+            'OpenFisca-France >= 0.5.1',
+            ],
         'test': [
             'nose',
             ],
@@ -66,7 +69,7 @@ setup(
         'Babel >= 0.9.4',
         'Biryani >= 0.10.4',
         'OpenFisca-Core >= 0.5.0',
-        'OpenFisca-Parsers >= 0.5dev',
+        'OpenFisca-Parsers >= 0.5',
         'PasteDeploy',
         'WebError >= 0.10',
         'WebOb >= 1.1',
