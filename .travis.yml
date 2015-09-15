@@ -1,6 +1,7 @@
 install:
   - pip install flake8  # Not yet available in Ubuntu precise (https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise)
   - pip install -r requirements.txt
+  - pip install --editable .[france]
 language: python
 python: "2.7"
 script: make test-ci
