@@ -29,7 +29,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '0.5.0',
+    version = '0.5.1',
 
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
@@ -49,18 +49,28 @@ setup(
 
     data_files = [
         ('share/locale/fr/LC_MESSAGES', ['openfisca_web_api/i18n/fr/LC_MESSAGES/openfisca-web-api.mo']),
+        ('share/openfisca/openfisca-web-api', ['development-france.ini', 'development-tunisia.ini', 'test.ini']),
         ],
     entry_points = {
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
         },
-    include_package_data = True,
+    extras_require = {
+        'dev': [
+            'PasteScript',
+            ],
+        'france': [
+            'OpenFisca-France >= 0.5.1',
+            ],
+        'test': [
+            'nose',
+            ],
+        },
     install_requires = [
         'Babel >= 0.9.4',
         'Biryani >= 0.10.4',
-        'OpenFisca-Core >= 0.5dev',
-        'OpenFisca-Parsers >= 0.5dev',
+        'OpenFisca-Core >= 0.5.0',
+        'OpenFisca-Parsers >= 0.5',
         'PasteDeploy',
-        'PasteScript',
         'WebError >= 0.10',
         'WebOb >= 1.1',
         ],

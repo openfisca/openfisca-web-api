@@ -1,8 +1,10 @@
 # Changelog
 
-## 0.5.1.dev0 - next release
+## 0.5.1
 
-* TODO Fill this changes list while developing
+* Remove docs, move to openfisca-gitbook repo
+* Update to travis new infrastructure
+* Do not install scipy in travis
 
 ## 0.5.0
 
