@@ -169,7 +169,7 @@ def test_map_enum_parameter_to_swagger():
 
     expected = {
         'name': u'taille_entreprise',
-        'description': u"Catégode taille d'entreprise (pour calcul des cotisations sociales)",
+        'description': u"Cat\xe9gorie de taille d'entreprise",
         'in': 'query',
         'type': 'string',
         'enum': [
