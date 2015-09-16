@@ -49,7 +49,16 @@ setup(
 
     data_files = [
         ('share/locale/fr/LC_MESSAGES', ['openfisca_web_api/i18n/fr/LC_MESSAGES/openfisca-web-api.mo']),
-        ('share/openfisca/openfisca-web-api', ['development-france.ini', 'development-tunisia.ini', 'test.ini']),
+        (
+            'share/openfisca/openfisca-web-api', [
+                'CHANGELOG.md',
+                'development-france.ini',
+                'development-tunisia.ini',
+                'LICENSE',
+                'README.md',
+                'test.ini',
+                ],
+            ),
         ],
     entry_points = {
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
@@ -77,6 +86,6 @@ setup(
     message_extractors = {'openfisca_web_api': [
         ('**.py', 'python', None),
         ]},
-    packages = find_packages(),
+    packages = find_packages(exclude=['openfisca_web_api.tests*']),
     test_suite = 'nose.collector',
     )
