@@ -2,6 +2,9 @@ TESTS_DIR=openfisca_web_api/tests
 
 all: flake8 test
 
+clean: clean-pyc
+	rm -rf build dist
+
 clean-pyc:
 	find . -name '*.pyc' -exec rm \{\} \;
 
