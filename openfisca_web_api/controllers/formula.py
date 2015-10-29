@@ -218,26 +218,22 @@ def create_simulation(data, period):
         )
     # Initialize entities, assuming there is only one person and one of each other entities ("familles",
     # "foyers fiscaux", etc).
-    persons = None
     for entity in result.entity_by_key_plural.itervalues():
         entity.count = 1
         entity.roles_count = 1
         entity.step_size = 1
-        if entity.is_persons_entity:
-            persons = entity
     # Link person to its entities using ID & role.
     for entity in result.entity_by_key_plural.itervalues():
         if not entity.is_persons_entity:
-            holder = persons.get_or_new_holder(entity.index_for_person_variable_name)
+            holder = result.get_or_new_holder(entity.index_for_person_variable_name)
             holder.set_array(period, np.array([0]))
-            holder = persons.get_or_new_holder(entity.role_for_person_variable_name)
+            holder = result.get_or_new_holder(entity.role_for_person_variable_name)
             holder.set_array(period, np.array([0]))
 
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
         column = model.tax_benefit_system.column_by_name[column_name]
-        entity = result.entity_by_key_plural[column.entity_key_plural]
-        holder = entity.get_or_new_holder(column_name)
+        holder = result.get_or_new_holder(column_name)
 
         if period.unit == 'year':
             holder.set_array(period, np.array([value], dtype = column.dtype))
