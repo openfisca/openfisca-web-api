@@ -57,6 +57,19 @@ def make_router():
         ('GET', '^/$', index),
         ('GET', '^/api/?$', index),
         ('POST', '^/api/1/calculate/?$', calculate.api1_calculate),
+
+        # TODO
+        # ('GET', '^/api/1/categories/?$', ),
+
+        # TODO
+        # - "output_format": "variables" should be by default
+        # - ability to give a "single_entity" like in Python
+        # - no google style API params, method, in output
+        #  - merge decompositions of simulate
+        #  - disable suggestions or repair by default, only opt-in
+        #  - use the scenario period for input variables, allow to specify a period for "variables" key
+        #    ("variables": [{"2015-01": "af"}])
+        # ('POST', '^/api/2/calculate/?$', calculate.api1_calculate),
         ('GET', '^/api/1/entities/?$', entities.api1_entities),
         ('GET', '^/api/1/field/?$', field.api1_field),
         ('GET', '^/api/1/fields/?$', fields.api1_fields),
