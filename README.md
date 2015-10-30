@@ -8,3 +8,19 @@
 This is the source code of the Web-API module.
 
 Please consult http://www.openfisca.fr/documentation
+
+## Install
+
+Assuming you are in an `openfisca` working directory:
+
+```
+git clone https://github.com/openfisca/openfisca-web-api.git
+cd openfisca-web-api
+git checkout next
+pip install --editable . --user # Microsoft Windows users must not use the `--user` option
+python setup.py compile_catalog
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)

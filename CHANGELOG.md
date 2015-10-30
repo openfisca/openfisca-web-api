@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2.dev0 - next release
+
+* TODO Fill this changes list while developing
+
 ## 0.5.1
 
 * Remove docs, move to openfisca-gitbook repo
