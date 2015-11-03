@@ -1,7 +1,7 @@
 # Contributing
 
-Read the [contribute section](http://www.openfisca.fr/documentation/contribute/)
-of the [documentation of OpenFisca](http://www.openfisca.fr/documentation/).
+Read the [contribute section](http://doc.openfisca.fr/contribute/)
+of the [documentation of OpenFisca](http://doc.openfisca.fr/).
 
 ## Code architecture
 

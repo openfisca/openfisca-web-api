@@ -7,7 +7,7 @@
 [OpenFisca](http://www.openfisca.fr/) is a versatile microsimulation free software.
 This is the source code of the Web-API module.
 
-Please consult http://www.openfisca.fr/documentation
+Please consult http://doc.openfisca.fr/
 
 ## Install
 
