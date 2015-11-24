@@ -44,7 +44,8 @@ def api1_formula(req):
         period = parse_period(params.pop('period', None))
         params = normalize(params)
         column = get_column_from_formula_name(req.urlvars.get('name'))
-        data['value'] = compute(column.name, params, period)
+        simulation = create_simulation(params, period)
+        data['value'] = compute(column.name, simulation)
     except Exception as error:
         data['error'] = error.args[0]
     finally:
@@ -89,9 +90,11 @@ On a server, just test what your library handles.
         data['values'] = dict()
         data['period'] = parse_period(req.urlvars.get('period'))
 
+        simulation = create_simulation(params, data['period'])
+
         for formula_name in formula_names:
             column = get_column_from_formula_name(formula_name)
-            data['values'][formula_name] = compute(column.name, params, data['period'])
+            data['values'][formula_name] = compute(column.name, simulation)
 
     except Exception as error:
         if isinstance(error.args[0], dict):  # we raised it ourselves, in this controller
@@ -204,8 +207,7 @@ def respond(req, version, data, params):
         )
 
 
-def compute(formula_name, params, period):
-    simulation = create_simulation(params, period)
+def compute(formula_name, simulation):
     resulting_dated_holder = simulation.compute(formula_name)
     return resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
 
