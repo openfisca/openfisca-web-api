@@ -26,7 +26,7 @@ def api1_field(req):
         variable = params.get('variable'),
         )
 
-    str_to_reforms = conv.make_str_to_reforms()
+    str_list_to_reforms = conv.make_str_list_to_reforms()
 
     data, errors = conv.pipe(
         conv.struct(
@@ -37,7 +37,7 @@ def api1_field(req):
                     conv.anything_to_bool,
                     conv.default(True),
                     ),
-                reforms = str_to_reforms,
+                reforms = str_list_to_reforms,
                 variable = conv.noop,  # Real conversion is done once tax-benefit system is known.
                 ),
             default = 'drop',

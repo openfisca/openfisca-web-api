@@ -89,7 +89,7 @@ def api1_simulate(req):
             headers = headers,
             )
 
-    str_to_reforms = conv.make_str_to_reforms()
+    str_list_to_reforms = conv.make_str_list_to_reforms()
 
     data, errors = conv.struct(
         dict(
@@ -98,9 +98,9 @@ def api1_simulate(req):
             #     conv.input_to_uuid_str,
             #     conv.not_none,
             #     ),
-            base_reforms = str_to_reforms,
+            base_reforms = str_list_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
-            reforms = str_to_reforms,
+            reforms = str_list_to_reforms,
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(

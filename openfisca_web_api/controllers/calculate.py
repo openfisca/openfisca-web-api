@@ -145,7 +145,7 @@ def api1_calculate(req):
             headers = headers,
             )
 
-    str_to_reforms = conv.make_str_to_reforms()
+    str_list_to_reforms = conv.make_str_list_to_reforms()
 
     data, errors = conv.struct(
         dict(
@@ -154,7 +154,7 @@ def api1_calculate(req):
             #     conv.input_to_uuid_str,
             #     conv.not_none,
             #     ),
-            base_reforms = str_to_reforms,
+            base_reforms = str_list_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             intermediate_variables = conv.pipe(
                 conv.test_isinstance((bool, int)),
@@ -171,7 +171,7 @@ def api1_calculate(req):
                 conv.test_in(['test_case', 'variables']),
                 conv.default('test_case'),
                 ),
-            reforms = str_to_reforms,
+            reforms = str_list_to_reforms,
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(

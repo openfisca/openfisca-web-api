@@ -39,31 +39,33 @@ def jsonify_value(value):
     return value
 
 
-def make_str_to_reforms():
+def make_str_list_to_reforms():
     # Defer converter creation for model to load.
     from . import model
 
-    def str_to_reforms(value, state = None):
+    def str_list_to_reforms(value, state = None):
         if value is None:
             return value, None
         if state is None:
             state = default_state
-        if model.build_reform_function_by_key is None:
+        value, error = pipe(
+            empty_to_none,
+            test_isinstance(list),
+            )(value)
+        if value is None or error is not None:
+            return value, error
+        if value and model.build_reform_function_by_key is None:
             return value, state._(u'No reform was declared to the API')
         declared_reforms_key = model.build_reform_function_by_key.keys()
-        return pipe(
-            test_isinstance(list),
-            uniform_sequence(
-                pipe(
-                    test_isinstance(basestring),
-                    empty_to_none,
-                    test_in(declared_reforms_key),
-                    ),
-                drop_none_items = True,
+        return uniform_sequence(
+            pipe(
+                test_isinstance(basestring),
+                empty_to_none,
+                test_in(declared_reforms_key),
                 ),
-            empty_to_none,
+            drop_none_items = True,
             )(value)
-    return str_to_reforms
+    return str_list_to_reforms
 
 
 def module_and_function_names_to_function(values, state = None):

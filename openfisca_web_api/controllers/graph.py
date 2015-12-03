@@ -43,13 +43,13 @@ def api1_graph(req):
             headers = headers,
             )
 
-    str_to_reforms = conv.make_str_to_reforms()
+    str_list_to_reforms = conv.make_str_list_to_reforms()
 
     data, errors = conv.pipe(
         conv.struct(
             dict(
                 context = conv.noop,  # For asynchronous calls
-                reforms = str_to_reforms,
+                reforms = str_list_to_reforms,
                 variable = conv.noop,  # Real conversion is done once tax-benefit system is known.
                 ),
             default = 'drop',

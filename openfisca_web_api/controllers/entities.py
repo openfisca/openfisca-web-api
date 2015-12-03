@@ -35,13 +35,13 @@ def api1_entities(req):
         reforms = params.getall('reform'),
         )
 
-    str_to_reforms = conv.make_str_to_reforms()
+    str_list_to_reforms = conv.make_str_list_to_reforms()
 
     data, errors = conv.pipe(
         conv.struct(
             dict(
                 context = conv.noop,  # For asynchronous calls
-                reforms = str_to_reforms,
+                reforms = str_list_to_reforms,
                 ),
             default = 'drop',
             ),
