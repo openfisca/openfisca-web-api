@@ -21,7 +21,6 @@ try:
 except ImportError:
     input_variables_extractors = None
 
-import openfisca_web_api
 from . import conf, conv, model
 
 
@@ -50,7 +49,6 @@ def get_parameters_file_path():
 
 def load_environment(global_conf, app_conf):
     """Configure the application environment."""
-    conf = openfisca_web_api.conf  # Empty dictionary
     conf.update(strings.deep_decode(global_conf))
     conf.update(strings.deep_decode(app_conf))
     conf.update(conv.check(conv.struct(
