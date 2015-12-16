@@ -9,7 +9,7 @@ import datetime
 import importlib
 import logging
 import os
-import pkg_resources
+# import pkg_resources
 import subprocess
 import sys
 import weakref
@@ -38,13 +38,13 @@ def get_git_head_sha(cwd = os.path.dirname(__file__)):
     return output.rstrip('\n')
 
 
-def get_parameters_file_path():
-    country_package_dir_path = pkg_resources.get_distribution(conf['country_package']).location
-    parameters_file_absolute_path = model.tax_benefit_system.legislation_xml_file_path
-    parameters_file_path = parameters_file_absolute_path[len(country_package_dir_path):]
-    if parameters_file_path.startswith('/'):
-        parameters_file_path = parameters_file_path[1:]
-    return parameters_file_path
+# def get_parameters_file_path():
+#     country_package_dir_path = pkg_resources.get_distribution(conf['country_package']).location
+#     parameters_file_absolute_path = model.tax_benefit_system.legislation_xml_file_path
+#     parameters_file_path = parameters_file_absolute_path[len(country_package_dir_path):]
+#     if parameters_file_path.startswith('/'):
+#         parameters_file_path = parameters_file_path[1:]
+#     return parameters_file_path
 
 
 def load_environment(global_conf, app_conf):
@@ -170,7 +170,7 @@ def load_environment(global_conf, app_conf):
     country_package_git_head_sha = get_git_head_sha(cwd = country_package.__path__[0])
 
     # Store parameters_file_path cache
-    model.parameters_file_path = get_parameters_file_path()
+    # model.parameters_file_path = get_parameters_file_path()
 
     # Store parameters_json cache
     parameters_json = []

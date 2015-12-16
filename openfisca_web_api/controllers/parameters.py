@@ -106,7 +106,7 @@ def api1_parameters(req):
             currency = tax_benefit_system.CURRENCY,
             method = req.script_name,
             parameters = parameters_json,
-            parameters_file_path = model.parameters_file_path,
+            # parameters_file_path = model.parameters_file_path,
             url = req.url.decode('utf-8'),
             ).iteritems())),
         headers = headers,
