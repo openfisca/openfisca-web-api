@@ -44,6 +44,22 @@ def api1_variables(req):
             ),
         )(inputs, state = ctx)
 
+    if errors is not None:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = 1,
+                error = collections.OrderedDict(sorted(dict(
+                    code = 400,  # Bad Request
+                    errors = [conv.jsonify_value(errors)],
+                    message = ctx._(u'Bad parameters in request'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
+
     simulation = None
     variables_json = []
     for variable_name in data['names'] or tax_benefit_system_variables_name:
