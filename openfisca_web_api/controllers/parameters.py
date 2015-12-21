@@ -99,15 +99,16 @@ def api1_parameters(req):
             parameter_json['description'] = parameter_json_in_cache['description']
             parameters_json.append(parameter_json)
 
+    response_dict = dict(
+        apiVersion = 1,
+        country_package_git_head_sha = environment.country_package_git_head_sha,
+        method = req.script_name,
+        parameters = parameters_json,
+        url = req.url.decode('utf-8'),
+        )
+    if hasattr(tax_benefit_system, 'CURRENCY'):
+        response_dict['currency'] = tax_benefit_system.CURRENCY
     return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            country_package_git_head_sha = environment.country_package_git_head_sha,
-            currency = tax_benefit_system.CURRENCY,
-            method = req.script_name,
-            parameters = parameters_json,
-            # parameters_file_path = model.parameters_file_path,
-            url = req.url.decode('utf-8'),
-            ).iteritems())),
+        collections.OrderedDict(sorted(response_dict.iteritems())),
         headers = headers,
         )
