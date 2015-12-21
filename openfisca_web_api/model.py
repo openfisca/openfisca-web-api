@@ -12,7 +12,6 @@ build_reform_function_by_key = None
 decomposition_json_by_file_path_cache = {}
 input_variables_and_parameters_by_column_name_cache = {}
 input_variables_extractor = None
-# parameters_file_path = None
 parameters_json_cache = None
 reform_by_full_key = None
 tax_benefit_system = None

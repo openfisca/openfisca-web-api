@@ -9,7 +9,7 @@ import datetime
 import importlib
 import logging
 import os
-# import pkg_resources
+import pkg_resources
 import subprocess
 import sys
 import weakref
@@ -25,6 +25,9 @@ from . import conf, conv, model
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Initialized in load_environment.
+country_package_dir_path = None
 country_package_git_head_sha = None
 git_head_sha = None
 
@@ -38,13 +41,11 @@ def get_git_head_sha(cwd = os.path.dirname(__file__)):
     return output.rstrip('\n')
 
 
-# def get_parameters_file_path():
-#     country_package_dir_path = pkg_resources.get_distribution(conf['country_package']).location
-#     parameters_file_absolute_path = model.tax_benefit_system.legislation_xml_file_path
-#     parameters_file_path = parameters_file_absolute_path[len(country_package_dir_path):]
-#     if parameters_file_path.startswith('/'):
-#         parameters_file_path = parameters_file_path[1:]
-#     return parameters_file_path
+def get_relative_file_path(absolute_file_path, base_path):
+    parameters_file_path = absolute_file_path[len(base_path):]
+    if parameters_file_path.startswith('/'):
+        parameters_file_path = parameters_file_path[1:]
+    return parameters_file_path
 
 
 def load_environment(global_conf, app_conf):
@@ -148,7 +149,8 @@ def load_environment(global_conf, app_conf):
             }
 
     # Cache default decomposition.
-    model.get_cached_or_new_decomposition_json(tax_benefit_system)
+    if hasattr(tax_benefit_system, 'DEFAULT_DECOMP_FILE'):
+        model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
     # Compute and cache compact legislation for each first day of month since at least 2 legal years.
     today = periods.instant(datetime.date.today())
@@ -163,19 +165,20 @@ def load_environment(global_conf, app_conf):
     if input_variables_extractors is not None:
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
 
+    global country_package_dir_path
+    country_package_dir_path = pkg_resources.get_distribution(conf['country_package']).location
+
     # Store Git last commit SHA
     global git_head_sha
     git_head_sha = get_git_head_sha()
     global country_package_git_head_sha
     country_package_git_head_sha = get_git_head_sha(cwd = country_package.__path__[0])
 
-    # Store parameters_file_path cache
-    # model.parameters_file_path = get_parameters_file_path()
-
-    # Store parameters_json cache
+    # Cache legislation JSON with references to original XML
+    legislation_json_with_references_to_xml = tax_benefit_system.get_legislation_json(with_source_file_infos = True)
     parameters_json = []
     walk_legislation_json(
-        tax_benefit_system.legislation_json,
+        legislation_json_with_references_to_xml,
         descriptions = [],
         parameters_json = parameters_json,
         path_fragments = [],
@@ -194,6 +197,11 @@ def walk_legislation_json(node_json, descriptions, parameters_json, path_fragmen
             )
         parameter_json['description'] = description
         parameter_json['name'] = u'.'.join(path_fragments)
+        if 'xml_file_path' in node_json:
+            parameter_json['xml_file_path'] = get_relative_file_path(
+                absolute_file_path = node_json['xml_file_path'],
+                base_path = country_package_dir_path,
+                )
         parameter_json = collections.OrderedDict(sorted(parameter_json.iteritems()))
         parameters_json.append(parameter_json)
     else:
