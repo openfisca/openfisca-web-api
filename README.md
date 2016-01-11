@@ -9,7 +9,7 @@ This is the source code of the Web-API module.
 
 Please consult http://doc.openfisca.fr/
 
-## Install
+## Install to develop
 
 Assuming you are in an `openfisca` working directory:
 
@@ -21,7 +21,7 @@ pip install --editable . --user # Microsoft Windows users must not use the `--us
 python setup.py compile_catalog
 ```
 
-## Install in production
+## Deploy in production
 
 Here we use Apache with mod_wsgi under Debian Jessie.
 
@@ -62,12 +62,65 @@ WSGIDaemonProcess api.openfisca.fr display-name=api
 # service apache2 force-reload
 ```
 
+## Test
+
 If you installed OpenFisca-Web-API from Git you can run the unit tests:
 
 ```
 # go to the git cloned directory
 cd /path/to/openfisca-web-api
 make test
+```
+
+You can also perform an HTTP request using [`curl`](http://curl.haxx.se/) and [`jq`](https://stedolan.github.io/jq/)
+to format the response JSON:
+
+```
+curl http://localhost:2000/api/1/calculate -X POST --data @./examples/calculate_single_person.json --header 'content-type: application/json' | jq .
+
+{
+  "apiVersion": 1,
+  "method": "/api/1/calculate",
+  "params": {
+    ... skipped ...
+  },
+  "url": "http://localhost:2000/api/1/calculate",
+  "value": [
+    {
+      "familles": [
+        {
+          "id": 0,
+          "parents": [
+            "individu0"
+          ]
+        }
+      ],
+      "foyers_fiscaux": [
+        {
+          "id": 0,
+          "declarants": [
+            "individu0"
+          ]
+        }
+      ],
+      "individus": [
+        {
+          "id": "individu0",
+          "birth": "1980-01-01"
+        }
+      ],
+      "menages": [
+        {
+          "id": 0,
+          "personne_de_reference": "individu0",
+          "revdisp": {
+            "2015": 5332.3701171875
+          }
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ## Contributing

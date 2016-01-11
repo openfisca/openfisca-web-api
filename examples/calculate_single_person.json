@@ -1,0 +1,33 @@
+{
+  "scenarios": [
+    {
+      "test_case": {
+        "familles": [
+          {
+            "parents": ["individu0"],
+            "enfants": []
+          }
+        ],
+        "foyers_fiscaux": [
+          {
+            "declarants": ["individu0"],
+            "personnes_a_charge": []
+          }
+        ],
+        "individus": [
+          {
+            "birth": "1980-01-01",
+            "id": "individu0"
+          }
+        ],
+        "menages": [
+          {
+            "personne_de_reference": "individu0"
+          }
+        ]
+      },
+      "period": "2015"
+    }
+  ],
+  "variables": ["revdisp"]
+}
