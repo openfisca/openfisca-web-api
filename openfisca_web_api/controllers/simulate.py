@@ -93,11 +93,6 @@ def api1_simulate(req):
 
     data, errors = conv.struct(
         dict(
-            # api_key = conv.pipe(  # Shared secret between client and server
-            #     conv.test_isinstance(basestring),
-            #     conv.input_to_uuid_str,
-            #     conv.not_none,
-            #     ),
             base_reforms = str_list_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             reforms = str_list_to_reforms,
@@ -171,29 +166,6 @@ def api1_simulate(req):
                 ).iteritems())),
             headers = headers,
             )
-
-#    api_key = data['api_key']
-#    account = model.Account.find_one(
-#        dict(
-#            api_key = api_key,
-#            ),
-#        as_class = collections.OrderedDict,
-#        )
-#    if account is None:
-#        return wsgihelpers.respond_json(ctx,
-#            collections.OrderedDict(sorted(dict(
-#                apiVersion = 1,
-#                context = data['context'],
-#                error = collections.OrderedDict(sorted(dict(
-#                    code = 401,  # Unauthorized
-#                    message = ctx._('Unknown API Key: {}').format(api_key),
-#                    ).iteritems())),
-#                method = req.script_name,
-#                params = inputs,
-#                url = req.url.decode('utf-8'),
-#                ).iteritems())),
-#            headers = headers,
-#            )
 
     scenarios = base_scenarios if data['reforms'] is None else reform_scenarios
 
