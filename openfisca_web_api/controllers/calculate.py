@@ -12,22 +12,36 @@ import itertools
 import os
 import time
 
+from openfisca_core.legislations import ParameterNotFound
 
 from .. import conf, contexts, conv, environment, model, wsgihelpers
+
+
+# Functions
 
 
 def N_(message):
     return message
 
 
-def build_and_calculate_simulations(variables_name, scenarios, trace = False):
-    simulations = []
-    for scenario in scenarios:
-        simulation = scenario.new_simulation(trace = trace)
-        for variable_name in variables_name:
-            simulation.calculate_output(variable_name)
-        simulations.append(simulation)
-    return simulations
+def build_error_json(exc, simulation, **kwargs):
+    variable_name = simulation.stack_trace[-1]['variable_name'] if simulation.stack_trace is not None else None
+    message = unicode(exc)
+    if variable_name is not None:
+        message += u' by variable "{}"'.format(variable_name)
+    error_json = {
+        'instant': str(exc.instant),
+        'message': message,
+        'name': exc.full_name,
+        'type': 'LEGISLATION_PARAMETER_NOT_FOUND',
+        }
+    error_json.update({key: value for key, value in kwargs.iteritems() if value is not None})
+    if simulation.stack_trace is None:
+        error_json['hint'] = u'Add `"trace": true` to the JSON payload to see ' \
+            'the name of the variable which requests this parameter.'
+    if variable_name is not None:
+        error_json['variable_name'] = variable_name
+    return error_json
 
 
 def build_output_variables(simulations, use_label, variables):
@@ -321,17 +335,58 @@ def api1_calculate(req):
             )
 
     calculate_simulation_start_time = time.time()
-    base_simulations = build_and_calculate_simulations(
-        scenarios = base_scenarios,
-        trace = data['intermediate_variables'] or data['trace'],
-        variables_name = data['variables'],
-        )
+
+    base_simulations = []
+    for scenario_index, scenario in enumerate(scenarios):
+        simulation = scenario.new_simulation(trace = data['intermediate_variables'] or data['trace'])
+        for variable_name in data['variables']:
+            try:
+                simulation.calculate_output(variable_name)
+            except ParameterNotFound as exc:
+                return wsgihelpers.respond_json(ctx,
+                    collections.OrderedDict(sorted(dict(
+                        apiVersion = 1,
+                        context = inputs.get('context'),
+                        error = collections.OrderedDict(sorted(dict(
+                            code = 500,
+                            errors = [{"scenarios": {scenario_index: build_error_json(exc, simulation)}}],
+                            message = ctx._(u'Internal server error'),
+                            ).iteritems())),
+                        method = req.script_name,
+                        params = inputs,
+                        url = req.url.decode('utf-8'),
+                        ).iteritems())),
+                    headers = headers,
+                    )
+        base_simulations.append(simulation)
+
     if data['reforms'] is not None:
-        reform_simulations = build_and_calculate_simulations(
-            scenarios = reform_scenarios,
-            trace = data['intermediate_variables'] or data['trace'],
-            variables_name = data['variables'],
-            )
+        reform_simulations = []
+        for scenario_index, scenario in enumerate(reform_scenarios):
+            simulation = scenario.new_simulation(trace = data['intermediate_variables'] or data['trace'])
+            for variable_name in data['variables']:
+                try:
+                    simulation.calculate_output(variable_name)
+                except ParameterNotFound as exc:
+                    return wsgihelpers.respond_json(ctx,
+                        collections.OrderedDict(sorted(dict(
+                            apiVersion = 1,
+                            context = inputs.get('context'),
+                            error = collections.OrderedDict(sorted(dict(
+                                code = 500,
+                                errors = [
+                                    {"scenarios": {scenario_index: build_error_json(exc, simulation, reforms = True)}},
+                                    ],
+                                message = ctx._(u'Internal server error'),
+                                ).iteritems())),
+                            method = req.script_name,
+                            params = inputs,
+                            url = req.url.decode('utf-8'),
+                            ).iteritems())),
+                        headers = headers,
+                        )
+            reform_simulations.append(simulation)
+
     calculate_simulation_end_time = time.time()
     calculate_simulation_time = calculate_simulation_end_time - calculate_simulation_start_time
 
