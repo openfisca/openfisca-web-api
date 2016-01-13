@@ -8,6 +8,7 @@ import collections
 import datetime
 import importlib
 import logging
+import multiprocessing
 import os
 import pkg_resources
 import subprocess
@@ -29,6 +30,7 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 # Initialized in load_environment.
 country_package_dir_path = None
 country_package_git_head_sha = None
+cpu_count = None
 git_head_sha = None
 
 
@@ -184,6 +186,11 @@ def load_environment(global_conf, app_conf):
         path_fragments = [],
         )
     model.parameters_json_cache = parameters_json
+
+    # Initialize multiprocessing and load_alert
+    if conf['load_alert']:
+        global cpu_count
+        cpu_count = multiprocessing.cpu_count()
 
 
 def walk_legislation_json(node_json, descriptions, parameters_json, path_fragments):

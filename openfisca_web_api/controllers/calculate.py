@@ -9,14 +9,11 @@ from __future__ import division
 import collections
 import copy
 import itertools
-import multiprocessing
 import os
 import time
 
-from .. import conf, contexts, conv, model, wsgihelpers
 
-
-cpu_count = multiprocessing.cpu_count()
+from .. import conf, contexts, conv, environment, model, wsgihelpers
 
 
 def N_(message):
@@ -93,7 +90,7 @@ def api1_calculate(req):
             # When load average is not available, always accept request.
             pass
         else:
-            if load_average[0] / cpu_count > 1:
+            if load_average[0] / environment.cpu_count > 1:
                 return wsgihelpers.respond_json(ctx,
                     collections.OrderedDict(sorted(dict(
                         apiVersion = 1,
