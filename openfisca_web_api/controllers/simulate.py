@@ -13,7 +13,6 @@ import os
 from openfisca_core import decompositions
 from openfisca_core.legislations import ParameterNotFound
 
-from . import calculate
 from .. import conf, contexts, conv, environment, model, wsgihelpers
 
 
@@ -201,93 +200,48 @@ def api1_simulate(req):
     decomposition_json = model.get_cached_or_new_decomposition_json(tax_benefit_system = base_tax_benefit_system)
     base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
 
-    base_response_json = copy.deepcopy(decomposition_json)  # Use decomposition as a skeleton for response.
-    for node in decompositions.iter_decomposition_nodes(base_response_json, children_first = True):
-        children = node.get('children')
-        if children:
-            node['values'] = map(lambda *l: sum(l), *(
-                child['values']
-                for child in children
-                ))
-        else:
-            node['values'] = values = []
-            for simulation in base_simulations:
-                try:
-                    simulation.calculate_output(node['code'])
-                except ParameterNotFound as exc:
-                    return wsgihelpers.respond_json(ctx,
-                        collections.OrderedDict(sorted(dict(
-                            apiVersion = 1,
-                            context = inputs.get('context'),
-                            error = collections.OrderedDict(sorted(dict(
-                                code = 500,
-                                errors = [{"scenarios": {scenario_index: calculate.build_error_json(exc, simulation)}}],
-                                message = ctx._(u'Internal server error'),
-                                ).iteritems())),
-                            method = req.script_name,
-                            params = inputs,
-                            url = req.url.decode('utf-8'),
-                            ).iteritems())),
-                        headers = headers,
-                        )
-                holder = simulation.get_holder(node['code'])
-                column = holder.column
-                values.extend(
-                    column.transform_value_to_json(value)
-                    for value in holder.new_test_case_array(simulation.period).tolist()
-                    )
+    try:
+        base_response_json = decompositions.calculate(base_simulations, decomposition_json)
+    except ParameterNotFound as exc:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = 1,
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 500,
+                    errors = [{"scenarios": {exc.simulation_index: exc.to_json()}}],
+                    message = ctx._(u'Internal server error'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
 
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(
             tax_benefit_system = reform_tax_benefit_system,
             )
         reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
-        # reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
-        reform_response_json = copy.deepcopy(reform_decomposition_json)  # Use decomposition as a skeleton for response.
-        for node in decompositions.iter_decomposition_nodes(reform_response_json, children_first = True):
-            children = node.get('children')
-            if children:
-                node['values'] = map(lambda *l: sum(l), *(
-                    child['values']
-                    for child in children
-                    ))
-            else:
-                node['values'] = values = []
-                for simulation in base_simulations:
-                    try:
-                        simulation.calculate_output(node['code'])
-                    except ParameterNotFound as exc:
-                        return wsgihelpers.respond_json(ctx,
-                            collections.OrderedDict(sorted(dict(
-                                apiVersion = 1,
-                                context = inputs.get('context'),
-                                error = collections.OrderedDict(sorted(dict(
-                                    code = 500,
-                                    errors = [
-                                        {
-                                            "scenarios": {
-                                                scenario_index: calculate.build_error_json(
-                                                    exc,
-                                                    simulation,
-                                                    reform = True,
-                                                    ),
-                                                }
-                                            },
-                                        ],
-                                    message = ctx._(u'Internal server error'),
-                                    ).iteritems())),
-                                method = req.script_name,
-                                params = inputs,
-                                url = req.url.decode('utf-8'),
-                                ).iteritems())),
-                            headers = headers,
-                            )
-                    holder = simulation.get_holder(node['code'])
-                    column = holder.column
-                    values.extend(
-                        column.transform_value_to_json(value)
-                        for value in holder.new_test_case_array(simulation.period).tolist()
-                        )
+        try:
+            reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
+        except ParameterNotFound as exc:
+            return wsgihelpers.respond_json(ctx,
+                collections.OrderedDict(sorted(dict(
+                    apiVersion = 1,
+                    context = inputs.get('context'),
+                    error = collections.OrderedDict(sorted(dict(
+                        code = 500,
+                        errors = [{"scenarios": {exc.simulation_index: exc.to_json()}}],
+                        message = ctx._(u'Internal server error'),
+                        ).iteritems())),
+                    method = req.script_name,
+                    params = inputs,
+                    url = req.url.decode('utf-8'),
+                    ).iteritems())),
+                headers = headers,
+                )
 
     if data['trace']:
         simulations_variables_json = []
