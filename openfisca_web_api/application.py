@@ -47,14 +47,24 @@ def environment_setter(app):
 
 
 def exception_to_json(app):
-    """WSGI middleware that catches all exceptions and responds a JSON with the message."""
+    """
+    WSGI middleware that catches all uncaught exceptions and responds a generic JSON object.
+    Since Webob wsgify decorator catches HTTPException subclasses, here remains only the others.
+    """
     def respond_json_exception(environ, start_response):
         try:
             return app(environ, start_response)
         except Exception as exc:
             log.exception(exc)
             start_response('500 Internal Server Error', [('content-type', 'application/json; charset=utf-8')])
-            return [json.dumps({'error': u'Internal Server Error'})]
+            error_json = {
+                'error': {
+                    'code': 500,
+                    'hint': u'See the HTTP server log to see the exception traceback.',
+                    'message': u'Internal Server Error',
+                    },
+                }
+            return [json.dumps(error_json)]
 
     return respond_json_exception
 

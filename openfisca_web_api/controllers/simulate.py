@@ -11,6 +11,7 @@ import copy
 import os
 
 from openfisca_core import decompositions
+from openfisca_core.legislations import ParameterNotFound
 
 from .. import conf, contexts, conv, environment, model, wsgihelpers
 
@@ -198,14 +199,49 @@ def api1_simulate(req):
 
     decomposition_json = model.get_cached_or_new_decomposition_json(tax_benefit_system = base_tax_benefit_system)
     base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
-    base_response_json = decompositions.calculate(base_simulations, decomposition_json)
+
+    try:
+        base_response_json = decompositions.calculate(base_simulations, decomposition_json)
+    except ParameterNotFound as exc:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = 1,
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 500,
+                    errors = [{"scenarios": {exc.simulation_index: exc.to_json()}}],
+                    message = ctx._(u'Internal server error'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
 
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(
             tax_benefit_system = reform_tax_benefit_system,
             )
         reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
-        reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
+        try:
+            reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
+        except ParameterNotFound as exc:
+            return wsgihelpers.respond_json(ctx,
+                collections.OrderedDict(sorted(dict(
+                    apiVersion = 1,
+                    context = inputs.get('context'),
+                    error = collections.OrderedDict(sorted(dict(
+                        code = 500,
+                        errors = [{"scenarios": {exc.simulation_index: exc.to_json()}}],
+                        message = ctx._(u'Internal server error'),
+                        ).iteritems())),
+                    method = req.script_name,
+                    params = inputs,
+                    url = req.url.decode('utf-8'),
+                    ).iteritems())),
+                headers = headers,
+                )
 
     if data['trace']:
         simulations_variables_json = []

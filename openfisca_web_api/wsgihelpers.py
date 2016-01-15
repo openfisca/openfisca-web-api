@@ -25,6 +25,7 @@ errors_title = {
     401: N_("Access Denied"),
     403: N_("Access Denied"),
     404: N_("Unable to Access"),
+    500: N_("Internal Server Error"),
     }
 
 
