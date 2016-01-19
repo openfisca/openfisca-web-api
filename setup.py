@@ -55,6 +55,7 @@ setup(
     install_requires = [
         'Babel >= 0.9.4',
         'Biryani >= 0.10.4',
+        'numpy >= 1.6',
         'OpenFisca-Core >= 0.5.0',
         'OpenFisca-Parsers >= 0.5',
         'PasteDeploy',
