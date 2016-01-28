@@ -6,7 +6,8 @@
 
 import collections
 
-from . import calculate1, entities, field, fields, formula, graph, parameters, reforms, simulate, swagger, variables
+from . import (calculate1, calculate2, entities, field, fields, formula, graph, parameters, reforms, simulate, swagger,
+    variables)
 from .. import contexts, urls, wsgihelpers
 
 
@@ -35,6 +36,7 @@ def make_router():
         ('GET', '^/$', index),
         ('GET', '^/api/?$', index),
         ('POST', '^/api/1/calculate/?$', calculate1.api1_calculate),
+        ('POST', '^/api/2/calculate/?$', calculate2.api2_calculate),
         ('GET', '^/api/1/entities/?$', entities.api1_entities),
         ('GET', '^/api/1/field/?$', field.api1_field),
         ('GET', '^/api/1/fields/?$', fields.api1_fields),
