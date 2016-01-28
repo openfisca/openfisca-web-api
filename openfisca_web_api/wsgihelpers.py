@@ -15,6 +15,8 @@ from functools import update_wrapper
 import webob.dec
 import webob.exc
 
+from .utils import sodict
+
 
 def N_(message):
     return message
@@ -57,6 +59,28 @@ def handle_cross_origin_resource_sharing(ctx):
     headers.append(('Access-Control-Allow-Origin', origin))
     headers.append(('Access-Control-Expose-Headers', 'WWW-Authenticate'))
     return headers
+
+
+def respond_error_json(ctx, code, inputs, details = None, headers = None, hint = None, message = None, type = None):
+    req = ctx.req
+    return respond_json(
+        ctx = ctx,
+        data = sodict(
+            apiVersion = 1,
+            context = inputs.get('context'),
+            error = sodict(
+                code = code,
+                details = details,
+                hint = hint,
+                message = message,
+                type = type,
+                ),
+            method = req.script_name,
+            params = inputs,
+            url = req.url.decode('utf-8'),
+            ),
+        headers = headers,
+        )
 
 
 def respond_json(ctx, data, code = None, headers = [], json_dumps_default = None, jsonp = None):
