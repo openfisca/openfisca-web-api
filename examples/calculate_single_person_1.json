@@ -4,14 +4,12 @@
       "test_case": {
         "familles": [
           {
-            "parents": ["individu0"],
-            "enfants": []
+            "parents": ["individu0"]
           }
         ],
         "foyers_fiscaux": [
           {
-            "declarants": ["individu0"],
-            "personnes_a_charge": []
+            "declarants": ["individu0"]
           }
         ],
         "individus": [
