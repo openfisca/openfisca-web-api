@@ -11,7 +11,6 @@ from openfisca_core import periods, simulations
 
 from .. import contexts, conv, model, wsgihelpers
 
-
 @wsgihelpers.wsgify
 def api1_formula(req):
     API_VERSION = 1
@@ -19,10 +18,11 @@ def api1_formula(req):
     data = dict()
 
     try:
+        tax_benefit_system = model.tax_benefit_system
         period = parse_period(params.pop('period', None))
-        params = normalize(params)
-        column = get_column_from_formula_name(req.urlvars.get('name'))
-        data['value'] = compute(column.name, params, period)
+        params = normalize(params, tax_benefit_system)
+        column = get_column_from_formula_name(req.urlvars.get('name'), tax_benefit_system)
+        data['value'] = compute(column.name, params, period, tax_benefit_system)
     except Exception as error:
         data['error'] = error.args[0]
     finally:
@@ -46,6 +46,16 @@ Example:
 
 This will compute both `salaire_super_brut` and `salaire_net_a_payer` in a single request.
 
+Reforms
+-----------
+
+Reforms can be requested to patch the simulation system.
+To keep this endpoint URL simple, they are requested as a list in a custom HTTP header.
+```
+X-OpenFisca-Extensions: de_net_a_brut, landais_piketty_saez
+```
+This header is of course optional.
+
 
 URL size limit
 --------------
@@ -61,15 +71,22 @@ On a server, just test what your library handles.
     data = dict()
 
     try:
-        params = normalize(params)
+        extensions_header = req.headers.get('X-Openfisca-Extensions')
+
+        tax_benefit_system = model.get_cached_composed_reform(
+            reform_keys = extensions_header.split(','),
+            tax_benefit_system = model.tax_benefit_system,
+            ) if extensions_header is not None else model.tax_benefit_system
+
+        params = normalize(params, tax_benefit_system)
         formula_names = req.urlvars.get('names').split('+')
 
         data['values'] = dict()
         data['period'] = parse_period(req.urlvars.get('period'))
 
         for formula_name in formula_names:
-            column = get_column_from_formula_name(formula_name)
-            data['values'][formula_name] = compute(column.name, params, data['period'])
+            column = get_column_from_formula_name(formula_name, tax_benefit_system)
+            data['values'][formula_name] = compute(column.name, params, data['period'], tax_benefit_system)
 
     except Exception as error:
         if isinstance(error.args[0], dict):  # we raised it ourselves, in this controller
@@ -85,8 +102,8 @@ On a server, just test what your library handles.
         return respond(req, API_VERSION, data, params)
 
 
-def get_column_from_formula_name(formula_name):
-    result = model.tax_benefit_system.column_by_name.get(formula_name)
+def get_column_from_formula_name(formula_name, tax_benefit_system):
+    result = tax_benefit_system.column_by_name.get(formula_name)
     if result is None:
         raise(Exception(dict(
             code = 404,
@@ -104,12 +121,12 @@ def get_column_from_formula_name(formula_name):
     return result
 
 
-def normalize(params):
+def normalize(params, tax_benefit_system):
     result = dict()
 
     try:
         for param_name, value in params.items():
-            result[param_name] = normalize_param(param_name, value)
+            result[param_name] = normalize_param(param_name, value, tax_benefit_system)
     except KeyError:
         raise Exception(dict(
             code = 400,
@@ -119,8 +136,8 @@ def normalize(params):
     return result
 
 
-def normalize_param(name, value):
-    column = model.tax_benefit_system.column_by_name[name]
+def normalize_param(name, value, tax_benefit_system):
+    column = tax_benefit_system.column_by_name[name]
 
     result, error = conv.pipe(
         column.input_to_dated_python  # if column is not a date, this will be None and conv.pipe will be pass-through
@@ -182,17 +199,17 @@ def respond(req, version, data, params):
         )
 
 
-def compute(formula_name, params, period):
-    simulation = create_simulation(params, period)
+def compute(formula_name, params, period, tax_benefit_system):
+    simulation = create_simulation(params, period, tax_benefit_system)
     resulting_dated_holder = simulation.compute(formula_name)
     return resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
 
 
-def create_simulation(data, period):
+def create_simulation(data, period, tax_benefit_system):
     result = simulations.Simulation(
         debug = False,
         period = period,
-        tax_benefit_system = model.tax_benefit_system,
+        tax_benefit_system = tax_benefit_system,
         )
     # Initialize entities, assuming there is only one person and one of each other entities ("familles",
     # "foyers fiscaux", etc).
@@ -210,7 +227,7 @@ def create_simulation(data, period):
 
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
-        column = model.tax_benefit_system.column_by_name[column_name]
+        column = tax_benefit_system.column_by_name[column_name]
         holder = result.get_or_new_holder(column_name)
 
         if period.unit == 'year':
