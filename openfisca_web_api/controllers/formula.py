@@ -41,10 +41,10 @@ You can compute several formulas at once by combining the paths and joining them
 
 Example:
 ```
-/salsuperbrut+salaire_net_a_payer?salaire_de_base=1440
+/salaire_super_brut+salaire_net_a_payer?salaire_de_base=1440
 ```
 
-This will compute both `salsuperbrut` and `salaire_net_a_payer` in a single request.
+This will compute both `salaire_super_brut` and `salaire_net_a_payer` in a single request.
 
 
 URL size limit
