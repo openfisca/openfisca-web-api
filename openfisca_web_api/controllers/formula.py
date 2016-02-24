@@ -204,9 +204,9 @@ def create_simulation(data, period):
     for entity in result.entity_by_key_plural.itervalues():
         if not entity.is_persons_entity:
             holder = result.get_or_new_holder(entity.index_for_person_variable_name)
-            holder.set_array(period, np.array([0]))
+            holder.put_in_cache(np.array([0]), period)
             holder = result.get_or_new_holder(entity.role_for_person_variable_name)
-            holder.set_array(period, np.array([0]))
+            holder.put_in_cache(np.array([0]), period)
 
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
@@ -214,14 +214,14 @@ def create_simulation(data, period):
         holder = result.get_or_new_holder(column_name)
 
         if period.unit == 'year':
-            holder.set_array(period, np.array([value], dtype = column.dtype))
+            holder.put_in_cache(np.array([value], dtype = column.dtype), period)
         elif period.unit == 'month':
             # Inject inputs for all months of year
             year = period.start.year
             month_index = 1
             while month_index <= 12:
                 month = periods.period('{}-{:02d}'.format(year, month_index))
-                holder.set_array(month, np.array([value], dtype = column.dtype))
+                holder.put_in_cache(np.array([value], dtype = column.dtype), month)
                 month_index += 1
 
     return result

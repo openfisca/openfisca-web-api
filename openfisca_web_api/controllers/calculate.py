@@ -54,10 +54,18 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
             entity_members = test_case[holder.entity.key_plural]
             if isinstance(variable_value_json, dict):
                 for entity_member_index, entity_member in enumerate(entity_members):
-                    entity_member[variable_name] = {
-                        period: array_json[entity_member_index]
-                        for period, array_json in variable_value_json.iteritems()
-                        }
+                    entity_member[variable_name] = {}
+                    for period, array_or_dict_json in variable_value_json.iteritems():
+                            if type(array_or_dict_json) == dict:
+                                if len(array_or_dict_json) == 1:
+                                    entity_member[variable_name][period] = \
+                                        array_or_dict_json[array_or_dict_json.keys()[0]][entity_member_index]
+                                else:
+                                    entity_member[variable_name][period] = {}
+                                    for key, array in array_or_dict_json.iteritems():
+                                        entity_member[variable_name][period][key] = array[entity_member_index]
+                            else:
+                                entity_member[variable_name][period] = array_or_dict_json[entity_member_index]
             else:
                 for entity_member, cell_json in itertools.izip(entity_members, variable_value_json):
                     entity_member[variable_name] = cell_json
