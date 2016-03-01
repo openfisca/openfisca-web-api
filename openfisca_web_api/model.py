@@ -19,6 +19,9 @@ TaxBenefitSystem = None
 
 
 def get_cached_composed_reform(reform_keys, tax_benefit_system):
+    if reform_by_full_key is None:
+        raise Exception('Cannot use reforms when none has been loaded in the instance configuration')\
+
     full_key = '.'.join(
         [tax_benefit_system.full_key] + reform_keys
         if isinstance(tax_benefit_system, reforms.AbstractReform)
