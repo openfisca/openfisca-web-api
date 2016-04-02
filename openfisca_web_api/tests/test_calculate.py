@@ -3,7 +3,7 @@
 
 import json
 
-from nose.tools import assert_equal, assert_is_instance
+from nose.tools import assert_equal, assert_is_instance, assert_true
 from webob import Request
 
 from . import common
@@ -69,6 +69,66 @@ def test_calculate_with_test_case():
         )
     res = req.get_response(common.app)
     assert_equal(res.status_code, 200, res.body)
+
+
+def test_calculate_with_axes():
+    test_case = {
+        'output_format': 'variables',
+        "scenarios": [{
+            "period": {
+                "start": 2014,
+                "unit": "year"
+                },
+            "axes": [{
+                "count": 50,
+                "max": 100000,
+                "min": 0,
+                "name": "salaire_imposable"
+                }],
+            "test_case": {
+                "individus": [
+                    {
+                        "id": "Personne Principale",
+                        "salaire_imposable": 0,
+                        "statmarit": 2
+                        },
+                    {
+                        "id": "Personne Conjoint",
+                        "salaire_imposable": 2
+                        },
+                    ],
+                "familles": [{
+                    "id": "Famille 1",
+                    "parents": ["Personne Principale", "Personne Conjoint"],
+                    "enfants": []
+                    }],
+                "foyers_fiscaux": [{
+                    "id": "Déclaration d'impôt 1",
+                    "declarants": ["Personne Principale", "Personne Conjoint"],
+                    "personnes_a_charge": []
+                    }],
+                "menages": [{
+                    "id": "Logement principal 1",
+                    "personne_de_reference": "Personne Principale",
+                    "conjoint": "Personne Conjoint",
+                    "enfants": []
+                    }],
+                },
+            }],
+        'variables': ['impo']
+        }
+    req = Request.blank(
+        '/api/1/calculate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 200, res.body)
+    res_body_json = json.loads(res.body)
+    impo_values = res_body_json['value'][0]['impo']['2014']
+    assert_is_instance(impo_values, list)
+    assert_true(impo_values[-1] < 0)
 
 
 def test_calculate_with_labels():
