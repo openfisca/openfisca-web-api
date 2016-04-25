@@ -2,12 +2,12 @@
 
 [![Build Status](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
 
-[More build status](http://www.openfisca.fr/build-status)
+[More build statuses](http://www.openfisca.fr/build-status)
 
 [OpenFisca](http://www.openfisca.fr/) is a versatile microsimulation free software.
 This is the source code of the Web-API module.
 
-Please consult http://doc.openfisca.fr/
+The documentation of the project is hosted at http://doc.openfisca.fr/
 
 ## Install to develop
 
@@ -23,7 +23,7 @@ python setup.py compile_catalog
 
 ## Deploy in production
 
-Here we use Apache with mod_wsgi under Debian Jessie.
+Here we use Apache with `mod_wsgi` under Debian Jessie.
 
 ```
 # aptitude install apache2 libapache2-mod-wsgi
@@ -62,6 +62,28 @@ WSGIDaemonProcess api.openfisca.fr display-name=api
 # service apache2 force-reload
 ```
 
+## Code architecture
+
+Each API endpoint (`calculate`, `simulate`, etc.) source code has its own controller
+(a function responding to a HTTP request) in `openfisca_web_api/controllers`.
+
+Each controller function consists basically of 3 steps:
+- reading and validating user input (with `req.params`)
+- doing some computations
+- returning the results in JSON (with `wsgihelpers.respond_json`)
+
+The configuration of the application is stored in `development-<country>.ini` files, `<country>` being either
+`france` or `tunisia`.
+The configuration is validated once when the application starts.
+The validation code is in `openfisca_web_api/environment.py` at the beginning of the `load_environment` function.
+
+The tests are in `openfisca_web_api/tests`.
+
+The function `make_app` in `openfisca_web_api/application.py` returns a [WSGI](http://wsgi.readthedocs.org/) application.
+It is the main entry point of the application and is declared in `setup.py`.
+
+All conversion and validation steps are done using the [Biryani](https://biryani.readthedocs.org) library.
+
 ## Test
 
 If you installed OpenFisca-Web-API from Git you can run the unit tests:
@@ -73,7 +95,3 @@ make test
 ```
 
 Also see [examples](./examples/).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md)
