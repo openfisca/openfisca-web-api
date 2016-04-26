@@ -2,7 +2,7 @@
   "scenarios": [
     {
       "input_variables": {
-        "birth": ["1980-01-01"]
+        "date_naissance": ["1980-01-01"]
       },
       "period": "2015"
     }

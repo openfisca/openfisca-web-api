@@ -151,13 +151,13 @@ def test_bad_params_error_message():
 
 
 def test_unnormalizable_params_status_code():
-    assert_equal(send(query_string = 'birth=herp')['status_code'], 400)
+    assert_equal(send(query_string = 'date_naissance=herp')['status_code'], 400)
 
 
 def test_unnormalizable_params_error_message():
-    message = send(query_string = 'birth=herp')['payload']['error']['message']
+    message = send(query_string = 'date_naissance=herp')['payload']['error']['message']
 
-    assert_in('birth', message)
+    assert_in('date_naissance', message)
     assert_in('normalized', message)
     assert_not_in('{', message)  # serialisation failed
 

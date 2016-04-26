@@ -16,7 +16,7 @@
         ],
         "individus": [
           {
-            "birth": "1980-01-01",
+            "date_naissance": "1980-01-01",
             "id": "individu0"
           }
         ],
