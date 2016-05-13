@@ -1,14 +1,14 @@
 # Changelog
 
-## 0.5.3.dev0 - next release
+## 1.0.0 – [diff](https://github.com/openfisca/openfisca-web-api/compare/0.5.2...1.0.0)
 
-* TODO Fill this changes list while developing
+* Switch to [semantic versioning](http://semver.org/)
 
-## 0.5.2
+## 0.5.2 – [diff](https://github.com/openfisca/openfisca-web-api/compare/0.5.1...0.5.2)
 
 * Misc updates
 
-## 0.5.1
+## 0.5.1 – [diff](https://github.com/openfisca/openfisca-web-api/compare/0.5.0...0.5.1)
 
 * Remove docs, move to openfisca-gitbook repo
 * Update to travis new infrastructure
