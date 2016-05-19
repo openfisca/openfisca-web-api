@@ -9,7 +9,7 @@ This is the source code of the Web-API module.
 
 The documentation of the project is hosted at http://doc.openfisca.fr/
 
-## Install to develop
+## Install
 
 Assuming you are in an `openfisca` working directory:
 
@@ -21,9 +21,23 @@ pip install --editable . --user # Microsoft Windows users must not use the `--us
 python setup.py compile_catalog
 ```
 
+## Run the HTTP server
+
+```
+paster serve --reload development-france.ini
+```
+
+To check if it's OK, open the following URL in your browser: http://localhost:2000/
+
+> 2000 is the port number defined in the development-france.ini config file.
+
+You should see this JSON response:
+
+    {"apiVersion": 1, "message": "Welcome, this is OpenFisca Web API.", "method": "/"}
+
 ## Deploy in production
 
-Here we use Apache with `mod_wsgi` under Debian Jessie.
+Here we use Apache with `mod_wsgi` under Debian Jessie but you may want to use another web server like Nginx.
 
 ```
 # aptitude install apache2 libapache2-mod-wsgi
