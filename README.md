@@ -26,6 +26,12 @@ python setup.py compile_catalog
 
 ## Run the HTTP server
 
+If you are in a conda environment, you can obtain paster by running this command :
+```
+conda install -c ioos pastescript=2.0.2 
+```
+
+Then run the server :
 ```
 paster serve --reload development-france.ini
 # gunicorn can be used as an alternative
