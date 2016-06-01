@@ -16,8 +16,11 @@ Assuming you are in an `openfisca` working directory:
 ```
 git clone https://github.com/openfisca/openfisca-web-api.git
 cd openfisca-web-api
-git checkout next
-pip install --editable . --user # Microsoft Windows users must not use the `--user` option
+git checkout master
+# If you are in a python environment (e.g. conda), or on Microsoft Windows
+pip install --editable .
+# Else
+pip install --editable . --user
 python setup.py compile_catalog
 ```
 
@@ -25,6 +28,7 @@ python setup.py compile_catalog
 
 ```
 paster serve --reload development-france.ini
+# gunicorn can be used as an alternative
 ```
 
 To check if it's OK, open the following URL in your browser: http://localhost:2000/
