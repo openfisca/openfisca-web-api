@@ -90,7 +90,7 @@ def test_calculate_with_axes():
                     {
                         "id": "Personne Principale",
                         "salaire_imposable": 0,
-                        "statmarit": 2
+                        "statut_marital": 2
                         },
                     {
                         "id": "Personne Conjoint",

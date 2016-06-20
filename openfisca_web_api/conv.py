@@ -54,9 +54,9 @@ def make_str_list_to_reforms():
             )(value)
         if value is None or error is not None:
             return value, error
-        if value and model.build_reform_function_by_key is None:
+        if value and model.reforms is None:
             return value, state._(u'No reform was declared to the API')
-        declared_reforms_key = model.build_reform_function_by_key.keys()
+        declared_reforms_key = model.reforms.keys()
         return uniform_sequence(
             pipe(
                 test_isinstance(basestring),
