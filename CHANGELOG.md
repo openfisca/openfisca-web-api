@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.1...1.0.2)
+
+* Force updating version number and CHANGELOG.md before merging on master
+* Release tag and Pip version automatically
+
 ## 1.0.1 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.0...1.0.1)
 
 * Use package version instead of git sha.
