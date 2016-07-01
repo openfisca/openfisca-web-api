@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.0...1.0.1)
+
+* Use package version instead of git sha.
+
 ## 1.0.0 – [diff](https://github.com/openfisca/openfisca-web-api/compare/0.5.2...1.0.0)
 
 * Switch to [semantic versioning](http://semver.org/)
