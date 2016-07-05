@@ -101,7 +101,7 @@ def api1_parameters(req):
 
     response_dict = dict(
         apiVersion = 1,
-        country_package_git_head_sha = environment.country_package_git_head_sha,
+        country_package_version = environment.country_package_version,
         method = req.script_name,
         parameters = parameters_json,
         url = req.url.decode('utf-8'),
