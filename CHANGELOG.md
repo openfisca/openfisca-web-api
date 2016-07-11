@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.3...1.0.4)
+
+* Update numpy dependency to 1.11
+
 ## 1.0.3 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.2...1.0.3)
 
 * Apply core API changes introduced by openfisca-core 2.0
