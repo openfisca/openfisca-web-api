@@ -124,12 +124,13 @@ def load_environment(global_conf, app_conf):
 
     model.reforms = {}
     model.reformed_tbs = {}
-    for reform in reforms:
-        reformed_tbs = reform(tax_benefit_system)
-        key = reformed_tbs.key
-        full_key = reformed_tbs.full_key
-        model.reforms[key] = reform
-        model.reformed_tbs[full_key] = reformed_tbs
+    if reforms is not None:
+        for reform in reforms:
+            reformed_tbs = reform(tax_benefit_system)
+            key = reformed_tbs.key
+            full_key = reformed_tbs.full_key
+            model.reforms[key] = reform
+            model.reformed_tbs[full_key] = reformed_tbs
 
     # Cache default decomposition.
     if hasattr(tax_benefit_system, 'DEFAULT_DECOMP_FILE'):
