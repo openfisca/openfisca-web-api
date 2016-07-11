@@ -57,7 +57,7 @@ setup(
         'Biryani >= 0.10.4',
         'numpy >= 1.6',
         'OpenFisca-Core ~= 2.0',
-        'OpenFisca-Parsers >= 0.5',
+        'OpenFisca-Parsers >= 0.5.2',
         'PasteDeploy',
         'WebError >= 0.10',
         'WebOb >= 1.1',
