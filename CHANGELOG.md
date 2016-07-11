@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.2...1.0.3)
+
+* Apply core API changes introduced by openfisca-core 2.0
+
 ## 1.0.2 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.1...1.0.2)
 
 * Force updating version number and CHANGELOG.md before merging on master

@@ -13,7 +13,7 @@ import sys
 import weakref
 
 from biryani import strings
-from openfisca_core import periods, reforms
+from openfisca_core import periods
 try:
     from openfisca_parsers import input_variables_extractors
 except ImportError:
@@ -88,11 +88,10 @@ def load_environment(global_conf, app_conf):
         errorware['smtp_server'] = conf.get('smtp_server', 'localhost')
 
     # Initialize tax-benefit system.
-
     country_package = importlib.import_module(conf['country_package'])
-    CountryTaxBenefitSystem = country_package.init_country()
+    tax_benefit_system = country_package.CountryTaxBenefitSystem()
 
-    class Scenario(CountryTaxBenefitSystem.Scenario):
+    class Scenario(tax_benefit_system.Scenario):
         instance_and_error_couple_cache = {} if conf['debug'] else weakref.WeakValueDictionary()  # class attribute
 
         @classmethod
@@ -110,37 +109,28 @@ def load_environment(global_conf, app_conf):
 
             return json_to_cached_or_new_instance
 
-    class TaxBenefitSystem(CountryTaxBenefitSystem):
-        pass
-    TaxBenefitSystem.Scenario = Scenario
+    tax_benefit_system.Scenario = Scenario
 
-    model.TaxBenefitSystem = TaxBenefitSystem
-    model.tax_benefit_system = tax_benefit_system = TaxBenefitSystem()
+    model.tax_benefit_system = tax_benefit_system
 
     tax_benefit_system.prefill_cache()
 
     # Initialize reforms
-    build_reform_functions = conv.check(
+    reforms = conv.check(
         conv.uniform_sequence(
             conv.module_and_function_str_to_function,
             )
         )(conf['reforms'])
-    if build_reform_functions is not None:
-        api_reforms = [
-            build_reform(tax_benefit_system)
-            for build_reform in build_reform_functions
-            ]
-        api_reforms = conv.check(
-            conv.uniform_sequence(conv.test_isinstance(reforms.AbstractReform))
-            )(api_reforms)
-        model.build_reform_function_by_key = {
-            reform.key: build_reform
-            for build_reform, reform in zip(build_reform_functions, api_reforms)
-            }
-        model.reform_by_full_key = {
-            reform.full_key: reform
-            for reform in api_reforms
-            }
+
+    model.reforms = {}
+    model.reformed_tbs = {}
+    if reforms is not None:
+        for reform in reforms:
+            reformed_tbs = reform(tax_benefit_system)
+            key = reformed_tbs.key
+            full_key = reformed_tbs.full_key
+            model.reforms[key] = reform
+            model.reformed_tbs[full_key] = reformed_tbs
 
     # Cache default decomposition.
     if hasattr(tax_benefit_system, 'DEFAULT_DECOMP_FILE'):
@@ -169,7 +159,7 @@ def load_environment(global_conf, app_conf):
     country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
 
     # Cache legislation JSON with references to original XML
-    legislation_json_with_references_to_xml = tax_benefit_system.get_legislation_json(with_source_file_infos = True)
+    legislation_json_with_references_to_xml = tax_benefit_system.get_legislation()
     parameters_json = []
     walk_legislation_json(
         legislation_json_with_references_to_xml,
