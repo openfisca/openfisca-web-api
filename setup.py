@@ -43,7 +43,7 @@ setup(
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
         },
     extras_require = {
-        'dev': [
+        'paster': [
             'PasteScript',
             ],
         'france': [
