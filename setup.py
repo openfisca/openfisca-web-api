@@ -39,6 +39,7 @@ setup(
             ),
         ],
     entry_points = {
+        'console_scripts': ['openfisca-serve=openfisca_web_api.scripts.serve:main'],
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
         },
     extras_require = {
