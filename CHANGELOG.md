@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.4...1.1.0)
+
+* Add openfisca-serve CLI script to quickly launch the api with a basic conf
+
 ## 1.0.4 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.0.3...1.0.4)
 
 * Update numpy dependency to 1.11
