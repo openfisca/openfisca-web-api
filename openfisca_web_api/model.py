@@ -10,6 +10,7 @@ from openfisca_core.reforms import Reform, compose_reforms
 # Declarations, initialized in environment module
 
 reforms = None
+extensions = None
 decomposition_json_by_file_path_cache = {}
 input_variables_and_parameters_by_column_name_cache = {}
 input_variables_extractor = None
