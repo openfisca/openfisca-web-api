@@ -35,7 +35,8 @@ function checkout {
 }
 
 
-if [ "$TRAVIS_BRANCH" != "master" ]; then
+if [[ "$TRAVIS_BRANCH" != "master" && -z "$TRAVIS_TAG" ]]
+then
   checkout "OpenFisca-Core"
   checkout "OpenFisca-France"
   checkout "OpenFisca-Parsers"
