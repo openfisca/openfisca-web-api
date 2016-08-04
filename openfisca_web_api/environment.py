@@ -70,6 +70,7 @@ def load_environment(global_conf, app_conf):
             'package_name': conv.default('openfisca-web-api'),
             'realm': conv.default(u'OpenFisca Web API'),
             'reforms': conv.ini_str_to_list,  # Another validation is done below.
+            'extensions': conv.ini_str_to_list,
             },
         default = 'drop',
         ))(conf))
@@ -90,6 +91,11 @@ def load_environment(global_conf, app_conf):
     # Initialize tax-benefit system.
     country_package = importlib.import_module(conf['country_package'])
     tax_benefit_system = country_package.CountryTaxBenefitSystem()
+
+    extensions = conf['extensions']
+    if extensions is not None:
+        for extension in extensions:
+            tax_benefit_system.load_extension(extension)
 
     class Scenario(tax_benefit_system.Scenario):
         instance_and_error_couple_cache = {} if conf['debug'] else weakref.WeakValueDictionary()  # class attribute
