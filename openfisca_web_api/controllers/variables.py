@@ -9,7 +9,7 @@ import datetime
 
 from openfisca_core import periods, simulations
 
-from .. import contexts, conv, environment, model, wsgihelpers
+from .. import conf, contexts, conv, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -83,6 +83,7 @@ def api1_variables(req):
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = 1,
+            country_package_name = conf['country_package'],
             country_package_version= environment.country_package_version,
             method = req.script_name,
             url = req.url.decode('utf-8'),
