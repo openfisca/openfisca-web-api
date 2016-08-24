@@ -30,6 +30,8 @@ country_package_version = None
 api_package_version = None
 cpu_count = None
 
+log = logging.getLogger(__name__)
+
 
 class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.
     pass
@@ -119,15 +121,15 @@ def load_environment(global_conf, app_conf):
 
     model.tax_benefit_system = tax_benefit_system
 
+    log.debug(u'Pre-fill tax and benefit system cache.')
     tax_benefit_system.prefill_cache()
 
-    # Initialize reforms
+    log.debug(u'Initialize reforms.')
     reforms = conv.check(
         conv.uniform_sequence(
             conv.module_and_function_str_to_function,
             )
         )(conf['reforms'])
-
     model.reforms = {}
     model.reformed_tbs = {}
     if reforms is not None:
@@ -138,7 +140,7 @@ def load_environment(global_conf, app_conf):
             model.reforms[key] = reform
             model.reformed_tbs[full_key] = reformed_tbs
 
-    # Cache default decomposition.
+    log.debug(u'Cache default decomposition.')
     if hasattr(tax_benefit_system, 'DEFAULT_DECOMP_FILE'):
         model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
@@ -151,7 +153,7 @@ def load_environment(global_conf, app_conf):
         tax_benefit_system.get_compact_legislation(instant)
         instant = instant.offset(1, 'month')
 
-    # Initialize lib2to3-based input variables extractor.
+    log.debug(u'Initialize lib2to3-based input variables extractor.')
     if input_variables_extractors is not None:
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
 
@@ -164,7 +166,7 @@ def load_environment(global_conf, app_conf):
     global country_package_version
     country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
 
-    # Cache legislation JSON with references to original XML
+    log.debug(u'Cache legislation JSON with references to original XML.')
     legislation_json_with_references_to_xml = tax_benefit_system.get_legislation()
     parameters_json = []
     walk_legislation_json(
