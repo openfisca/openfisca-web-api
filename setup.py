@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '1.2.1',
+    version = '1.2.2',
 
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
