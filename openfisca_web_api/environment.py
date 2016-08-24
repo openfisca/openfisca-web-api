@@ -37,11 +37,18 @@ class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictio
     pass
 
 
-def get_relative_file_path(absolute_file_path, base_path):
-    parameters_file_path = absolute_file_path[len(base_path):]
-    if parameters_file_path.startswith('/'):
-        parameters_file_path = parameters_file_path[1:]
-    return parameters_file_path
+def get_relative_file_path(absolute_file_path):
+    '''
+    Example:
+    absolute_file_path = "/home/xxx/Dev/openfisca/openfisca-france/openfisca_france/param/param.xml"
+    result = "openfisca_france/param/param.xml"
+    '''
+    global country_package_dir_path
+    assert country_package_dir_path is not None
+    relative_file_path = absolute_file_path[len(country_package_dir_path):]
+    if relative_file_path.startswith('/'):
+        relative_file_path = relative_file_path[1:]
+    return relative_file_path
 
 
 def load_environment(global_conf, app_conf):
@@ -197,10 +204,7 @@ def walk_legislation_json(node_json, descriptions, parameters_json, path_fragmen
         parameter_json['description'] = description
         parameter_json['name'] = u'.'.join(path_fragments)
         if 'xml_file_path' in node_json:
-            parameter_json['xml_file_path'] = get_relative_file_path(
-                absolute_file_path = node_json['xml_file_path'],
-                base_path = country_package_dir_path,
-                )
+            parameter_json['xml_file_path'] = get_relative_file_path(node_json['xml_file_path'])
         parameter_json = collections.OrderedDict(sorted(parameter_json.iteritems()))
         parameters_json.append(parameter_json)
     else:
