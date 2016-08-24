@@ -158,10 +158,10 @@ def load_environment(global_conf, app_conf):
     country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
 
     log.debug(u'Cache legislation JSON with references to original XML.')
-    legislation_json_with_references_to_xml = tax_benefit_system.get_legislation()
+    legislation_json = tax_benefit_system.get_legislation(with_source_file_infos=True)
     parameters_json = []
     walk_legislation_json(
-        legislation_json_with_references_to_xml,
+        legislation_json,
         descriptions = [],
         parameters_json = parameters_json,
         path_fragments = [],
