@@ -47,7 +47,7 @@ setup(
             'PasteScript',
             ],
         'france': [
-            'OpenFisca-France ~= 4.0.3',
+            'OpenFisca-France >= 4.0.3, < 5.0',
             ],
         'test': [
             'nose',
@@ -58,7 +58,7 @@ setup(
         'Biryani[datetimeconv] >= 0.10.4',
         'numpy >= 1.11',
         'OpenFisca-Core >= 2.1.0, < 3.0',
-        'OpenFisca-Parsers ~= 0.5.4',
+        'OpenFisca-Parsers >= 0.5.4, < 1.0',
         'PasteDeploy',
         'WebError >= 0.10',
         'WebOb >= 1.1',
