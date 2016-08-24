@@ -81,14 +81,17 @@ def api1_variables(req):
                 )
         variables_json.append(variable_json)
 
+    response_dict = dict(
+        apiVersion = 1,
+        country_package_name = conf['country_package'],
+        country_package_version= environment.country_package_version,
+        method = req.script_name,
+        url = req.url.decode('utf-8'),
+        variables = variables_json,
+        )
+    if hasattr(tax_benefit_system, 'CURRENCY'):
+        response_dict['currency'] = tax_benefit_system.CURRENCY
     return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            country_package_name = conf['country_package'],
-            country_package_version= environment.country_package_version,
-            method = req.script_name,
-            url = req.url.decode('utf-8'),
-            variables = variables_json,
-            ).iteritems())),
+        collections.OrderedDict(sorted(response_dict.iteritems())),
         headers = headers,
         )
