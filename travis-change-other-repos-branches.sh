@@ -6,17 +6,17 @@
 
 
 function checkout {
-  name="$1"
-  DIR=`python -c "import pkg_resources; print pkg_resources.get_distribution('$name').location"`
-  pushd "$DIR"
-  git checkout "$TRAVIS_BRANCH"
-  popd
+    name="$1"
+    DIR=`python -c "import pkg_resources; print pkg_resources.get_distribution('$name').location"`
+    pushd "$DIR"
+    git checkout "$TRAVIS_BRANCH" && pip install --editable .
+    popd
 }
 
 
 if [[ "$TRAVIS_BRANCH" != "master" && -z "$TRAVIS_TAG" ]]
 then
-  checkout "OpenFisca-Core"
-  checkout "OpenFisca-France"
-  checkout "OpenFisca-Parsers"
+    checkout "OpenFisca-Core"
+    checkout "OpenFisca-France"
+    checkout "OpenFisca-Parsers"
 fi
