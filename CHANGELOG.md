@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+* Update travis procedures
+
 ## 1.2.1 – [diff](https://github.com/openfisca/openfisca-web-api/compare/1.2.0...1.2.1)
 
 * Fix run-travis-tests.sh to repair automatic pypi releasing

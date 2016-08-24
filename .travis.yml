@@ -3,29 +3,19 @@ language: python
 python: 2.7
 cache: pip
 install:
-  - wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip nose numpy
-  - source activate test-environment
-  - pip install flake8  # Not yet available in Ubuntu precise (https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise)
+  - pip install --upgrade pip wheel  # pip >= 8.0 needed to be compatible with "manylinux" wheels, used by numpy >= 1.11
+  - pip install flake8
   - pip install -r requirements.txt
+  - ./travis-change-other-repos-branches.sh
   - pip install --editable .[france,test]
-script: bash run-travis-tests.sh
+script: ./travis-run-tests.sh
 before_deploy:
-- python setup.py compile_catalog
-- openssl aes-256-cbc -K $encrypted_67b95433b01c_key -iv $encrypted_67b95433b01c_iv
-  -in openfisca_bot.enc -out openfisca_bot -d
+  - python setup.py compile_catalog
+  - openssl aes-256-cbc -K $encrypted_67b95433b01c_key -iv $encrypted_67b95433b01c_iv -in openfisca_bot.enc -out openfisca_bot -d
 deploy:
 - provider: script
   skip_cleanup: true
-  script: ./release-tag.sh
+  script: ./travis-release-tag.sh
   on:
     branch: master
 - provider: pypi
