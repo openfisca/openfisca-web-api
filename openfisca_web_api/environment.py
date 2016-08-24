@@ -30,16 +30,25 @@ country_package_version = None
 api_package_version = None
 cpu_count = None
 
+log = logging.getLogger(__name__)
+
 
 class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.
     pass
 
 
-def get_relative_file_path(absolute_file_path, base_path):
-    parameters_file_path = absolute_file_path[len(base_path):]
-    if parameters_file_path.startswith('/'):
-        parameters_file_path = parameters_file_path[1:]
-    return parameters_file_path
+def get_relative_file_path(absolute_file_path):
+    '''
+    Example:
+    absolute_file_path = "/home/xxx/Dev/openfisca/openfisca-france/openfisca_france/param/param.xml"
+    result = "openfisca_france/param/param.xml"
+    '''
+    global country_package_dir_path
+    assert country_package_dir_path is not None
+    relative_file_path = absolute_file_path[len(country_package_dir_path):]
+    if relative_file_path.startswith('/'):
+        relative_file_path = relative_file_path[1:]
+    return relative_file_path
 
 
 def load_environment(global_conf, app_conf):
@@ -119,15 +128,15 @@ def load_environment(global_conf, app_conf):
 
     model.tax_benefit_system = tax_benefit_system
 
+    log.debug(u'Pre-fill tax and benefit system cache.')
     tax_benefit_system.prefill_cache()
 
-    # Initialize reforms
+    log.debug(u'Initialize reforms.')
     reforms = conv.check(
         conv.uniform_sequence(
             conv.module_and_function_str_to_function,
             )
         )(conf['reforms'])
-
     model.reforms = {}
     model.reformed_tbs = {}
     if reforms is not None:
@@ -138,20 +147,11 @@ def load_environment(global_conf, app_conf):
             model.reforms[key] = reform
             model.reformed_tbs[full_key] = reformed_tbs
 
-    # Cache default decomposition.
+    log.debug(u'Cache default decomposition.')
     if hasattr(tax_benefit_system, 'DEFAULT_DECOMP_FILE'):
         model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
-    # Compute and cache compact legislation for each first day of month since at least 2 legal years.
-    today = periods.instant(datetime.date.today())
-    first_day_of_year = today.offset('first-of', 'year')
-    instant = first_day_of_year.offset(-2, 'year')
-    two_years_later = first_day_of_year.offset(2, 'year')
-    while instant < two_years_later:
-        tax_benefit_system.get_compact_legislation(instant)
-        instant = instant.offset(1, 'month')
-
-    # Initialize lib2to3-based input variables extractor.
+    log.debug(u'Initialize lib2to3-based input variables extractor.')
     if input_variables_extractors is not None:
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
 
@@ -164,16 +164,27 @@ def load_environment(global_conf, app_conf):
     global country_package_version
     country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
 
-    # Cache legislation JSON with references to original XML
-    legislation_json_with_references_to_xml = tax_benefit_system.get_legislation()
+    log.debug(u'Cache legislation JSON with references to original XML.')
+    legislation_json = tax_benefit_system.get_legislation(with_source_file_infos=True)
     parameters_json = []
     walk_legislation_json(
-        legislation_json_with_references_to_xml,
+        legislation_json,
         descriptions = [],
         parameters_json = parameters_json,
         path_fragments = [],
         )
     model.parameters_json_cache = parameters_json
+
+    if not conf['debug']:
+        # Do this after tax_benefit_system.get_legislation(with_source_file_infos=True).
+        log.debug(u'Compute and cache compact legislation for each first day of month since at least 2 legal years.')
+        today = periods.instant(datetime.date.today())
+        first_day_of_year = today.offset('first-of', 'year')
+        instant = first_day_of_year.offset(-2, 'year')
+        two_years_later = first_day_of_year.offset(2, 'year')
+        while instant < two_years_later:
+            tax_benefit_system.get_compact_legislation(instant)
+            instant = instant.offset(1, 'month')
 
     # Initialize multiprocessing and load_alert
     if conf['load_alert']:
@@ -193,10 +204,7 @@ def walk_legislation_json(node_json, descriptions, parameters_json, path_fragmen
         parameter_json['description'] = description
         parameter_json['name'] = u'.'.join(path_fragments)
         if 'xml_file_path' in node_json:
-            parameter_json['xml_file_path'] = get_relative_file_path(
-                absolute_file_path = node_json['xml_file_path'],
-                base_path = country_package_dir_path,
-                )
+            parameter_json['xml_file_path'] = get_relative_file_path(node_json['xml_file_path'])
         parameter_json = collections.OrderedDict(sorted(parameter_json.iteritems()))
         parameters_json.append(parameter_json)
     else:

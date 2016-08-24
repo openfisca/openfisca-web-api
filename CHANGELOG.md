@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.0
+
+* Update introspection data (via OpenFisca-Core update)
+* Add country_package_name to parameters and variables endpoints
+* Add debug logging to load_environment
+* Do not pre-load 2 years in debug mode
+* Add currency to variables endpoint
+
 ## 1.2.2
 
 * Update travis procedures

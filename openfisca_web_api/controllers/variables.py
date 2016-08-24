@@ -9,7 +9,7 @@ import datetime
 
 from openfisca_core import periods, simulations
 
-from .. import contexts, conv, environment, model, wsgihelpers
+from .. import conf, contexts, conv, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -65,6 +65,7 @@ def api1_variables(req):
     for variable_name in data['names'] or tax_benefit_system_variables_name:
         column = tax_benefit_system.column_by_name[variable_name]
         variable_json = column.to_json()
+        variable_json['source_file_path'] = environment.get_relative_file_path(variable_json['source_file_path'])
         label = variable_json.get('label')
         if label is not None and label == variable_name:
             del variable_json['label']
@@ -80,13 +81,17 @@ def api1_variables(req):
                 )
         variables_json.append(variable_json)
 
+    response_dict = dict(
+        apiVersion = 1,
+        country_package_name = conf['country_package'],
+        country_package_version= environment.country_package_version,
+        method = req.script_name,
+        url = req.url.decode('utf-8'),
+        variables = variables_json,
+        )
+    if hasattr(tax_benefit_system, 'CURRENCY'):
+        response_dict['currency'] = tax_benefit_system.CURRENCY
     return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            country_package_version= environment.country_package_version,
-            method = req.script_name,
-            url = req.url.decode('utf-8'),
-            variables = variables_json,
-            ).iteritems())),
+        collections.OrderedDict(sorted(response_dict.iteritems())),
         headers = headers,
         )

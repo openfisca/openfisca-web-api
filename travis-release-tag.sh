@@ -7,8 +7,8 @@ version=`python setup.py --version`
 eval "$(ssh-agent -s)" #start the ssh agent
 if [ -e openfisca_bot ]
 then
-	chmod 400 ./openfisca_bot
-	ssh-add ./openfisca_bot
+    chmod 400 ./openfisca_bot
+    ssh-add ./openfisca_bot
 fi
 git tag $version
 git push git@github.com:openfisca/openfisca-web-api.git --tags

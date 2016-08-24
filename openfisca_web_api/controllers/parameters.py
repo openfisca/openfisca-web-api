@@ -8,7 +8,7 @@ import collections
 
 from openfisca_core import legislations, periods
 
-from .. import contexts, conv, environment, model, wsgihelpers
+from .. import conf, contexts, conv, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -101,6 +101,7 @@ def api1_parameters(req):
 
     response_dict = dict(
         apiVersion = 1,
+        country_package_name = conf['country_package'],
         country_package_version = environment.country_package_version,
         method = req.script_name,
         parameters = parameters_json,
