@@ -144,15 +144,6 @@ def load_environment(global_conf, app_conf):
     if hasattr(tax_benefit_system, 'DEFAULT_DECOMP_FILE'):
         model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
-    # Compute and cache compact legislation for each first day of month since at least 2 legal years.
-    today = periods.instant(datetime.date.today())
-    first_day_of_year = today.offset('first-of', 'year')
-    instant = first_day_of_year.offset(-2, 'year')
-    two_years_later = first_day_of_year.offset(2, 'year')
-    while instant < two_years_later:
-        tax_benefit_system.get_compact_legislation(instant)
-        instant = instant.offset(1, 'month')
-
     log.debug(u'Initialize lib2to3-based input variables extractor.')
     if input_variables_extractors is not None:
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
@@ -176,6 +167,17 @@ def load_environment(global_conf, app_conf):
         path_fragments = [],
         )
     model.parameters_json_cache = parameters_json
+
+    if not conf['debug']:
+        # Do this after tax_benefit_system.get_legislation(with_source_file_infos=True).
+        log.debug(u'Compute and cache compact legislation for each first day of month since at least 2 legal years.')
+        today = periods.instant(datetime.date.today())
+        first_day_of_year = today.offset('first-of', 'year')
+        instant = first_day_of_year.offset(-2, 'year')
+        two_years_later = first_day_of_year.offset(2, 'year')
+        while instant < two_years_later:
+            tax_benefit_system.get_compact_legislation(instant)
+            instant = instant.offset(1, 'month')
 
     # Initialize multiprocessing and load_alert
     if conf['load_alert']:
