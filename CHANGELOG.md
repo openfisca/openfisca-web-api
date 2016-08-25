@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1
+
+* In some cases in `/variables` endpoint, `source_file_path` of each variable was wrong if application was deployed
+  in a virtualenv. This fix uses `importlib` to get the path of the country package instead of `pkg_resources`.
+
 ## 2.0.0
 
 * Update introspection data (via OpenFisca-Core update)
