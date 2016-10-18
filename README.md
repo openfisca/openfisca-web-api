@@ -31,10 +31,11 @@ Then you can ensure you have the latest version of `pip`:
 pip install --upgrade pip wheel
 ```
 
-Then you can install OpenFisca-Web-API. We use `paster` local HTTP server.
+Then you can install OpenFisca-Web-API. We tell `pip` we want to install the extra requirements
+`paster` (the local HTTP server) and `france` (OpenFisca-France) all described in `setup.py`.
 
 ```
-pip install --editable .[paster]
+pip install --editable .[paster,france]
 python setup.py compile_catalog
 ```
 
