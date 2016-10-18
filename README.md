@@ -26,10 +26,10 @@ python setup.py compile_catalog
 
 ## Run the HTTP server
 
-If you are in a conda environment, you can obtain paster by running this command :
+If you are in a conda environment, you can obtain paster by running this command (or retrieve this version from another valid anaconda.org organisation) :
 ```
-conda install -c ioos pastescript=2.0.2 
-```
+ conda install -c conda-forge pastescript=2.0.2 
+ ```
 
 Then run the server :
 ```
