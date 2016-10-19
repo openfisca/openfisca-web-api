@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2
+
+* Remove any mention to `conda` in README, since we use `pip` now.
+
 ## 2.0.1
 
 * In some cases in `/variables` endpoint, `source_file_path` of each variable was wrong if application was deployed
