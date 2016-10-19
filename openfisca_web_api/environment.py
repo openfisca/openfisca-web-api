@@ -96,6 +96,7 @@ def load_environment(global_conf, app_conf):
         errorware['error_subject_prefix'] = conf.get('error_subject_prefix', 'OpenFisca Web API Error: ')
         errorware['from_address'] = conf['from_address']
         errorware['smtp_server'] = conf.get('smtp_server', 'localhost')
+        errorware['show_exceptions_in_wsgi_errors'] = conf.get('show_exceptions_in_wsgi_errors', True)
 
     # Initialize tax-benefit system.
     country_package = importlib.import_module(conf['country_package'])

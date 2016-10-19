@@ -12,72 +12,47 @@ try:
     import ipdb
 except ImportError:
     ipdb = None
-from weberror.errormiddleware import ErrorMiddleware
-import webob
+import weberror.errormiddleware
+from webob.dec import wsgify
 
 from . import conf, controllers, environment, urls
 
 log = logging.getLogger(__name__)
 
 
-def launch_debugger_on_exception(app):
-    """WSGI middleware that catches all exceptions and launches a debugger."""
-    def _launch_debugger_on_exception(environ, start_response):
-        try:
-            return app(environ, start_response)
-        except Exception as exc:
-            log.exception(exc)
-            e, m, tb = sys.exc_info()
-            ipdb.post_mortem(tb)
-            raise
-    return _launch_debugger_on_exception
+@wsgify.middleware
+def launch_debugger_on_exception(req, app):
+    try:
+        return req.get_response(app)
+    except Exception as exc:
+        log.exception(exc)
+        e, m, tb = sys.exc_info()
+        ipdb.post_mortem(tb)
+        raise
 
 
-def environment_setter(app):
-    """WSGI middleware that sets request-dependant environment."""
-    def set_environment(environ, start_response):
-        req = webob.Request(environ)
-        urls.application_url = req.application_url
-        try:
-            return app(req.environ, start_response)
-        except webob.exc.WSGIHTTPException as wsgi_exception:
-            return wsgi_exception(environ, start_response)
-
-    return set_environment
+@wsgify.middleware
+def set_application_url(req, app):
+    urls.application_url = req.application_url
+    return req.get_response(app)
 
 
-def exception_to_json(app):
+@wsgify.middleware
+def ensure_json_content_type(req, app):
     """
-    WSGI middleware that catches all uncaught exceptions and responds a generic JSON object.
-    Since Webob wsgify decorator catches HTTPException subclasses, here remains only the others.
+    ErrorMiddleware returns hard-coded content-type text/html.
+    Here we force it to be application/json.
     """
-    def respond_json_exception(environ, start_response):
-        try:
-            return app(environ, start_response)
-        except Exception as exc:
-            log.exception(exc)
-            start_response('500 Internal Server Error', [('content-type', 'application/json; charset=utf-8')])
-            error_json = {
-                'error': {
-                    'code': 500,
-                    'hint': u'See the HTTP server log to see the exception traceback.',
-                    'message': u'Internal Server Error',
-                    },
-                }
-            return [json.dumps(error_json)]
-
-    return respond_json_exception
+    res = req.get_response(app, catch_exc_info=True)
+    res.content_type = 'application/json; charset=utf-8'
+    return res
 
 
-def x_api_version_header_setter(app):
-    """WSGI middleware that sets response X-API-Version header."""
-    def set_x_api_version_header(environ, start_response):
-        req = webob.Request(environ)
-        res = req.get_response(app)
-        res.headers.update({'X-API-Version': environment.api_package_version})
-        return res(environ, start_response)
-
-    return set_x_api_version_header
+@wsgify.middleware
+def add_x_api_version_header(req, app):
+    res = req.get_response(app)
+    res.headers.update({'X-API-Version': environment.api_package_version})
+    return res
 
 
 def make_app(global_conf, **app_conf):
@@ -99,18 +74,30 @@ def make_app(global_conf, **app_conf):
     app = controllers.make_router()
 
     # Init request-dependant environment
-    app = environment_setter(app)
-
-    # Set X-API-Version response header
-    app = x_api_version_header_setter(app)
+    app = set_application_url(app)
 
     # CUSTOM MIDDLEWARE HERE (filtered by error handling middlewares)
 
     # Handle Python exceptions
+    if not conf['debug']:
+        def json_error_template(head_html, exception, extra):
+            error_json = {
+                'code': 500,
+                'hint': u'See the HTTP server log to see the exception traceback.',
+                'message': exception,
+                }
+            if head_html:
+                error_json['head_html'] = head_html
+            if extra:
+                error_json['extra'] = extra
+            return json.dumps({'error': error_json})
+        weberror.errormiddleware.error_template = json_error_template
+        app = weberror.errormiddleware.ErrorMiddleware(app, global_conf, **conf['errorware'])
+
+    app = ensure_json_content_type(app)
+    app = add_x_api_version_header(app)
+
     if conf['debug'] and ipdb is not None:
         app = launch_debugger_on_exception(app)
-    app = exception_to_json(app)
-    if not conf['debug']:
-        app = ErrorMiddleware(app, global_conf, **conf['errorware'])
 
     return app
