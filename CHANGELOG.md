@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.3
+
+* Refactor middlewares in order to send error emails *and* returning JSON with correct content-type.
+
 ## 2.0.2
 
 * Remove any mention to `conda` in README, since we use `pip` now.
