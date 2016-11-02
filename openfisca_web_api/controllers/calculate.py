@@ -51,7 +51,7 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
             if variable_value_json is None:
                 continue
             variable_name = holder.column.name
-            entity_members = test_case[holder.entity.key_plural]
+            entity_members = test_case[holder.entity.plural]
             if isinstance(variable_value_json, dict):
                 for entity_member_index, entity_member in enumerate(entity_members):
                     entity_member[variable_name] = {}
