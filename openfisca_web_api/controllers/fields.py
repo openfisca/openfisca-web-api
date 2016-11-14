@@ -12,7 +12,7 @@ from .. import contexts, conv, model, wsgihelpers
 
 def get_column_json(column):
     column_json = column.to_json()
-    column_json['entity'] = column.entity  # Overwrite with symbol instead of key plural for compatibility.
+    column_json['entity'] = column.entity.key  # Overwrite with symbol instead of key plural for compatibility.
     return column_json
 
 

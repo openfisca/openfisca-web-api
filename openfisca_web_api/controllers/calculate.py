@@ -404,7 +404,7 @@ def api1_calculate(req):
                 traceback_json.append(collections.OrderedDict(sorted(dict(
                     cell_type = column.val_type,  # Unification with OpenFisca Julia name.
                     default_input_variables = step.get('default_input_variables', False),
-                    entity = column.entity,
+                    entity = column.entity.key,
                     input_variables = [
                         (input_variable_name, str(input_variable_period))
                         for input_variable_name, input_variable_period in input_variables_infos

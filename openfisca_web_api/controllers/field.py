@@ -91,7 +91,7 @@ def api1_field(req):
             get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
             with_input_variables_details = True,
             )
-    value_json['entity'] = column.entity  # Overwrite with symbol instead of key plural for compatibility.
+    value_json['entity'] = column.entity.key  # Overwrite with symbol instead of key plural for compatibility.
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
