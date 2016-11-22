@@ -11,6 +11,6 @@ def setup_module(module):
 
 
 def test_entities_without_parameters():
-    req = Request.blank('/api/1/entities', method = 'GET')
+    req = Request.blank('/api/2/entities', method = 'GET')
     res = req.get_response(common.app)
     assert res.status_code == 200
