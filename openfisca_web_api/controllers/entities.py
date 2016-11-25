@@ -9,15 +9,13 @@ import collections
 from .. import contexts, conv, model, wsgihelpers
 
 
-def build_entity_data(entity_class):
-    entity_data = {'label': entity_class.label}
-    if entity_class.is_persons_entity:
-        entity_data['isPersonsEntity'] = entity_class.is_persons_entity
+def build_entity_data(entity):
+    entity_data = {'label': entity.label}
+    if entity.is_person:
+        entity_data['isPersonsEntity'] = entity.is_person
     else:
         entity_data.update({
-            'maxCardinalityByRoleKey': entity_class.max_cardinality_by_role_key,
-            'roles': entity_class.roles_key,
-            'labelByRoleKey': entity_class.label_by_role_key,
+            'roles': entity.roles_description,
             })
     return entity_data
 
@@ -70,10 +68,9 @@ def api1_entities(req):
         tax_benefit_system = country_tax_benefit_system,
         ) if data['reforms'] is not None else country_tax_benefit_system
 
-    entities_class = tax_benefit_system.entity_class_by_key_plural.itervalues()
     entities = {
-        entity_class.key_plural: build_entity_data(entity_class)
-        for entity_class in entities_class
+        entity.key: build_entity_data(entity)
+        for entity in tax_benefit_system.entities
         }
 
     return wsgihelpers.respond_json(ctx,

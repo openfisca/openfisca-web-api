@@ -51,7 +51,7 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
             if variable_value_json is None:
                 continue
             variable_name = holder.column.name
-            entity_members = test_case[holder.entity.key_plural]
+            entity_members = test_case[holder.entity.plural]
             if isinstance(variable_value_json, dict):
                 for entity_member_index, entity_member in enumerate(entity_members):
                     entity_member[variable_name] = {}
@@ -404,7 +404,7 @@ def api1_calculate(req):
                 traceback_json.append(collections.OrderedDict(sorted(dict(
                     cell_type = column.val_type,  # Unification with OpenFisca Julia name.
                     default_input_variables = step.get('default_input_variables', False),
-                    entity = column.entity,
+                    entity = column.entity.key,
                     input_variables = [
                         (input_variable_name, str(input_variable_period))
                         for input_variable_name, input_variable_period in input_variables_infos

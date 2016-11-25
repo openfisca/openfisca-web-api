@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0
+
+* Adapt parsers to core#v4
+
+* Breaking change:
+    * Route /1/entities deprecated, replaced by /2/entities with different structure.
+
 ## 2.0.3
 
 * Refactor middlewares in order to send error emails *and* returning JSON with correct content-type.
