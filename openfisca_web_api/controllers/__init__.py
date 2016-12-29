@@ -35,7 +35,7 @@ def make_router():
         ('GET', '^/$', index),
         ('GET', '^/api/?$', index),
         ('POST', '^/api/1/calculate/?$', calculate.api1_calculate),
-        ('GET', '^/api/2/entities/?$', entities.api1_entities),
+        ('GET', '^/api/2/entities/?$', entities.api2_entities),
         ('GET', '^/api/1/field/?$', field.api1_field),
         ('GET', '^/api/1/fields/?$', fields.api1_fields),
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', formula.api1_formula),

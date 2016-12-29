@@ -21,7 +21,7 @@ def build_entity_data(entity):
 
 
 @wsgihelpers.wsgify
-def api1_entities(req):
+def api2_entities(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
