@@ -10,7 +10,11 @@ from .. import contexts, conv, model, wsgihelpers
 
 
 def build_entity_data(entity):
-    entity_data = {'label': entity.label}
+    entity_data = {
+        'key': entity.key,
+        'label': entity.label,
+        'plural': entity.plural
+        }
     if entity.is_person:
         entity_data['isPersonsEntity'] = entity.is_person
     else:
