@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.1
+
+* Add `entity.key` and `entity.plural` to JSON returned by `/2/entities` endpoint.
+
 ## 3.0.0
 
 * Adapt parsers to core#v4
