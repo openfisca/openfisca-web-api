@@ -61,11 +61,6 @@ def load_environment(global_conf, app_conf):
             'app_dir': conv.set_value(app_dir),
             'country_package': conv.pipe(
                 conv.make_input_to_slug(separator = u'_'),
-                conv.test_in((
-                    u'openfisca_france',
-                    u'openfisca_tunisia',
-                    u'openfisca_tunisia_pension',
-                    )),
                 conv.not_none,
                 ),
             'debug': conv.pipe(conv.guess_bool, conv.default(False)),
