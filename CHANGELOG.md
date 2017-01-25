@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.1
+
+* Fix the condition to detect if the country package has decompositions.
+    * Only load decompositions if `tax_benefit_system` has a `DECOMP_DIR` attribute
+
 ## 3.0.0
 
 * Adapt parsers to core#v4
