@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.0
+
+* Make the api compatible with other countries than france and tunisia
+
 ## 3.0.1
 
 * Fix the condition to detect if the country package has decompositions.
