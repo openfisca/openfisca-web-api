@@ -149,7 +149,7 @@ def load_environment(global_conf, app_conf):
             model.reformed_tbs[full_key] = reformed_tbs
 
     log.debug(u'Cache default decomposition.')
-    if hasattr(tax_benefit_system, 'DEFAULT_DECOMP_FILE'):
+    if tax_benefit_system.DEFAULT_DECOMP_FILE or hasattr(tax_benefit_system, 'DECOMP_DIR'):
         model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
     log.debug(u'Initialize lib2to3-based input variables extractor.')
