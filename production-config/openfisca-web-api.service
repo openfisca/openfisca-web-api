@@ -1,0 +1,10 @@
+[Unit]
+Description=OpenFisca Web API
+
+[Service]
+ExecStart=/home/openfisca/virtualenvs/openfisca/bin/gunicorn --paste /home/openfisca/production-configs/api.openfisca.fr/config/config.ini
+User=openfisca
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
