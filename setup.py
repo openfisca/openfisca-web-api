@@ -45,9 +45,6 @@ setup(
         'paster': [
             'PasteScript',
             ],
-        'france': [
-            'OpenFisca-France >= 5.0.0, < 7.0',
-            ],
         'test': [
             'nose',
             ],

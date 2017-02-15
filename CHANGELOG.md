@@ -3,6 +3,7 @@
 ## 3.0.1
 
 * Rename variables to make the tests pass.
+* Remove the dependency constraint to France.
 
 ## 3.0.0
 
