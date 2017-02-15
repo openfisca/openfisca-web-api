@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.1
+
+* Add documentation and example files to deploy in production.
+
 ## 3.2.0
 
 * Make the script `openfisca-serve` work with any country
