@@ -27,5 +27,5 @@
       "period": "2015"
     }
   ],
-  "variables": ["revdisp"]
+  "variables": ["revenu_disponible"]
 }

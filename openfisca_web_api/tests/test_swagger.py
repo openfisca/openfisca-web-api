@@ -118,21 +118,31 @@ def test_map_type_to_swagger_enum():
 
 
 def test_map_parameters_to_swagger():
-    target_column = model.tax_benefit_system.column_by_name['revdisp']
+    target_column = model.tax_benefit_system.column_by_name['revenu_disponible']
 
     actual = [
         description.get('name')
         for description in map_parameters_to_swagger(target_column)
         ]
 
-    assert_equal(actual, ['ppe', 'rev_trav', 'rev_cap', 'pen', 'psoc', 'impo'])
+    assert_equal(
+        actual,
+        [
+            u'revenus_du_travail',
+            u'ppe',
+            u'impots_directs',
+            u'pensions',
+            u'prestations_sociales',
+            u'revenus_du_capital',
+            ]
+        )
 
 
 def test_map_parameter_to_swagger():
-    target_column = model.tax_benefit_system.column_by_name['rev_cap']
+    target_column = model.tax_benefit_system.column_by_name['revenus_du_capital']
 
     expected = {
-        'name': u'rev_cap',
+        'name': u'revenus_du_capital',
         'description': u'Revenus du patrimoine',
         'in': 'query',
         'type': 'number',

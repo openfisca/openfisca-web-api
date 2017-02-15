@@ -8,5 +8,5 @@
     }
   ],
   "output_format": "variables",
-  "variables": ["revdisp"]
+  "variables": ["revenu_disponible"]
 }

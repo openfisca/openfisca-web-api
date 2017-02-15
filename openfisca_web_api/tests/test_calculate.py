@@ -59,7 +59,7 @@ def test_calculate_with_test_case():
                 'period': '2013',
                 },
             ],
-        'variables': ['revdisp'],
+        'variables': ['revenu_disponible'],
         }
     req = Request.blank(
         '/api/1/calculate',
@@ -115,7 +115,7 @@ def test_calculate_with_axes():
                     }],
                 },
             }],
-        'variables': ['impo']
+        'variables': ['impots_directs']
         }
     req = Request.blank(
         '/api/1/calculate',
@@ -126,7 +126,7 @@ def test_calculate_with_axes():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
-    impo_values = res_body_json['value'][0]['impo']['2014']
+    impo_values = res_body_json['value'][0]['impots_directs']['2014']
     assert_is_instance(impo_values, list)
     assert_true(impo_values[-1] < 0)
 
