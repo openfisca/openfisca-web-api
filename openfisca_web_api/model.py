@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-import os
-
 from openfisca_core import decompositions
 from openfisca_core.reforms import Reform, compose_reforms
 
@@ -33,15 +31,13 @@ def get_cached_composed_reform(reform_keys, tax_benefit_system):
     return composed_reform_tbs
 
 
-def get_cached_or_new_decomposition_json(tax_benefit_system, xml_file_name = None):
-    if xml_file_name is None:
-        xml_file_name = tax_benefit_system.DEFAULT_DECOMP_FILE
+def get_cached_or_new_decomposition_json(tax_benefit_system):
+    xml_file_path = tax_benefit_system.decomposition_file_path
     global decomposition_json_by_file_path_cache
-    decomposition_json = decomposition_json_by_file_path_cache.get(xml_file_name)
+    decomposition_json = decomposition_json_by_file_path_cache.get(xml_file_path)
     if decomposition_json is None:
-        xml_file_path = os.path.join(tax_benefit_system.DECOMP_DIR, xml_file_name)
         decomposition_json = decompositions.get_decomposition_json(tax_benefit_system, xml_file_path)
-        decomposition_json_by_file_path_cache[xml_file_name] = decomposition_json
+        decomposition_json_by_file_path_cache[xml_file_path] = decomposition_json
     return decomposition_json
 
 

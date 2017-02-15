@@ -197,7 +197,7 @@ def api1_simulate(req):
             headers = headers,
             )
 
-    decomposition_json = model.get_cached_or_new_decomposition_json(tax_benefit_system = base_tax_benefit_system)
+    decomposition_json = model.get_cached_or_new_decomposition_json(base_tax_benefit_system)
     base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
 
     try:
@@ -220,9 +220,7 @@ def api1_simulate(req):
             )
 
     if data['reforms'] is not None:
-        reform_decomposition_json = model.get_cached_or_new_decomposition_json(
-            tax_benefit_system = reform_tax_benefit_system,
-            )
+        reform_decomposition_json = model.get_cached_or_new_decomposition_json(reform_tax_benefit_system)
         reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
         try:
             reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
