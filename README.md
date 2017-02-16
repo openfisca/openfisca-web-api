@@ -13,35 +13,43 @@ The documentation of the project is hosted at http://doc.openfisca.fr/
 
 If you want to run the Web API on your machine, follow these steps.
 
+Make sure you have Python 2 installed:
+
+```bash
+python --version
+Python 2.7.9
 ```
+
+Clone the repository:
+
+```bash
 git clone https://github.com/openfisca/openfisca-web-api.git
 cd openfisca-web-api
 ```
 
-Optional: at this point if you work with [Python virtualenvs](http://virtualenvwrapper.readthedocs.io/en/latest/),
-you can activate it. Example with a virtualenv named `openfisca`:
+> Optional: at this point if you work with [Python virtualenvs](http://virtualenvwrapper.readthedocs.io/en/latest/),
+> you can activate it. Example with a virtualenv named `openfisca`:
+> ```bash
+> workon openfisca
+> ```
 
-```
-workon openfisca
-```
+Make sure you have the latest version of `pip`:
 
-Then you can ensure you have the latest version of `pip`:
-
-```
+```bash
 pip install --upgrade pip wheel
 ```
 
 Then you can install OpenFisca-Web-API. We tell `pip` we want to install the extra requirements
 `paster` (the local HTTP server) and `france` (OpenFisca-France) all described in `setup.py`.
 
-```
+```bash
 pip install --editable .[paster,france]
 python setup.py compile_catalog
 ```
 
 ## Run the HTTP server
 
-```
+```bash
 paster serve --reload development-france.ini
 ```
 
@@ -51,7 +59,9 @@ To check if it's OK, open the following URL in your browser: http://localhost:20
 
 You should see this JSON response:
 
-    {"apiVersion": 1, "message": "Welcome, this is OpenFisca Web API.", "method": "/"}
+```json
+{"apiVersion": 1, "message": "Welcome, this is OpenFisca Web API.", "method": "/"}
+```
 
 ## Code architecture
 
@@ -79,7 +89,7 @@ All conversion and validation steps are done using the [Biryani](https://biryani
 
 If you installed OpenFisca-Web-API from Git you can run the unit tests:
 
-```
+```bash
 make test
 ```
 
@@ -91,8 +101,8 @@ See the [examples directory](./examples/).
 
 Here we use Apache with `mod_wsgi` under Debian Jessie but you may want to use another web server like Nginx.
 
-```
-# aptitude install apache2 libapache2-mod-wsgi
+```bash
+sudo apt install apache2 libapache2-mod-wsgi
 ```
 
 Then create a vhost, for example (adapt to your domain name and paths):
@@ -122,8 +132,10 @@ WSGIDaemonProcess api.openfisca.fr display-name=api
 </VirtualHost>
 ```
 
-```
-# ln -s /path/to/apache2.conf /etc/apache2/sites-available/api.openfisca.fr.conf
-# a2ensite api.openfisca.fr.conf
-# service apache2 force-reload
+As root:
+
+```bash
+ln -s /path/to/apache2.conf /etc/apache2/sites-available/api.openfisca.fr.conf
+a2ensite api.openfisca.fr.conf
+systemctl force-reload apache2
 ```
