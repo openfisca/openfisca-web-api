@@ -199,8 +199,9 @@ def walk_legislation_json(node_json, descriptions, parameters_json, path_fragmen
             fragment
             for fragment in descriptions + [node_json.get('description')]
             if fragment
-            )
-        parameter_json['description'] = description
+            ) or None
+        if description is not None:
+            parameter_json['description'] = description
         parameter_json['name'] = u'.'.join(path_fragments)
         if 'xml_file_path' in node_json:
             parameter_json['xml_file_path'] = get_relative_file_path(node_json['xml_file_path'])
