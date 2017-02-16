@@ -66,7 +66,7 @@ def api1_graph(req):
             dict(
                 variable = conv.pipe(
                     conv.empty_to_none,
-                    conv.default(u'revdisp'),
+                    conv.default(u'revenu_disponible'),
                     conv.test_in(tax_benefit_system.column_by_name),
                     ),
                 ),

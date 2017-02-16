@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '3.0.0',
+    version = '3.0.1',
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
     classifiers = [
@@ -44,9 +44,6 @@ setup(
     extras_require = {
         'paster': [
             'PasteScript',
-            ],
-        'france': [
-            'OpenFisca-France >= 5.0.0, < 7.0',
             ],
         'test': [
             'nose',
