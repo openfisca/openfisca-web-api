@@ -153,9 +153,12 @@ def load_environment(global_conf, app_conf):
         model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
 
     global country_package_dir_path
-    # Using pkg_resources.get_distribution(conf["country_package"]).location
-    # returns a wrong path in virtualenvs (<venv>/lib versus <venv>/local/lib).
-    country_package_dir_path = country_package.__path__[0]
+    # - Do not use pkg_resources.get_distribution(conf["country_package"]).location
+    #   because it returns a wrong path in virtualenvs (<venv>/lib versus <venv>/local/lib)
+    # - Use os.path.abspath because when the web API is runned in development with "paster serve",
+    #   __path__[0] == 'openfisca_france' for example. Then, get_relative_file_path won't be able
+    #   to find the relative path of an already relative path.
+    country_package_dir_path = os.path.abspath(country_package.__path__[0])
 
     global api_package_version
     api_package_version = pkg_resources.get_distribution('openfisca_web_api').version
