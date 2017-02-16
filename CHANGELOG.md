@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.2
+
+* Fix the condition to detect if the country package has decompositions:
+    * Load decompositions only if `tax_benefit_system` has a `decomposition_file_path` attribute.
+
 ## 3.0.1
 
 * Rename variables to make the tests pass.
