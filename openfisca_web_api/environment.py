@@ -61,11 +61,6 @@ def load_environment(global_conf, app_conf):
             'app_dir': conv.set_value(app_dir),
             'country_package': conv.pipe(
                 conv.make_input_to_slug(separator = u'_'),
-                conv.test_in((
-                    u'openfisca_france',
-                    u'openfisca_tunisia',
-                    u'openfisca_tunisia_pension',
-                    )),
                 conv.not_none,
                 ),
             'debug': conv.pipe(conv.guess_bool, conv.default(False)),
@@ -204,8 +199,9 @@ def walk_legislation_json(node_json, descriptions, parameters_json, path_fragmen
             fragment
             for fragment in descriptions + [node_json.get('description')]
             if fragment
-            )
-        parameter_json['description'] = description
+            ) or None
+        if description is not None:
+            parameter_json['description'] = description
         parameter_json['name'] = u'.'.join(path_fragments)
         if 'xml_file_path' in node_json:
             parameter_json['xml_file_path'] = get_relative_file_path(node_json['xml_file_path'])

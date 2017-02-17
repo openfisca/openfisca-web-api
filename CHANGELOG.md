@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0
+
+* Accept other countries than OpenFisca-France and OpenFisca-Tunisia.
+* The endpoint `parameters` now removes the `description` key from the JSON response, instead of an empty string,
+  when nodes of the legislation XML have no description.
+
 ## 3.0.2
 
 * Fix the condition to detect if the country package has decompositions:
