@@ -26,20 +26,10 @@ Clone the repository:
 git clone https://github.com/openfisca/openfisca-web-api.git
 cd openfisca-web-api
 ```
+Make sure you have the latest version of `pip`:
 
-
-To avoid any dependencies problem we recommend you to use a [virtual environment](https://virtualenv.pypa.io/en/stable/), for example with the tool : [pew](https://github.com/berdario/pew#command-reference).
-
-```python
-pip install pew
-# Answer "Y" to the question about modifying your shell config file.
-```
-Now create the virtual environment with the command `pew new`
-
-```python
-pew new openfisca
-# It creates a virtual environment with the name openfisca
-# The virtualenv you just created will be automatically activated.
+```bash
+pip install --upgrade pip wheel
 ```
 For OpenFisca you need an updated version of `pip`.
 
@@ -48,6 +38,22 @@ For OpenFisca you need an updated version of `pip`.
 pip --version
 # Should print at least 9.0 at the time we write this doc.
 ```
+
+To avoid any dependencies problem we recommend you to use a [virtual environment](https://virtualenv.pypa.io/en/stable/), for example with the tool : [pew](https://github.com/berdario/pew#command-reference).
+
+```python
+sudo pip install pew
+# Answer "Y" to the question about modifying your shell config file.
+```
+Now create the virtual environment with the command `pew new`
+
+```python
+pew new openfisca
+# It creates a virtual environment with the name openfisca
+# The virtualenv you just created will be automatically activated.
+# Answer "Y" to the question about modifying your shell config file.
+```
+
 Now you have all the requirements to install OpenFisca in your virtual environment.
 
 Later, you'll be able to activate the virtualenv to access to OpenFisca from the terminal like this:
@@ -56,17 +62,11 @@ Later, you'll be able to activate the virtualenv to access to OpenFisca from the
 pew workon openfisca
 ```
 
-Make sure you have the latest version of `pip`:
-
-```bash
-pip install --upgrade pip wheel
-```
-
 Then you can install OpenFisca-Web-API. We tell `pip` we want to install the extra requirements
 `paster` (the local HTTP server) and `france` (OpenFisca-France) all described in `setup.py`.
 
 ```bash
-pip install --editable .[paster,france]
+pip install --editable .[paster] OpenFisca-France
 python setup.py compile_catalog
 ```
 
