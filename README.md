@@ -58,27 +58,14 @@ Now you have all the requirements to install OpenFisca in your virtual environme
 Install OpenFisca-Web-API (represented by `.` which is the current directory) and OpenFisca-France in your virtual env:
 
 ```sh
-pip install --editable .[paster] OpenFisca-France
+pip install --editable .[paster]
 python setup.py compile_catalog
 ```
 
 If no errors, the Web API is installed in your virtual env. You can now run it with the HTTP server.
 
-## Run the HTTP server
-
-```sh
-paster serve --reload development-france.ini
-```
-
-To check if it's OK, open the following URL in your browser: http://localhost:2000/
-
-> 2000 is the port number defined in the development-france.ini config file.
-
-You should see this JSON response:
-
-```json
-{"apiVersion": 1, "message": "Welcome, this is OpenFisca Web API.", "method": "/"}
-```
+To run the Web API, you must install a country package like like [OpenFisca-France](https://github.com/openfisca/openfisca-france/).
+and read its README.
 
 ## Code architecture
 
@@ -109,10 +96,6 @@ If you installed OpenFisca-Web-API from Git you can run the unit tests:
 ```sh
 make test
 ```
-
-## Examples
-
-See the [examples directory](./examples/).
 
 ## Deploy in production
 
