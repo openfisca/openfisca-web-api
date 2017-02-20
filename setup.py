@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '3.2.0',
+    version = '3.2.1',
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
     classifiers = [
@@ -29,8 +29,6 @@ setup(
         (
             'share/openfisca/openfisca-web-api', [
                 'CHANGELOG.md',
-                'development-france.ini',
-                'development-tunisia.ini',
                 'LICENSE',
                 'README.md',
                 'test.ini',
