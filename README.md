@@ -12,67 +12,61 @@ The documentation of the project is hosted at http://doc.openfisca.fr/
 ## Local install
 
 If you want to run the Web API on your machine, follow these steps.
+Otherwise, read the documentation to learn how to [interact with `api.openfisca.fr`](https://doc.openfisca.fr/openfisca-web-api/index.html).
 
 Make sure you have Python 2 installed:
 
-```bash
+```sh
 python --version
 Python 2.7.9
 ```
 
 Clone the repository:
 
-```bash
+```sh
 git clone https://github.com/openfisca/openfisca-web-api.git
 cd openfisca-web-api
 ```
+
 Make sure you have the latest version of `pip`:
 
-```bash
+```sh
 pip install --upgrade pip wheel
-```
-For OpenFisca you need an updated version of `pip`.
-
-```python
-# Pew will automatically update pip itself. Let's check:
 pip --version
 # Should print at least 9.0 at the time we write this doc.
 ```
 
-To avoid any dependencies problem we recommend you to use a [virtual environment](https://virtualenv.pypa.io/en/stable/), for example with the tool : [pew](https://github.com/berdario/pew#command-reference).
+To avoid any dependencies problem we recommend you to use a [virtual environment](https://virtualenv.pypa.io/en/stable/),
+for example with the tool : [pew](https://github.com/berdario/pew#command-reference).
 
-```python
+```sh
 sudo pip install pew
-# Answer "Y" to the question about modifying your shell config file.
 ```
-Now create the virtual environment with the command `pew new`
 
-```python
+Now create a new virtual environment:
+
+```sh
 pew new openfisca
-# It creates a virtual environment with the name openfisca
-# The virtualenv you just created will be automatically activated.
 # Answer "Y" to the question about modifying your shell config file.
+# It creates a virtual environment named "openfisca".
+# The virtualenv you just created will be automatically activated.
+# Later, you'll just have to type "pew workon openfisca" to activate the virtualenv.
 ```
 
 Now you have all the requirements to install OpenFisca in your virtual environment.
 
-Later, you'll be able to activate the virtualenv to access to OpenFisca from the terminal like this:
+Install OpenFisca-Web-API (represented by `.` which is the current directory) and OpenFisca-France in your virtual env:
 
-```bash
-pew workon openfisca
-```
-
-Then you can install OpenFisca-Web-API. We tell `pip` we want to install the extra requirements
-`paster` (the local HTTP server) and `france` (OpenFisca-France) all described in `setup.py`.
-
-```bash
+```sh
 pip install --editable .[paster] OpenFisca-France
 python setup.py compile_catalog
 ```
 
+If no errors, the Web API is installed in your virtual env. You can now run it with the HTTP server.
+
 ## Run the HTTP server
 
-```bash
+```sh
 paster serve --reload development-france.ini
 ```
 
@@ -112,7 +106,7 @@ All conversion and validation steps are done using the [Biryani](https://biryani
 
 If you installed OpenFisca-Web-API from Git you can run the unit tests:
 
-```bash
+```sh
 make test
 ```
 
@@ -124,7 +118,7 @@ See the [examples directory](./examples/).
 
 Here we use Apache with `mod_wsgi` under Debian Jessie but you may want to use another web server like Nginx.
 
-```bash
+```sh
 sudo apt install apache2 libapache2-mod-wsgi
 ```
 
@@ -157,7 +151,7 @@ WSGIDaemonProcess api.openfisca.fr display-name=api
 
 As root:
 
-```bash
+```sh
 ln -s /path/to/apache2.conf /etc/apache2/sites-available/api.openfisca.fr.conf
 a2ensite api.openfisca.fr.conf
 systemctl force-reload apache2
