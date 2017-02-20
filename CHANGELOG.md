@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.1
+
+* Bugfix: in development mode, fix the path of the country package. This impacts the `parameters` endpoint.
+
 ## 3.1.0
 
 * Accept other countries than OpenFisca-France and OpenFisca-Tunisia.
