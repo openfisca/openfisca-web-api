@@ -3,31 +3,34 @@
 import os
 import sys
 import argparse
-from logging.config import fileConfig
 from wsgiref.simple_server import make_server
 
-from paste.deploy import loadapp
+from openfisca_core.scripts import add_tax_benefit_system_arguments, detect_country_package
 
+from ..application import make_app
+
+HOST_NAME = 'localhost'
+BASE_CONF = {
+    'debug': 'true',
+    }
 
 def main():
-    parser = argparse.ArgumentParser(description = __doc__)
-    parser.add_argument('-p', '--port', action = 'store', default = 2000, help = "port to serve on")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--port', action = 'store', default = 2000, help = "port to serve on", type = int)
+    parser = add_tax_benefit_system_arguments(parser)
     args = parser.parse_args()
 
-    port = int(args.port)
-    hostname = 'localhost'
-    conf_file_path = os.path.join(sys.prefix, 'share', 'openfisca', 'openfisca-web-api', 'development-france.ini')
+    conf = BASE_CONF.copy()
+    conf['country_package'] = args.country_package or detect_country_package()
+    if args.extensions:
+        # The api excepts the extensions and reforms to be separated by line breaks in the conf
+        conf['extensions'] = os.linesep.join(args.extensions)
+    if args.reforms:
+        conf['reforms'] = os.linesep.join(args.reforms)
 
-    # If openfisca_web_api has been installed with --editable
-    if not os.path.isfile(conf_file_path):
-        import pkg_resources
-        api_sources_path = pkg_resources.get_distribution("openfisca_web_api").location
-        conf_file_path = os.path.join(api_sources_path, 'development-france.ini')
-
-    fileConfig(conf_file_path)
-    application = loadapp('config:{}'.format(conf_file_path))
-    httpd = make_server(hostname, port, application)
-    print u'Serving on http://{}:{}/'.format(hostname, port)
+    app = make_app({}, **conf)
+    httpd = make_server(HOST_NAME, args.port, app)
+    print u'Serving on http://{}:{}/'.format(HOST_NAME, args.port)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
