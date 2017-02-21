@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.2.0
+
+* Make the script `openfisca-serve` work with any country
+    - Before, it was always loading `openfisca-france`
+    - Now, the country package (as well as reforms and extensions) can be provided through arguments
+    - If no country package is provided, an auto-detection is attempted
+
+For more information about how to use the script, run `openfisca-serve -h`.
+
 ## 3.1.1
 
 * Bugfix: in development mode, fix the path of the country package. This impacts the `parameters` endpoint.
