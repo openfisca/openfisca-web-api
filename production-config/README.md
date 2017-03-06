@@ -14,9 +14,6 @@ Here is the big picture:
   - We recommend using [pew](https://github.com/berdario/pew) because it's written in Python so it's shell agnostic.
 - For the sake of the example we're going to make the Web API serve the OpenFisca-France country.
 
--  web server
--  WSGI-compatible Python web server
-
 First, install Nginx.
 
 If you use the Debian Jessie GNU/Linux distribution on your server, type as root:
@@ -25,7 +22,8 @@ If you use the Debian Jessie GNU/Linux distribution on your server, type as root
 apt install nginx
 ```
 
-For any other OS please read the Nginx documentation.
+For any other OS please read the [Nginx documentation](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/).
+For Mac OS X consider using [homebrew-nginx](https://github.com/Homebrew/homebrew-nginx).
 
 ```sh
 # Upgrade some important Python packages:
@@ -67,7 +65,7 @@ repository.
 
   > See also [Gunicorn deployment tutorial](http://gunicorn.org/#deployment).
 
-- [`openfisca-web-api.service`](./openfisca-web-api.service) is the systemd service file staring the gunicorn server.
+- [`openfisca-web-api.service`](./openfisca-web-api.service) is the systemd service file starting the gunicorn server.
 
   Copy or link it to `/etc/systemd/system`. Update the paths in the file.
 

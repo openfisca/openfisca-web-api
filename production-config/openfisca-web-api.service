@@ -1,3 +1,7 @@
+# Update the paths in this file:
+# - gunicorn: use `pew dir openfisca` to know the directory of your virtualenv and concatenate `/bin/gunicorn`
+# - config.ini: indicate the path where you placed the file
+
 [Unit]
 Description=OpenFisca Web API
 
