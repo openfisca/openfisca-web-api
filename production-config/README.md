@@ -23,7 +23,7 @@ apt install nginx
 ```
 
 For any other OS please read the [Nginx documentation](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/).
-For Mac OS X consider using [homebrew-nginx](https://github.com/Homebrew/homebrew-nginx).
+For macOS you could consider using [`homebrew-nginx`](https://github.com/Homebrew/homebrew-nginx).
 
 ```sh
 # Upgrade some important Python packages:
