@@ -4,7 +4,7 @@ set -e
 
 current_version=`python setup.py --version`
 
-if ! git diff-index --quiet master openfisca_web_api
+if [[ $(git --no-pager diff --ignore-blank-lines  master openfisca_web_api) ]]
 then
     if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" != false ]]
     then
