@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+set -e
+
 current_version=`python setup.py --version`
 
 if ! git diff-index --quiet master openfisca_web_api
