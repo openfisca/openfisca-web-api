@@ -25,5 +25,3 @@ then
 fi
 
 make test
-
-bash openfisca_web_api/tests/test-cli.sh

@@ -12,3 +12,4 @@ flake8:
 
 test: flake8
 	nosetests openfisca_web_api --exe --with-doctest
+	bash openfisca_web_api/tests/test-cli.sh
