@@ -1,0 +1,14 @@
+# Update the paths in this file:
+# - gunicorn: use `pew dir openfisca` to know the directory of your virtualenv and concatenate `/bin/gunicorn`
+# - config.ini: indicate the path where you placed the file
+
+[Unit]
+Description=OpenFisca Web API
+
+[Service]
+ExecStart=/home/openfisca/virtualenvs/openfisca/bin/gunicorn --paste /home/openfisca/production-configs/api.openfisca.fr/config/config.ini
+User=openfisca
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
