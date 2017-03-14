@@ -204,7 +204,7 @@ def respond(req, version, data, params):
 
 
 def compute(formula_name, simulation):
-    resulting_dated_holder = simulation.compute(formula_name)
+    resulting_dated_holder = simulation.compute(formula_name, simulation.period)
     return resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
 
 
