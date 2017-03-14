@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.3.0
+
+* Adapt the web API to make it compatible with `OpenFisca-Core v7`
+
 ## 3.2.1
 
 * Add documentation and example files to deploy in production.
