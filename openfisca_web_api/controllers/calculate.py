@@ -81,7 +81,7 @@ def api1_calculate(req):
             simulation = scenario.new_simulation(trace = trace)
             for variable_name in variables:
                 try:
-                    simulation.calculate_output(variable_name)
+                    simulation.calculate_output(variable_name, simulation.period)
                 except ParameterNotFound as exc:
                     raise wsgihelpers.respond_json(ctx,
                         collections.OrderedDict(sorted(dict(

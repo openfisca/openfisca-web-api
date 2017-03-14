@@ -158,7 +158,7 @@ def test_calculate_with_labels():
                             },
                         ],
                     },
-                'period': '2013',
+                'period': '2013-01',
                 },
             ],
         'variables': ['categorie_salarie'],
@@ -173,8 +173,8 @@ def test_calculate_with_labels():
     assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
     individus = res_body_json['value'][0]['individus']
-    assert_equal(individus[0]['categorie_salarie']['2013'], 0)
-    assert_equal(individus[1]['categorie_salarie']['2013'], 1)
+    assert_equal(individus[0]['categorie_salarie']['2013-01'], 0)
+    assert_equal(individus[1]['categorie_salarie']['2013-01'], 1)
 
     # Then test returning labels of enumerations.
     test_case['labels'] = True
@@ -188,8 +188,8 @@ def test_calculate_with_labels():
     assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
     individus = res_body_json['value'][0]['individus']
-    assert_equal(individus[0]['categorie_salarie']['2013'], 'prive_non_cadre')
-    assert_equal(individus[1]['categorie_salarie']['2013'], 'prive_cadre')
+    assert_equal(individus[0]['categorie_salarie']['2013-01'], 'prive_non_cadre')
+    assert_equal(individus[1]['categorie_salarie']['2013-01'], 'prive_cadre')
 
 
 def test_calculate_with_output_format_variables():
