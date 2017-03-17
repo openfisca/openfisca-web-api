@@ -2,13 +2,25 @@
 
 from openfisca_france import CountryTaxBenefitSystem
 
+def build_parameter(parameter_json, parameter_path):
+    result = {}
+    result['description'] = parameter_json.get('description')
+    result['id'] = parameter_path
+    result['values'] = {}
+    if parameter_json.get('values'):
+        for value_object in parameter_json['values']:
+            result['values'][value_object['start']] = value_object['value']
+    else:
+        # Handle baremes here
+        pass
+    return result
+
+
 def walk_legislation_json(node_json, parameters_json, path_fragments):
     children_json = node_json.get('children') or None
     if children_json is None:
-        parameter_json = dict(node_json.copy())  # No need to deepcopy since it is a leaf.
-        parameter_json['description'] = node_json.get('description')
-        parameter_json['name'] = u'.'.join(path_fragments)
-        parameters_json.append(parameter_json)
+        parameter = build_parameter(node_json, u'.'.join(path_fragments))
+        parameters_json.append(parameter)
     else:
         for child_name, child_json in children_json.iteritems():
             walk_legislation_json(
