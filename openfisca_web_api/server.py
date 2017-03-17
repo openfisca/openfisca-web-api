@@ -2,7 +2,7 @@
 
 from flask import Flask, jsonify, abort
 
-from .model import build_parameters
+from model import build_parameters
 
 app = Flask(__name__)
 
