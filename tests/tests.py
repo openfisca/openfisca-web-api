@@ -22,3 +22,14 @@ class ParametersRoute(TestCase):
             parameters['cotsoc.gen.smic_h_b'],
             { 'description': 'SMIC horaire brut' }
             )
+
+
+class ParameterRoute(TestCase):
+
+    def test_error_code_non_existing_parameter(self):
+        response = tester.get('/parameter/non.existing.parameter')
+        self.assertEqual(response.status_code, 404)
+
+    def test_return_code_existing_parameter(self):
+        response = tester.get('/parameter/prestations.minima_sociaux.rsa.montant_de_base_du_rsa')
+        self.assertEqual(response.status_code, 200)
