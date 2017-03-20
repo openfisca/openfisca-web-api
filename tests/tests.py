@@ -7,6 +7,7 @@ from openfisca_web_api.app import create_app
 
 tester = create_app('openfisca_dummy_country').test_client()
 
+
 class ParametersRoute(TestCase):
 
     @classmethod
@@ -15,6 +16,11 @@ class ParametersRoute(TestCase):
 
     def test_return_code(self):
         self.assertEqual(self.response.status_code, 200)
+
+    def test_headers(self):
+        headers = self.response.headers
+        self.assertEqual(headers.get('Country-Package'), 'openfisca-dummy-country')
+        self.assertEqual(headers.get('Country-Package-Version'), '0.1.0')
 
     def test_item_content(self):
         parameters = json.loads(self.response.data)
