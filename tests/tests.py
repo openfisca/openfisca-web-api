@@ -1,28 +1,33 @@
 # -*- coding: utf-8 -*-
 
+from httplib import OK, NOT_FOUND
 from unittest import TestCase
 import json
+import pkg_resources
 
 from openfisca_web_api.app import create_app
 
-tester = create_app('openfisca_dummy_country').test_client()
+TEST_COUNTRY_PACKAGE = 'openfisca_dummy_country'
+distribution = pkg_resources.get_distribution(TEST_COUNTRY_PACKAGE)
+subject = create_app(TEST_COUNTRY_PACKAGE).test_client()
 
 
 class ParametersRoute(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.response = tester.get('/parameters')
+        cls.response = subject.get('/parameters')
 
     def test_return_code(self):
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, OK)
 
-    def test_headers(self):
-        headers = self.response.headers
-        self.assertEqual(headers.get('Country-Package'), 'openfisca-dummy-country')
-        self.assertEqual(headers.get('Country-Package-Version'), '0.1.1')
+    def test_package_name_header(self):
+        self.assertEqual(self.response.headers.get('Country-Package'), distribution.key)
 
-    def test_item_content(self):
+    def test_package_version_header(self):
+        self.assertEqual(self.response.headers.get('Country-Package-Version'), distribution.version)
+
+    def test_response_data(self):
         parameters = json.loads(self.response.data)
         self.assertEqual(
             parameters[u'impot.taux'],
@@ -33,15 +38,15 @@ class ParametersRoute(TestCase):
 class ParameterRoute(TestCase):
 
     def test_error_code_non_existing_parameter(self):
-        response = tester.get('/parameter/non.existing.parameter')
-        self.assertEqual(response.status_code, 404)
+        response = subject.get('/parameter/non.existing.parameter')
+        self.assertEqual(response.status_code, NOT_FOUND)
 
     def test_return_code_existing_parameter(self):
-        response = tester.get('/parameter/impot.taux')
-        self.assertEqual(response.status_code, 200)
+        response = subject.get('/parameter/impot.taux')
+        self.assertEqual(response.status_code, OK)
 
     def test_fuzzied_parameter_values(self):
-        response = tester.get('/parameter/impot.taux')
+        response = subject.get('/parameter/impot.taux')
         parameter = json.loads(response.data)
         self.assertEqual(
             parameter,
@@ -53,7 +58,7 @@ class ParameterRoute(TestCase):
             )
 
     def test_stopped_parameter_values(self):
-        response = tester.get('/parameter/csg.activite.deductible.taux')
+        response = subject.get('/parameter/csg.activite.deductible.taux')
         parameter = json.loads(response.data)
         self.assertEqual(
             parameter,
