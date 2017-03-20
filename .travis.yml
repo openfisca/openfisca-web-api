@@ -5,4 +5,4 @@ cache: pip
 install:
   - pip install --upgrade pip wheel  # pip >= 8.0 needed to be compatible with "manylinux" wheels, used by numpy >= 1.11
   - pip install --editable .[test]
-script: nosetests
+script: make test

@@ -26,7 +26,7 @@ class ParametersRoute(TestCase):
         parameters = json.loads(self.response.data)
         self.assertEqual(
             parameters[u'impot.taux'],
-            { u'description': u'taux d\'impôt sur les salaires' }
+            {u'description': u'taux d\'impôt sur les salaires'}
             )
 
 

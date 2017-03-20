@@ -5,6 +5,7 @@ import importlib
 
 DATE_FORMAT = "%Y-%m-%d"
 
+
 def get_next_day(date):
     parsed_date = datetime.datetime.strptime(date, DATE_FORMAT)
     next_day = parsed_date + datetime.timedelta(days=1)
@@ -12,10 +13,11 @@ def get_next_day(date):
 
 
 def build_parameter(parameter_json, parameter_path):
-    result = {}
-    result['description'] = parameter_json.get('description')
-    result['id'] = parameter_path
-    result['values'] = {}
+    result = {
+        'description': parameter_json.get('description'),
+        'id': parameter_path,
+        'values': {}
+        }
     if parameter_json.get('values'):  # we don't handle baremes yet
         values = parameter_json.get('values')
         stop_date = values[0].get('stop')
@@ -44,7 +46,8 @@ def build_tax_benefit_system(country_package_name):
     try:
         country_package = importlib.import_module(country_package_name)
     except ImportError:
-        raise ValueError(u"{} is not installed in your current environment".format(country_package_name))
+        raise ValueError(
+            u"{} is not installed in your current environment".format(country_package_name).encode('utf-8'))
     return country_package.CountryTaxBenefitSystem()
 
 
@@ -65,4 +68,4 @@ def build_headers(tax_benefit_system):
     return {
         'Country-Package': package_name,
         'Country-Package-Version': version
-    }
+        }

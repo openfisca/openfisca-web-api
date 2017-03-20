@@ -17,6 +17,7 @@ setup(
         'test': [
             'Openfisca-Dummy-Country >= 0.1.1',
             'nose',
+            'flake8',
             ],
         },
     include_package_data=True,  # Will read MANIFEST.in
