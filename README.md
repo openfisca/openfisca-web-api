@@ -6,7 +6,7 @@ Will work once [this PR](https://github.com/openfisca/openfisca-core/pull/475) i
 
 ```sh
 git@github.com:openfisca/openfisca-web-api.git
-git checkout rewrite
+git checkout flask
 pip install -e ".[test]"
 ```
 
