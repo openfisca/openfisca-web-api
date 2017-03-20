@@ -89,7 +89,7 @@ def test_invalid_formula_error_message():
     message = send(formula = INVALID_FORMULA)['payload']['error']['message']
 
     assert_in(INVALID_FORMULA, message)
-    assert_in('does not exist', message)
+    assert_in('was not found', message)
     assert_not_in('{', message)  # serialisation failed
 
 
@@ -107,7 +107,7 @@ def test_invalid_formula_with_valid_formula_error_message():
     message = send(formula = VALID_FORMULA + '+' + INVALID_FORMULA)['payload']['error']['message']
 
     assert_in(INVALID_FORMULA, message)
-    assert_in('does not exist', message)
+    assert_in('was not found', message)
     assert_not_in('{', message)  # serialisation failed
 
 
@@ -146,7 +146,7 @@ def test_bad_params_error_message():
     message = send(query_string = INVALID_QUERY_STRING)['payload']['error']['message']
 
     assert_in(INVALID_FORMULA, message)
-    assert_in('does not exist', message)
+    assert_in('was not found', message)
     assert_not_in('{', message)  # serialisation failed
 
 

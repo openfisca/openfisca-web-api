@@ -76,7 +76,7 @@ def test_invalid_formula_status_code():
 def test_invalid_formula_error_message():
     message = send(formula = INVALID_FORMULA)['payload']['error']['message']
     assert_in(INVALID_FORMULA, message)
-    assert_in('does not exist', message)
+    assert_in('was not found', message)
 
 
 def test_invalid_formula_value():
@@ -119,7 +119,7 @@ def test_bad_params_error_message():
     message = send(query_string = INVALID_QUERY_STRING)['payload']['error']['message']
 
     assert_in(INVALID_FORMULA, message)
-    assert_in('does not exist', message)
+    assert_in('was not found', message)
 
 
 def test_bad_params_value():

@@ -8,6 +8,7 @@ from datetime import datetime
 
 import numpy as np
 from openfisca_core import periods, simulations
+from openfisca_core.taxbenefitsystems import VariableNotFound
 
 from .. import contexts, conv, model, wsgihelpers
 
@@ -107,20 +108,20 @@ On a server, just test what your library handles.
 
 
 def get_column_from_formula_name(formula_name, tax_benefit_system):
-    result = tax_benefit_system.column_by_name.get(formula_name)
-    if result is None:
-        raise(Exception(dict(
+    try:
+        result = tax_benefit_system.get_column(formula_name, check_existence = True)
+    except VariableNotFound as exc:
+        raise Exception(dict(
             code = 404,
-            message = u"You requested to compute variable '{}', but it does not exist"
-                      .format(formula_name)
-            )))
+            message = exc.message
+            ))
 
     if result.is_input_variable():
-        raise(Exception(dict(
+        raise Exception(dict(
             code = 422,
             message = u"You requested to compute variable '{}', but it is an input variable, it cannot be computed"
                       .format(formula_name)
-            )))
+            ))
 
     return result
 
@@ -131,17 +132,16 @@ def normalize(params, tax_benefit_system):
     try:
         for param_name, value in params.items():
             result[param_name] = normalize_param(param_name, value, tax_benefit_system)
-    except KeyError:
+    except VariableNotFound as exc:
         raise Exception(dict(
             code = 400,
-            message = u"You passed parameter '{}', but it does not exist".format(param_name)
+            message = exc.message
             ))
-
     return result
 
 
 def normalize_param(name, value, tax_benefit_system):
-    column = tax_benefit_system.column_by_name[name]
+    column = tax_benefit_system.get_column(name, check_existence = True)
 
     result, error = conv.pipe(
         column.input_to_dated_python  # if column is not a date, this will be None and conv.pipe will be pass-through
@@ -162,11 +162,11 @@ def parse_period(period_descriptor):
     try:
         result = periods.period(period_descriptor)
     except ValueError:
-        raise(Exception(dict(
+        raise Exception(dict(
             code = 400,
             message = u"You requested computation for period '{}', but it could not be parsed as a period"
                       .format(period_descriptor)
-            )))
+            ))
 
     if result.unit not in ['year', 'month']:
         raise Exception(dict(

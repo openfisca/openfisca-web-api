@@ -12,6 +12,7 @@ import os
 
 from openfisca_core import decompositions
 from openfisca_core.legislations import ParameterNotFound
+from openfisca_core.taxbenefitsystems import VariableNotFound
 
 from .. import conf, contexts, conv, environment, model, wsgihelpers
 
@@ -127,24 +128,30 @@ def api1_simulate(req):
                 reform_keys = data['reforms'],
                 tax_benefit_system = base_tax_benefit_system,
                 )
+        try:
+            base_scenarios, base_scenarios_errors = conv.uniform_sequence(
+                base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                    ctx = ctx,
+                    repair = data['validate'],
+                    tax_benefit_system = base_tax_benefit_system,
+                    )
+                )(data['scenarios'], state = ctx)
+        except (ValueError, VariableNotFound) as exc:
+            wsgihelpers.handle_error(exc, ctx, headers)
 
-        base_scenarios, base_scenarios_errors = conv.uniform_sequence(
-            base_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                ctx = ctx,
-                repair = data['validate'],
-                tax_benefit_system = base_tax_benefit_system,
-                )
-            )(data['scenarios'], state = ctx)
         errors = {'scenarios': base_scenarios_errors} if base_scenarios_errors is not None else None
 
         if errors is None and data['reforms'] is not None:
-            reform_scenarios, reform_scenarios_errors = conv.uniform_sequence(
-                reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
-                    ctx = ctx,
-                    repair = data['validate'],
-                    tax_benefit_system = reform_tax_benefit_system,
-                    )
-                )(data['scenarios'], state = ctx)
+            try:
+                reform_scenarios, reform_scenarios_errors = conv.uniform_sequence(
+                    reform_tax_benefit_system.Scenario.make_json_to_cached_or_new_instance(
+                        ctx = ctx,
+                        repair = data['validate'],
+                        tax_benefit_system = reform_tax_benefit_system,
+                        )
+                    )(data['scenarios'], state = ctx)
+            except (ValueError, VariableNotFound) as exc:
+                wsgihelpers.handle_error(exc, ctx, headers)
             errors = {'scenarios': reform_scenarios_errors} if reform_scenarios_errors is not None else None
 
     if errors is not None:

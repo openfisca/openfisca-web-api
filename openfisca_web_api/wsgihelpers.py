@@ -125,3 +125,15 @@ def convert_date_to_json(obj):
         return obj.isoformat()
     else:
         return json.JSONEncoder().default(obj)
+
+
+def handle_error(error, ctx, headers):
+    raise respond_json(ctx,
+        dict(
+            error = dict(
+                code = 400,
+                errors = u"{}: {}".format(error.__class__.__name__, error.message),
+                ),
+            ),
+        headers = headers,
+        )
