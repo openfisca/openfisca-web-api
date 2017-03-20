@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-
-from openfisca_dummy_country import CountryTaxBenefitSystem
+import importlib
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -41,8 +40,9 @@ def walk_legislation_json(node_json, parameters_json, path_fragments):
                 )
 
 
-def build_parameters():
-    tax_benefit_system = CountryTaxBenefitSystem()
+def build_parameters(country_package_name):
+    country_package = importlib.import_module(country_package_name)
+    tax_benefit_system = country_package.CountryTaxBenefitSystem()
     legislation_json = tax_benefit_system.get_legislation()
     parameters_json = []
     walk_legislation_json(
@@ -52,5 +52,3 @@ def build_parameters():
         )
 
     return {parameter['id']: parameter for parameter in parameters_json}
-
-

@@ -3,9 +3,9 @@
 from unittest import TestCase
 import json
 
-from openfisca_web_api.server import app
+from openfisca_web_api.app import create_app
 
-tester = app.test_client()
+tester = create_app('openfisca_dummy_country').test_client()
 
 class ParametersRoute(TestCase):
 
