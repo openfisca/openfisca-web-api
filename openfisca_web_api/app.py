@@ -15,7 +15,7 @@ def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
     headers = build_headers(tax_benefit_system)
     parameters = build_parameters(tax_benefit_system)
     parameters_description = {
-        name: { 'description' :parameter['description']}
+        name: { 'description' :parameter['description'], 'href': '/parameter/{}'.format(name)}
         for name, parameter in parameters.iteritems()
         }
 
