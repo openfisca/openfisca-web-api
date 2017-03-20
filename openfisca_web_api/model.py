@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from openfisca_france import CountryTaxBenefitSystem
+from openfisca_dummy_country import CountryTaxBenefitSystem
 
 def build_parameter(parameter_json, parameter_path):
     result = {}

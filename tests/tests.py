@@ -19,8 +19,8 @@ class ParametersRoute(TestCase):
     def test_item_content(self):
         parameters = json.loads(self.response.data)
         self.assertEqual(
-            parameters['cotsoc.gen.smic_h_b'],
-            { 'description': 'SMIC horaire brut' }
+            parameters[u'impot.taux'],
+            { u'description': u'taux d\'impôt sur les salaires' }
             )
 
 
@@ -31,5 +31,5 @@ class ParameterRoute(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_return_code_existing_parameter(self):
-        response = tester.get('/parameter/prestations.minima_sociaux.rsa.montant_de_base_du_rsa')
+        response = tester.get('/parameter/impot.taux')
         self.assertEqual(response.status_code, 200)
