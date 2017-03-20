@@ -9,19 +9,8 @@ import collections
 from .. import contexts, conv, model, wsgihelpers
 
 
-def build_entity_data(entity):
-    entity_data = {'label': entity.label}
-    if entity.is_person:
-        entity_data['isPersonsEntity'] = entity.is_person
-    else:
-        entity_data.update({
-            'roles': entity.roles_description,
-            })
-    return entity_data
-
-
 @wsgihelpers.wsgify
-def api1_entities(req):
+def api2_entities(req):
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
@@ -69,7 +58,7 @@ def api1_entities(req):
         ) if data['reforms'] is not None else country_tax_benefit_system
 
     entities = {
-        entity.key: build_entity_data(entity)
+        entity.key: entity.to_json()
         for entity in tax_benefit_system.entities
         }
 

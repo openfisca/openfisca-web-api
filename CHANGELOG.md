@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.3.1
+
+* Technical and not breaking change
+    - Move JSON representation of entities to the Core for code factorization
+
 ## 3.3.0
 
 * Adapt the web API to make it compatible with `OpenFisca-Core v7`
