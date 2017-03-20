@@ -95,10 +95,7 @@ def make_validate_variable(reforms, base_tax_benefit_system, reform_tax_benefit_
         if state is None:
             state = default_state
         if reforms is None:
-            return test_in(
-                base_tax_benefit_system.column_by_name,
-                error = u'Variable "{}" is unknown in base tax and benefit system'.format(value),
-                )(value)
+            return value, None
         else:
             is_valid = value in base_tax_benefit_system.column_by_name and \
                 value in reform_tax_benefit_system.column_by_name

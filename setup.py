@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'OpenFisca-Web-API',
-    version = '3.3.1',
+    version = '3.4.0',
     author = 'OpenFisca Team',
     author_email = 'contact@openfisca.fr',
     classifiers = [
@@ -53,7 +53,7 @@ setup(
         'Babel >= 0.9.4',
         'Biryani[datetimeconv] >= 0.10.4',
         'numpy >= 1.11',
-        'OpenFisca-Core[parsers] >= 7.1.0, < 8.0',
+        'OpenFisca-Core[parsers] >= 8.0, < 9.0',
         'PasteDeploy',
         'WebError >= 0.10',
         'WebOb >= 1.1',

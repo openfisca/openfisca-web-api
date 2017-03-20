@@ -1,9 +1,13 @@
 # Changelog
 
+## 3.4.0
+
+* Improve error messages when the test case is invalid
+* Make the web API compatible with `OpenFisca-Core v8`
+
 ## 3.3.1
 
 * Technical and not breaking change
-    - Move JSON representation of entities to the Core for code factorization
 
 ## 3.3.0
 
