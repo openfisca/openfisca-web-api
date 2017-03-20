@@ -41,7 +41,10 @@ def walk_legislation_json(node_json, parameters_json, path_fragments):
 
 
 def build_tax_benefit_system(country_package_name):
-    country_package = importlib.import_module(country_package_name)
+    try:
+        country_package = importlib.import_module(country_package_name)
+    except ImportError:
+        raise ValueError(u"{} is not installed in your current environment".format(country_package_name))
     return country_package.CountryTaxBenefitSystem()
 
 
