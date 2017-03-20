@@ -20,7 +20,7 @@ class ParametersRoute(TestCase):
     def test_headers(self):
         headers = self.response.headers
         self.assertEqual(headers.get('Country-Package'), 'openfisca-dummy-country')
-        self.assertEqual(headers.get('Country-Package-Version'), '0.1.0')
+        self.assertEqual(headers.get('Country-Package-Version'), '0.1.1')
 
     def test_item_content(self):
         parameters = json.loads(self.response.data)
