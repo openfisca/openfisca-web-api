@@ -33,3 +33,27 @@ class ParameterRoute(TestCase):
     def test_return_code_existing_parameter(self):
         response = tester.get('/parameter/impot.taux')
         self.assertEqual(response.status_code, 200)
+
+    def test_fuzzied_parameter_values(self):
+        response = tester.get('/parameter/impot.taux')
+        parameter = json.loads(response.data)
+        self.assertEqual(
+            parameter,
+            {
+                u'id': u'impot.taux',
+                u'description': u'taux d\'impôt sur les salaires',
+                u'values': {u'2016-01-01': 0.35, u'2015-01-01': 0.32, u'1998-01-01': 0.3}
+                }
+            )
+
+    def test_stopped_parameter_values(self):
+        response = tester.get('/parameter/csg.activite.deductible.taux')
+        parameter = json.loads(response.data)
+        self.assertEqual(
+            parameter,
+            {
+                u'id': u'csg.activite.deductible.taux',
+                u'description': u'taux de la CSG déductible',
+                u'values': {u'2016-01-01': None, u'2015-01-01': 0.06, u'1998-01-01': 0.051}
+                }
+            )

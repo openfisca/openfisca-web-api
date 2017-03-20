@@ -1,18 +1,29 @@
 # -*- coding: utf-8 -*-
 
+import datetime
+
 from openfisca_dummy_country import CountryTaxBenefitSystem
+
+DATE_FORMAT = "%Y-%m-%d"
+
+def get_next_day(date):
+    parsed_date = datetime.datetime.strptime(date, DATE_FORMAT)
+    next_day = parsed_date + datetime.timedelta(days=1)
+    return next_day.strftime(DATE_FORMAT)
+
 
 def build_parameter(parameter_json, parameter_path):
     result = {}
     result['description'] = parameter_json.get('description')
     result['id'] = parameter_path
     result['values'] = {}
-    if parameter_json.get('values'):
-        for value_object in parameter_json['values']:
+    if parameter_json.get('values'):  # we don't handle baremes yet
+        values = parameter_json.get('values')
+        stop_date = values[0].get('stop')
+        if stop_date:
+            result['values'][get_next_day(stop_date)] = None
+        for value_object in values:
             result['values'][value_object['start']] = value_object['value']
-    else:
-        # Handle baremes here
-        pass
     return result
 
 
