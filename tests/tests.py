@@ -79,3 +79,21 @@ def test_stopped_parameter_values():
             }
         )
 
+
+def check_route_not_found(route):
+    response = subject.get(route)
+    assert_equal(response.status_code, NOT_FOUND)
+
+
+def test_wrong_routes():
+    wrong_routes = [
+        '/parameter',
+        '/parameter/',
+        '/parameter/with-ÜNı©ød€',
+        '/parameter/with%20url%20encoding',
+        '/parameter/impot.taux/',
+        '/parameter/impot.taux/too-much-nesting',
+        '/parameter//impot.taux/',
+        ]
+    for route in wrong_routes:
+        yield check_route_not_found, route
