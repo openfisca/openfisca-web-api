@@ -24,6 +24,8 @@ def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
         for name, parameter in parameters.iteritems()
         }
 
+    app.url_map.strict_slashes = False  # Accept url like /parameters/
+
     @app.route('/parameters')
     def get_parameters():
         return jsonify(parameters_description)
