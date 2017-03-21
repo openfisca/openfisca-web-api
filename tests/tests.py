@@ -7,9 +7,9 @@ from nose.tools import assert_equal
 
 from openfisca_web_api.app import create_app
 
-TEST_COUNTRY_PACKAGE = 'openfisca_dummy_country'
-distribution = pkg_resources.get_distribution(TEST_COUNTRY_PACKAGE)
-subject = create_app(TEST_COUNTRY_PACKAGE).test_client()
+TEST_COUNTRY_PACKAGE_NAME = 'openfisca_dummy_country'
+distribution = pkg_resources.get_distribution(TEST_COUNTRY_PACKAGE_NAME)
+subject = create_app(TEST_COUNTRY_PACKAGE_NAME).test_client()
 
 
 # /parameters
@@ -36,13 +36,8 @@ def test_response_data():
         {u'description': u'taux d\'impôt sur les salaires'}
         )
 
-
-def test_with_extra_slash():
-    response = subject.get('/parameters/')
-    assert_equal(response.status_code, NOT_FOUND)
-
-
 # /parameter/<id>
+
 
 def test_error_code_non_existing_parameter():
     response = subject.get('/parameter/non.existing.parameter')
@@ -80,20 +75,22 @@ def test_stopped_parameter_values():
         )
 
 
-def check_route_not_found(route):
+def check_code(route, code):
     response = subject.get(route)
-    assert_equal(response.status_code, NOT_FOUND)
+    assert_equal(response.status_code, code)
 
 
-def test_wrong_routes():
-    wrong_routes = [
-        '/parameter',
-        '/parameter/',
-        '/parameter/with-ÜNı©ød€',
-        '/parameter/with%20url%20encoding',
-        '/parameter/impot.taux/',
-        '/parameter/impot.taux/too-much-nesting',
-        '/parameter//impot.taux/',
-        ]
-    for route in wrong_routes:
-        yield check_route_not_found, route
+def test_routes_robustness():
+    expected_codes = {
+        '/parameters/': OK,
+        '/parameter': NOT_FOUND,
+        '/parameter/': NOT_FOUND,
+        '/parameter/with-ÜNı©ød€': NOT_FOUND,
+        '/parameter/with%20url%20encoding': NOT_FOUND,
+        '/parameter/impot.taux/': OK,
+        '/parameter/impot.taux/too-much-nesting': NOT_FOUND,
+        '/parameter//impot.taux/': NOT_FOUND,
+        }
+
+    for route, code in expected_codes.iteritems():
+        yield check_code, route, code
