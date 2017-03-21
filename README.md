@@ -18,5 +18,6 @@ nosetests
 ## Run
 
 ```sh
-COUNTRY_PACKAGE=openfisca_france FLASK_APP=openfisca_web_api/server.py flask run
+cd openfisca-web-api/openfisca_web_api
+COUNTRY_PACKAGE=openfisca_dummy_country python server.py --port 6000
 ```
