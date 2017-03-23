@@ -3,7 +3,7 @@
 
 import json
 
-from nose.tools import assert_equal, assert_is_instance, assert_true
+from nose.tools import assert_equal, assert_in, assert_is_instance, assert_true
 from webob import Request
 
 from . import common
@@ -327,3 +327,45 @@ def test_calculate_with_trace():
     assert_is_instance(first_traceback, dict)
     traceback_with_parameters = next(item for item in first_scenario_tracebacks if item.get('parameters'))
     assert_is_instance(traceback_with_parameters['parameters'], list)
+
+
+def test_calculate_with_wrong_input_variable_period():
+    test_case = {
+        'scenarios': [
+            {
+                'test_case': {
+                    'familles': [
+                        {
+                            'parents': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'foyers_fiscaux': [
+                        {
+                            'declarants': ['ind0', 'ind1'],
+                            },
+                        ],
+                    'individus': [
+                        {'id': 'ind0', 'enfant_a_charge': {"2013-01": 15000}},
+                        {'id': 'ind1'},
+                        ],
+                    'menages': [
+                        {
+                            'conjoint': 'ind1',
+                            'personne_de_reference': 'ind0',
+                            },
+                        ],
+                    },
+                'period': '2013',
+                },
+            ],
+        'variables': ['revenu_disponible'],
+        }
+    req = Request.blank(
+        '/api/1/calculate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 400, res.body)
+    assert_in(u'ValueError: Unable to set a value for variable', res.body, res.body)
