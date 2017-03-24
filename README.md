@@ -2,12 +2,12 @@
 
 [![Build Status](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
 
-[More build statuses](http://www.openfisca.fr/build-status)
+[More build statuses](https://www.openfisca.fr/build-status)
 
-[OpenFisca](http://www.openfisca.fr/) is a versatile microsimulation free software.
+[OpenFisca](https://www.openfisca.fr/) is a versatile microsimulation free software.
 This is the source code of the Web-API module.
 
-The documentation of the project is hosted at http://doc.openfisca.fr/
+The documentation of the project is hosted at https://doc.openfisca.fr/
 
 ## Local install
 
