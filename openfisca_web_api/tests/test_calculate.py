@@ -75,10 +75,7 @@ def test_calculate_with_axes():
     test_case = {
         'output_format': 'variables',
         "scenarios": [{
-            "period": {
-                "start": 2014,
-                "unit": "year"
-                },
+            "period": 2014,
             "axes": [{
                 "count": 50,
                 "max": 100000,
