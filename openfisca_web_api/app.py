@@ -2,6 +2,7 @@
 
 import os
 from flask import Flask, jsonify, abort
+from flask_cors import CORS
 
 from model import build_parameters, build_tax_benefit_system, build_headers
 
@@ -15,6 +16,7 @@ def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
             )
 
     app = Flask(__name__)
+    CORS(app, origins = '*')
 
     tax_benefit_system = build_tax_benefit_system(country_package)
     headers = build_headers(tax_benefit_system)

@@ -23,6 +23,7 @@ setup(
     include_package_data=True,  # Will read MANIFEST.in
     install_requires=[
         'flask == 0.12',
+        'flask-cors == 3.0.2',
         'OpenFisca-Core >= 8.0.0, < 10.0',
         ],
     packages=find_packages(exclude=['openfisca_web_api.tests*']),
