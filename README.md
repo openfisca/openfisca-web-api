@@ -22,3 +22,9 @@ COUNTRY_PACKAGE=openfisca_france gunicorn "openfisca_web_api.app:create_app()" -
 ```
 
 The `--workers k` (with `k >= 3`) option is necessary to avoid [this issue](http://stackoverflow.com/questions/11150343/slow-requests-on-local-flask-server). Without it, AJAX requests from Chrome sometimes take more than 20s to process.
+
+## Deploy
+
+```sh
+ssh deploy-new-api@api-test.openfisca.fr
+```
