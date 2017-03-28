@@ -18,7 +18,7 @@ nosetests
 ## Run
 
 ```sh
-COUNTRY_PACKAGE=openfisca_france FLASK_APP=openfisca_web_api/server.py flask run --with-threads
+COUNTRY_PACKAGE=openfisca_france gunicorn "openfisca_web_api.app:create_app()" --bind localhost:5000 --workers 3
 ```
 
-The `--with-threads` is necessary to avoid [this issue](https://github.com/corydolphin/flask-cors/issues/147#issuecomment-289539799). Without it, AJAX requests from Chrome sometimes take more than 20s to process.
+The `--workers k` (with `k >= 3`) option is necessary to avoid [this issue](http://stackoverflow.com/questions/11150343/slow-requests-on-local-flask-server). Without it, AJAX requests from Chrome sometimes take more than 20s to process.
