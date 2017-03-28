@@ -1,5 +1,7 @@
 # OpenFisca new Web-API
 
+This is the new OpenFisca web API, available at https://api-test.openfisca.fr/ (beta version).
+
 ## Install
 
 ```sh
