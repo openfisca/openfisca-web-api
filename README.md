@@ -46,7 +46,7 @@ sudo pip install pew
 Now create a new virtual environment:
 
 ```sh
-pew new openfisca
+pew new openfisca --python=python2
 # Answer "Y" to the question about modifying your shell config file.
 # It creates a virtual environment named "openfisca".
 # The virtualenv you just created will be automatically activated.
