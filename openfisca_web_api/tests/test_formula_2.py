@@ -199,6 +199,5 @@ def test_invalid_period_day_error_message():
     message = send(period = VALID_DAY)['payload']['error']['message']
 
     assert_in(VALID_DAY, message)
-    assert_in('year', message)
-    assert_in('month', message)
+    assert_in('could not be parsed', message)
     assert_not_in('{', message)  # serialisation failed

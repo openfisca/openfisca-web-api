@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.0.0
+
+* Restrict the accepted formats to define a period
+  - The valid formats are listed in [the doc](https://doc.openfisca.fr/periodsinstants.html)
+
 ## 3.4.0
 
 * Improve error messages when the test case is invalid
