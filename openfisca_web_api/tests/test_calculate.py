@@ -368,4 +368,5 @@ def test_calculate_with_wrong_input_variable_period():
         )
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
-    assert_in(u'ValueError: Unable to set a value for variable', res.body, res.body)
+    res_body_json = json.loads(res.body)
+    assert_in(u'ValueError: Unable to set a value for variable', res_body_json['error']['message'], res.body)
