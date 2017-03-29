@@ -132,7 +132,7 @@ def handle_error(error, ctx, headers):
         dict(
             error = dict(
                 code = 400,
-                errors = u"{}: {}".format(error.__class__.__name__, error.message),
+                message = u"{}: {}".format(error.__class__.__name__, error.message),
                 ),
             ),
         headers = headers,
