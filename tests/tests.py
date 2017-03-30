@@ -33,7 +33,7 @@ def test_response_data():
     parameters = json.loads(parameters_response.data)
     assert_equal(
         parameters[u'impot.taux'],
-        {u'description': u'taux d\'impôt sur les salaires'}
+        {u'description': u'Taux d\'impôt sur les salaires'}
         )
 
 # /parameter/<id>
@@ -56,21 +56,21 @@ def test_fuzzied_parameter_values():
         parameter,
         {
             u'id': u'impot.taux',
-            u'description': u'taux d\'impôt sur les salaires',
+            u'description': u'Taux d\'impôt sur les salaires',
             u'values': {u'2016-01-01': 0.35, u'2015-01-01': 0.32, u'1998-01-01': 0.3}
             }
         )
 
 
 def test_stopped_parameter_values():
-    response = subject.get('/parameter/csg.activite.deductible.taux')
+    response = subject.get('/parameter/impot.bouclier')
     parameter = json.loads(response.data)
     assert_equal(
         parameter,
         {
-            u'id': u'csg.activite.deductible.taux',
-            u'description': u'taux de la CSG déductible',
-            u'values': {u'2016-01-01': None, u'2015-01-01': 0.06, u'1998-01-01': 0.051}
+            u'id': u'impot.bouclier',
+            u'description': u'Montant maximum de l\'impôt',
+            u'values': {u'2012-01-01': None, u'2009-01-01': 0.6, u'2008-01-01': 0.5}
             }
         )
 
