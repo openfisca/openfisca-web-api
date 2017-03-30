@@ -75,6 +75,25 @@ def test_stopped_parameter_values():
         )
 
 
+def test_bareme():
+    response = subject.get('/parameter/contribution_sociale.salaire.bareme')
+    parameter = json.loads(response.data)
+    assert_equal(
+        parameter,
+        {
+            u'id': u'contribution_sociale.salaire.bareme',
+            u'description': u'Bareme progressif de contribution sociale sur les salaires',
+            u'brackets': {
+                u'2013-01-01': {"0.0": 0.03, "12000.0": 0.10},
+                u'2014-01-01': {"0.0": 0.03, "12100.0": 0.10},
+                u'2015-01-01': {"0.0": 0.04, "12200.0": 0.12},
+                u'2016-01-01': {"0.0": 0.04, "12300.0": 0.12},
+                u'2017-01-01': {"0.0": 0.02, "6000.0": 0.06, "12400.0": 0.12},
+                }
+            }
+        )
+
+
 def check_code(route, code):
     response = subject.get(route)
     assert_equal(response.status_code, code)

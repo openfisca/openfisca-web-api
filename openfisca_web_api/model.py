@@ -6,25 +6,69 @@ import importlib
 DATE_FORMAT = "%Y-%m-%d"
 
 
+def build_values(values):
+    result = {}
+    stop_date = values[0].get('stop')
+    if stop_date:
+        result[get_next_day(stop_date)] = None
+    for value_object in values:
+        result[value_object['start']] = value_object['value']
+
+    return result
+
+
 def get_next_day(date):
     parsed_date = datetime.datetime.strptime(date, DATE_FORMAT)
     next_day = parsed_date + datetime.timedelta(days=1)
     return next_day.strftime(DATE_FORMAT)
 
 
+def get_value(date, values):
+    candidates = sorted([
+        (start_date, value)
+        for start_date, value in values.iteritems()
+        if start_date <= date  # dates are lexicographically ordered and can be sorted
+        ], reverse = True)
+
+    if candidates:
+        return candidates[0][1]
+    else:
+        return None
+
+
+def build_brackets(brackets):
+    result = {}
+    # preprocess brackets
+    brackets = [{
+        'thresholds': build_values(bracket['threshold']),
+        'rates': build_values(bracket['rate']),
+        } for bracket in brackets]
+
+    dates = set(sum(
+        [bracket['thresholds'].keys() + bracket['rates'].keys() for bracket in brackets],
+        []))  # flatten the dates and remove duplicates
+
+    # We iterate on all dates as we need to build the whole scale for each of them
+    for date in dates:
+        for bracket in brackets:
+            threshold_value = get_value(date, bracket['thresholds'])
+            if threshold_value is not None:
+                rate_value = get_value(date, bracket['rates'])
+                result[date] = result.get(date) or {}
+                result[date][threshold_value] = rate_value
+
+    return result
+
+
 def build_parameter(parameter_json, parameter_path):
     result = {
         'description': parameter_json.get('description'),
         'id': parameter_path,
-        'values': {}
         }
-    if parameter_json.get('values'):  # we don't handle baremes yet
-        values = parameter_json.get('values')
-        stop_date = values[0].get('stop')
-        if stop_date:
-            result['values'][get_next_day(stop_date)] = None
-        for value_object in values:
-            result['values'][value_object['start']] = value_object['value']
+    if parameter_json.get('values'):
+        result['values'] = build_values(parameter_json['values'])
+    elif parameter_json.get('brackets'):
+        result['brackets'] = build_brackets(parameter_json['brackets'])
     return result
 
 
