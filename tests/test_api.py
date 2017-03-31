@@ -94,6 +94,25 @@ def test_bareme():
         )
 
 
+def test_stopped_bareme():
+    response = subject.get('/parameter/contribution_sociale.crds.activite.abattement')
+    parameter = json.loads(response.data)
+    assert_equal(
+        parameter,
+        {
+            u'id': u'contribution_sociale.crds.activite.abattement',
+            u'description': u"Abattement sur les revenus d\'activité, du chômage et des préretraites",
+            u'brackets': {
+                "1998-01-01": {"0.0": 0.05},
+                "2005-01-01": {"0.0": 0.03},
+                "2011-01-01": {"0.0": 0.03, "4.0": 0},
+                "2012-01-01": {"0.0": 0.0175, "4.0": 0},
+                "2015-01-01": None,
+                }
+            }
+        )
+
+
 def check_code(route, code):
     response = subject.get(route)
     assert_equal(response.status_code, code)

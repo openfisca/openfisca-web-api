@@ -57,6 +57,12 @@ def build_brackets(brackets):
                 result[date] = result.get(date) or {}
                 result[date][threshold_value] = rate_value
 
+    # Handle stopped parameters: a parameter is stopped if its first bracket is stopped
+    latest_date_first_threshold = max(brackets[0]['thresholds'].keys())
+    latest_value_first_threshold = brackets[0]['thresholds'][latest_date_first_threshold]
+    if latest_value_first_threshold is None:
+        result[latest_date_first_threshold] = None
+
     return result
 
 
