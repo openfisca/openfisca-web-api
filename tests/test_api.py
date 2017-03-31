@@ -33,7 +33,7 @@ def test_response_data():
     parameters = json.loads(parameters_response.data)
     assert_equal(
         parameters[u'impot.taux'],
-        {u'description': u'taux d\'impôt sur les salaires'}
+        {u'description': u'Taux d\'impôt sur les salaires'}
         )
 
 # /parameter/<id>
@@ -56,21 +56,59 @@ def test_fuzzied_parameter_values():
         parameter,
         {
             u'id': u'impot.taux',
-            u'description': u'taux d\'impôt sur les salaires',
+            u'description': u'Taux d\'impôt sur les salaires',
             u'values': {u'2016-01-01': 0.35, u'2015-01-01': 0.32, u'1998-01-01': 0.3}
             }
         )
 
 
 def test_stopped_parameter_values():
-    response = subject.get('/parameter/csg.activite.deductible.taux')
+    response = subject.get('/parameter/impot.bouclier')
     parameter = json.loads(response.data)
     assert_equal(
         parameter,
         {
-            u'id': u'csg.activite.deductible.taux',
-            u'description': u'taux de la CSG déductible',
-            u'values': {u'2016-01-01': None, u'2015-01-01': 0.06, u'1998-01-01': 0.051}
+            u'id': u'impot.bouclier',
+            u'description': u'Montant maximum de l\'impôt',
+            u'values': {u'2012-01-01': None, u'2009-01-01': 0.6, u'2008-01-01': 0.5}
+            }
+        )
+
+
+def test_bareme():
+    response = subject.get('/parameter/contribution_sociale.salaire.bareme')
+    parameter = json.loads(response.data)
+    assert_equal(
+        parameter,
+        {
+            u'id': u'contribution_sociale.salaire.bareme',
+            u'description': u'Bareme progressif de contribution sociale sur les salaires',
+            u'brackets': {
+                u'2013-01-01': {"0.0": 0.03, "12000.0": 0.10},
+                u'2014-01-01': {"0.0": 0.03, "12100.0": 0.10},
+                u'2015-01-01': {"0.0": 0.04, "12200.0": 0.12},
+                u'2016-01-01': {"0.0": 0.04, "12300.0": 0.12},
+                u'2017-01-01': {"0.0": 0.02, "6000.0": 0.06, "12400.0": 0.12},
+                }
+            }
+        )
+
+
+def test_stopped_bareme():
+    response = subject.get('/parameter/contribution_sociale.crds.activite.abattement')
+    parameter = json.loads(response.data)
+    assert_equal(
+        parameter,
+        {
+            u'id': u'contribution_sociale.crds.activite.abattement',
+            u'description': u"Abattement sur les revenus d\'activité, du chômage et des préretraites",
+            u'brackets': {
+                "1998-01-01": {"0.0": 0.05},
+                "2005-01-01": {"0.0": 0.03},
+                "2011-01-01": {"0.0": 0.03, "4.0": 0},
+                "2012-01-01": {"0.0": 0.0175, "4.0": 0},
+                "2015-01-01": None,
+                }
             }
         )
 
