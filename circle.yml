@@ -9,3 +9,8 @@ dependencies:
 test:
   override:
     - make test
+deployment:
+  production:
+    branch: rewrite
+    commands:
+      - ssh deploy-new-api@api-test.openfisca.fr
