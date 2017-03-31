@@ -11,6 +11,12 @@ git checkout rewrite
 pip install -e ".[test]"
 ```
 
+Install OpenFisca-France as well if you need it:
+
+```sh
+pip install openfisca_france
+```
+
 ## Test
 
 ```sh
