@@ -46,6 +46,7 @@ setup(
             'PasteScript',
             ],
         'test': [
+            'flake8',
             'nose',
             ],
         },
