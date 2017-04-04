@@ -10,10 +10,16 @@ script: ./travis-run-tests.sh
 before_deploy:
   - python setup.py compile_catalog
   - openssl aes-256-cbc -K $encrypted_67b95433b01c_key -iv $encrypted_67b95433b01c_iv -in openfisca_bot.enc -out openfisca_bot -d
+  - openssl aes-256-cbc -K $encrypted_3fddb3da1568_key -iv $encrypted_3fddb3da1568_iv -in deploy-api.enc -out deploy-api -d
+  - eval "$(ssh-agent -s)"
+  - chmod 400 ./openfisca_bot ./deploy-api
+  - ssh-add ./openfisca_bot ./deploy-api
 deploy:
 - provider: script
   skip_cleanup: true
-  script: ./travis-release-tag.sh
+  script:
+    - git tag "$(python setup.py --version)"
+    - git push git@github.com:openfisca/openfisca-web-api.git --tags
   on:
     branch: master
 - provider: pypi
@@ -21,5 +27,9 @@ deploy:
   password:
     secure: NTX2IEfW+6m/mVOMevzRYKE9Yo0IumTe/Sxka75c20oJNYsaeoZrI+7132Zm8p+D3yXNqJHgRJTAn5JhMsbJLDf+VjQ0TCZ86/JMc9wZuyvlGCsI5xMJTyj2YTZ6Rdddu3l+4OHUnzelUx/pN8Jt1eYW6CF5PaLUKJtl9tb3X78=
   distributions: "bdist_wheel"
+  on:
+    tags: true
+- provider: script
+  script: ssh deploy-api@api.openfisca.fr
   on:
     tags: true
