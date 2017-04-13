@@ -17,21 +17,21 @@ before_deploy:
   - chmod 400 ./openfisca_bot ./deploy-api
   - ssh-add ./openfisca_bot ./deploy-api
 deploy:
-- provider: script
-  skip_cleanup: true
-  script:
-    - git tag "$(python setup.py --version)"
-    - git push git@github.com:openfisca/openfisca-web-api.git --tags
-  on:
-    branch: master
-- provider: pypi
-  user: openfisca-bot
-  password:
-    secure: NTX2IEfW+6m/mVOMevzRYKE9Yo0IumTe/Sxka75c20oJNYsaeoZrI+7132Zm8p+D3yXNqJHgRJTAn5JhMsbJLDf+VjQ0TCZ86/JMc9wZuyvlGCsI5xMJTyj2YTZ6Rdddu3l+4OHUnzelUx/pN8Jt1eYW6CF5PaLUKJtl9tb3X78=
-  distributions: "bdist_wheel"
-  on:
-    tags: true
-- provider: script
-  script: ssh deploy-api@api.openfisca.fr
-  on:
-    branch: ci
+  - provider: script
+    skip_cleanup: true
+    script:
+      - git tag "$(python setup.py --version)"
+      - git push git@github.com:openfisca/openfisca-web-api.git --tags
+    on:
+      branch: master
+  - provider: pypi
+    user: openfisca-bot
+    password:
+      secure: NTX2IEfW+6m/mVOMevzRYKE9Yo0IumTe/Sxka75c20oJNYsaeoZrI+7132Zm8p+D3yXNqJHgRJTAn5JhMsbJLDf+VjQ0TCZ86/JMc9wZuyvlGCsI5xMJTyj2YTZ6Rdddu3l+4OHUnzelUx/pN8Jt1eYW6CF5PaLUKJtl9tb3X78=
+    distributions: "bdist_wheel"
+    on:
+      tags: true
+  - provider: script
+    script: ssh deploy-api@api.openfisca.fr
+    on:
+      branch: ci
