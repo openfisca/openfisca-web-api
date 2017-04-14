@@ -54,7 +54,7 @@ setup(
         'Babel >= 0.9.4',
         'Biryani[datetimeconv] >= 0.10.4',
         'numpy >= 1.11',
-        'OpenFisca-Core[parsers] >= 9.0, < 10.0',
+        'OpenFisca-Core[parsers] >= 10.0.1, < 11.0',
         'PasteDeploy',
         'WebError >= 0.10',
         'WebOb >= 1.1',
