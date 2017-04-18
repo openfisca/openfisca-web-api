@@ -23,7 +23,7 @@ deploy:
       - git tag "$(python setup.py --version)"
       - git push git@github.com:openfisca/openfisca-web-api.git --tags
     on:
-      branch: master
+      branch: ci
   - provider: pypi
     user: openfisca-bot
     password:
