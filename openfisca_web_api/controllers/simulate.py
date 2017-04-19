@@ -205,7 +205,10 @@ def api1_simulate(req):
             )
 
     decomposition_json = model.get_cached_or_new_decomposition_json(base_tax_benefit_system)
-    base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
+    try:
+        base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
+    except ValueError as exc:
+        wsgihelpers.handle_error(exc, ctx, headers)
 
     try:
         base_response_json = decompositions.calculate(base_simulations, decomposition_json)
@@ -228,7 +231,11 @@ def api1_simulate(req):
 
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(reform_tax_benefit_system)
-        reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
+        try:
+            reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
+        except ValueError as exc:
+            wsgihelpers.handle_error(exc, ctx, headers)
+
         try:
             reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
         except ParameterNotFound as exc:

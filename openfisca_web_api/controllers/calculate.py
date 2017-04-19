@@ -357,9 +357,12 @@ def api1_calculate(req):
 
     trace_simulations = data['trace'] or data['intermediate_variables']
 
-    base_simulations = calculate_simulations(scenarios, data['variables'], trace = trace_simulations)
-    if data['reforms'] is not None:
-        reform_simulations = calculate_simulations(reform_scenarios, data['variables'], trace = trace_simulations)
+    try:
+        base_simulations = calculate_simulations(scenarios, data['variables'], trace = trace_simulations)
+        if data['reforms'] is not None:
+            reform_simulations = calculate_simulations(reform_scenarios, data['variables'], trace = trace_simulations)
+    except ValueError as exc:
+        wsgihelpers.handle_error(exc, ctx, headers)
 
     calculate_simulation_end_time = time.time()
     calculate_simulation_time = calculate_simulation_end_time - calculate_simulation_start_time
