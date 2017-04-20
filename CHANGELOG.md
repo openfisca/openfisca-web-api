@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.0.1
+
+* Technical change: return a nice error message to the user instead of a generic "Server Error".
+    - Impacts `simulate` endpoint.
+
 ## 5.0.0
 
 * Breaking change: Adapt Web-API to OpenFisca-Core 10
@@ -7,7 +12,7 @@
 * Technical change: return the error message to the user instead of a generic "Server Error".
     - Impacts `calculate` and `simulate` endpoints.
     - In particular when a wrong period is specified for an input variable in the JSON payload
- 
+
 ## 4.0.0
 
 * Restrict the accepted formats to define a period
