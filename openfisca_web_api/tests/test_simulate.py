@@ -115,3 +115,43 @@ def test_simulate_with_wrong_input_variable_period():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(u'ValueError: Unable to set a value for variable', res_body_json['error']['message'], res.body)
+
+
+def test_simulate_with_wrong_period():
+    test_case = {
+        'scenarios': [
+            {
+                'test_case': {
+                    'familles': [
+                        {
+                            'parents': ['ind0'],
+                            },
+                        ],
+                    'foyers_fiscaux': [
+                        {
+                            'declarants': ['ind0'],
+                            },
+                        ],
+                    'individus': [
+                        {'id': 'ind0'},
+                        ],
+                    'menages': [
+                        {
+                            'personne_de_reference': 'ind0',
+                            },
+                        ],
+                    },
+                'period': '2015-01',
+                },
+            ],
+        }
+    req = Request.blank(
+        '/api/1/simulate',
+        body = json.dumps(test_case),
+        headers = (('Content-Type', 'application/json'),),
+        method = 'POST',
+        )
+    res = req.get_response(common.app)
+    assert_equal(res.status_code, 400, res.body)
+    res_body_json = json.loads(res.body)
+    assert_in(u'ValueError: Unable to compute variable', res_body_json['error']['message'], res.body)

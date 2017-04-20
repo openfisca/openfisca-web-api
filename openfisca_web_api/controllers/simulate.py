@@ -228,6 +228,8 @@ def api1_simulate(req):
                 ).iteritems())),
             headers = headers,
             )
+    except ValueError as exc:
+        wsgihelpers.handle_error(exc, ctx, headers)
 
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(reform_tax_benefit_system)
@@ -254,6 +256,8 @@ def api1_simulate(req):
                     ).iteritems())),
                 headers = headers,
                 )
+        except ValueError as exc:
+            wsgihelpers.handle_error(exc, ctx, headers)
 
     if data['trace']:
         simulations_variables_json = []
