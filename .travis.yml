@@ -2,6 +2,8 @@ sudo: false # Use new Travis container-based infrastructure
 language: python
 python: 2.7
 cache: pip
+addons:
+  ssh_known_hosts: api.openfisca.fr
 install:
   - pip install --upgrade pip wheel  # pip >= 8.0 needed to be compatible with "manylinux" wheels, used by numpy >= 1.11
   - pip install "OpenFisca-France==15.1.0"  # Needed only for tests.
@@ -9,17 +11,26 @@ install:
 script: ./travis-run-tests.sh
 before_deploy:
   - python setup.py compile_catalog
+  - rm -f ./openfisca_bot ./deploy-api
   - openssl aes-256-cbc -K $encrypted_67b95433b01c_key -iv $encrypted_67b95433b01c_iv -in openfisca_bot.enc -out openfisca_bot -d
+  - openssl aes-256-cbc -K $encrypted_3fddb3da1568_key -iv $encrypted_3fddb3da1568_iv -in deploy-api.enc -out deploy-api -d
+  - eval "$(ssh-agent -s)"
+  - chmod 400 ./openfisca_bot ./deploy-api
+  - ssh-add ./openfisca_bot ./deploy-api
 deploy:
-- provider: script
-  skip_cleanup: true
-  script: ./travis-release-tag.sh
-  on:
-    branch: master
-- provider: pypi
-  user: openfisca-bot
-  password:
-    secure: Ou0bDDMEsy08YkkD3soCjftZT6IqAGZQO7oE0iTJOY2jw4Zy+y5RHAyignSCnpvFZNVDc1+bG+BpwAaZ1bKqa0Be57ktK81bo/k4kf+OwCNT6Et2S4i4woLoDRwPjgMOn3/dmIE7H19wwuTQo4AB0WcdgMcBreyO+k4IvcYzQjU=
-  distributions: "bdist_wheel"
-  on:
-    tags: true
+  - provider: script
+    skip_cleanup: true
+    script: ./travis-release-tag.sh
+    on:
+      branch: master
+  - provider: pypi
+    user: openfisca-bot
+    password:
+      secure: Ou0bDDMEsy08YkkD3soCjftZT6IqAGZQO7oE0iTJOY2jw4Zy+y5RHAyignSCnpvFZNVDc1+bG+BpwAaZ1bKqa0Be57ktK81bo/k4kf+OwCNT6Et2S4i4woLoDRwPjgMOn3/dmIE7H19wwuTQo4AB0WcdgMcBreyO+k4IvcYzQjU=
+    distributions: "bdist_wheel"
+    on:
+      tags: true
+  - provider: script
+    script: ssh deploy-api@api.openfisca.fr
+    on:
+      tags: true
