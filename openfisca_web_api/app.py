@@ -42,12 +42,18 @@ def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
         parameter = parameters.get(id)
         if parameter is None:
             raise abort(404)
-        else:
-            return jsonify(parameter)
+        return jsonify(parameter)
 
     @app.route('/variables')
     def get_variables():
         return jsonify(variables_description)
+
+    @app.route('/variable/<id>')
+    def get_variable(id):
+        variable = variables.get(id)
+        if variable is None:
+            raise abort(404)
+        return jsonify(variable)
 
     @app.after_request
     def apply_headers(response):
