@@ -4,7 +4,7 @@ import os
 from flask import Flask, jsonify, abort
 from flask_cors import CORS
 
-from model import build_parameters, build_tax_benefit_system, build_headers
+from model import build_parameters, build_tax_benefit_system, build_headers, build_variables
 
 
 def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
@@ -25,6 +25,11 @@ def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
         name: {'description': parameter['description']}
         for name, parameter in parameters.iteritems()
         }
+    variables = build_variables(tax_benefit_system)
+    variables_description = {
+        name: {'description': variable['description']}
+        for name, variable in variables.iteritems()
+        }
 
     app.url_map.strict_slashes = False  # Accept url like /parameters/
 
@@ -39,6 +44,10 @@ def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
             raise abort(404)
         else:
             return jsonify(parameter)
+
+    @app.route('/variables')
+    def get_variables():
+        return jsonify(variables_description)
 
     @app.after_request
     def apply_headers(response):

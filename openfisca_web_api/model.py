@@ -113,6 +113,13 @@ def build_parameters(tax_benefit_system):
     return {parameter['id']: parameter for parameter in parameters_json}
 
 
+def build_variables(tax_benefit_system):
+    return {
+        name: {'description': variable.label}
+        for name, variable in tax_benefit_system.column_by_name.iteritems()
+        }
+
+
 def build_headers(tax_benefit_system):
     package_name, version = tax_benefit_system.get_package_metadata()
     return {
