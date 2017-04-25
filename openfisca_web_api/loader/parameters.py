@@ -2,8 +2,6 @@
 
 import datetime
 
-from commons import DATE_FORMAT
-
 
 def build_values(values):
     result = {}
@@ -17,9 +15,9 @@ def build_values(values):
 
 
 def get_next_day(date):
-    parsed_date = datetime.datetime.strptime(date, DATE_FORMAT)
+    parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d")
     next_day = parsed_date + datetime.timedelta(days=1)
-    return next_day.strftime(DATE_FORMAT)
+    return next_day.isoformat().split('T')[0]
 
 
 def get_value(date, values):

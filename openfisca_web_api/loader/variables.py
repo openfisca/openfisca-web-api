@@ -2,8 +2,6 @@
 
 import datetime
 
-from commons import DATE_FORMAT
-
 
 def format_value(value):
     if isinstance(value, datetime.date):
