@@ -4,6 +4,8 @@ import datetime
 import inspect
 import textwrap
 
+from commons import get_next_day
+
 
 def format_value(value):
     if isinstance(value, datetime.date):
@@ -39,14 +41,20 @@ def build_formula(formula, country_package_metadata, remove_first_line = False):
         'content': source_code,
         }
 
+
 def build_formulas(dated_formulas, country_package_metadata):
     def get_start_or_default(dated_formula):
         return dated_formula['start_instant'].date.isoformat() if dated_formula['start_instant'] else '0001-01-01'
 
-    return {
+    result = {
         get_start_or_default(dated_formula): build_formula(dated_formula['formula_class'], country_package_metadata, remove_first_line = True)
         for dated_formula in dated_formulas
-    }
+        }
+
+    if dated_formulas[-1]['stop_instant']:
+        result[get_next_day(dated_formulas[-1]['stop_instant'].date.isoformat())] = None
+
+    return result
 
 
 def build_variable(variable, country_package_metadata):
@@ -69,7 +77,7 @@ def build_variable(variable, country_package_metadata):
     if hasattr(variable.formula_class, 'function') and variable.formula_class.function:
         result['formulas'] = {
             '0001-01-01': build_formula(variable.formula_class, country_package_metadata)
-        }
+            }
     if hasattr(variable.formula_class, 'dated_formulas_class'):
         result['formulas'] = build_formulas(variable.formula_class.dated_formulas_class, country_package_metadata)
     return result

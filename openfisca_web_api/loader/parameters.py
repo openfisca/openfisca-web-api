@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import datetime
+from commons import get_next_day
 
 
 def build_values(values):
@@ -12,12 +12,6 @@ def build_values(values):
         result[value_object['start']] = value_object['value']
 
     return result
-
-
-def get_next_day(date):
-    parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d")
-    next_day = parsed_date + datetime.timedelta(days=1)
-    return next_day.isoformat().split('T')[0]
 
 
 def get_value(date, values):

@@ -2,7 +2,7 @@
 
 from httplib import OK, NOT_FOUND
 import json
-from nose.tools import assert_equal, assert_regexp_matches, assert_not_in, assert_items_equal, assert_in
+from nose.tools import assert_equal, assert_regexp_matches, assert_not_in, assert_items_equal, assert_in, assert_is_none
 from . import subject
 
 # /variables
@@ -126,3 +126,9 @@ def test_dated_variable_with_no_start():
     variable = json.loads(response.data)
     assert_items_equal(variable['formulas'], ['0001-01-01', '1880-01-01'])
     assert_in('function_avant_1880', variable['formulas']['0001-01-01']['content'])
+
+
+def test_interrupted_dated_variable():
+    response = subject.get('/variable/rmi')
+    variable = json.loads(response.data)
+    assert_is_none(variable['formulas']['2010-01-01'])
