@@ -2,12 +2,13 @@
 
 from httplib import OK, NOT_FOUND
 import json
-from nose.tools import assert_equal, assert_regexp_matches
+from nose.tools import assert_equal, assert_regexp_matches, assert_not_in
 from . import subject
 
 # /variables
 
 variables_response = subject.get('/variables')
+GITHUB_URL_REGEX = '^https://github\.com/openfisca/openfisca-dummy-country/blob/\d+\.\d+\.\d+/openfisca_dummy_country/model/model\.py#L\d+-L\d+$'
 
 
 def test_return_code():
@@ -49,7 +50,7 @@ def test_input_variable_value():
         u'defaultValue': u'1970-01-01',
         u'definitionPeriod': u'eternity',
         u'entity': u'individu',
-        u'reference': [u'https://fr.wikipedia.org/wiki/Date_de_naissance'],
+        u'references': [u'https://fr.wikipedia.org/wiki/Date_de_naissance'],
         }
 
     for key, expected_value in expected_values.iteritems():
@@ -57,4 +58,42 @@ def test_input_variable_value():
 
 
 def test_input_variable_github_url():
-    assert_regexp_matches(input_variable['source'], '^https://github\.com/openfisca/openfisca-dummy-country/blob/\d+\.\d+\.\d+/openfisca_dummy_country/model/model\.py#L\d+-L\d+$')
+    assert_regexp_matches(input_variable['source'], GITHUB_URL_REGEX)
+
+
+variable_response = subject.get('/variable/salaire_net')
+variable = json.loads(variable_response.data)
+
+
+def test_return_code_existing_variable():
+    assert_equal(variable_response.status_code, OK)
+
+
+def check_variable_value(key, expected_value):
+    assert_equal(variable[key], expected_value)
+
+
+def test_variable_value():
+    expected_values = {
+        u'description': u'Salaire net',
+        u'valueType': u'Float',
+        u'defaultValue': 0,
+        u'definitionPeriod': u'month',
+        u'entity': u'individu',
+        }
+
+    for key, expected_value in expected_values.iteritems():
+        yield check_variable_value, key, expected_value
+
+
+def test_null_values_are_dropped():
+    assert_not_in('references', variable.keys())
+
+
+def test_variable_formula_github_link():
+    assert_regexp_matches(variable['formulas']['0001-01-01']['source'], GITHUB_URL_REGEX)
+
+
+def test_variable_formula_content():
+    formula_code = "def function(individu, period):\n    salaire_brut = individu('salaire_brut', period)\n\n    return salaire_brut * 0.8\n"
+    assert_equal(variable['formulas']['0001-01-01']['content'], formula_code)
