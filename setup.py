@@ -15,7 +15,7 @@ setup(
     url='https://github.com/openfisca/openfisca-web-api/tree/rewrite',
     extras_require={
         'test': [
-            'Openfisca-Dummy-Country == 0.1.2',
+            'Openfisca-Dummy-Country == 0.1.5',
             'nose',
             'flake8',
             ],
