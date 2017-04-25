@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import importlib
 
-DATE_FORMAT = "%Y-%m-%d"
+from commons import DATE_FORMAT
 
 
 def build_values(values):
@@ -92,15 +91,6 @@ def walk_legislation_json(node_json, parameters_json, path_fragments):
                 )
 
 
-def build_tax_benefit_system(country_package_name):
-    try:
-        country_package = importlib.import_module(country_package_name)
-    except ImportError:
-        raise ValueError(
-            u"{} is not installed in your current environment".format(country_package_name).encode('utf-8'))
-    return country_package.CountryTaxBenefitSystem()
-
-
 def build_parameters(tax_benefit_system):
     legislation_json = tax_benefit_system.get_legislation()
     parameters_json = []
@@ -111,33 +101,3 @@ def build_parameters(tax_benefit_system):
         )
 
     return {parameter['id']: parameter for parameter in parameters_json}
-
-
-def format_value(value):
-    if not isinstance(value, datetime.date):
-        return value
-    else:
-        return value.strftime(DATE_FORMAT)
-
-
-def build_variables(tax_benefit_system):
-    return {
-        name: {
-            'description': variable.label,
-            'valueType': variable.__class__.__name__.strip('Col'),
-            'defaultValue': format_value(variable.default),
-            'definitionPeriod': variable.definition_period,
-            'entity': variable.entity.key,
-            # 'reference': '',
-            # 'source': '', # TODO : use variable.formula_class.(start_line_number|source_code|source_file_path)
-            }
-        for name, variable in tax_benefit_system.column_by_name.iteritems()
-        }
-
-
-def build_headers(tax_benefit_system):
-    package_name, version = tax_benefit_system.get_package_metadata()
-    return {
-        'Country-Package': package_name,
-        'Country-Package-Version': version
-        }
