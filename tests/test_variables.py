@@ -41,4 +41,4 @@ def test_input_variable_value():
     assert_equal(variable['defaultValue'], u"1970-01-01")
     assert_equal(variable['definitionPeriod'], u"eternity")
     assert_equal(variable['entity'], u"individu")
-    assert_regexp_matches(variable['source'], '^https://github.com/openfisca/openfisca-dummy-country/blob/\d+.\d+.\d+/openfisca_dummy_country/model/model.py$')
+    assert_regexp_matches(variable['source'], '^https://github\.com/openfisca/openfisca-dummy-country/blob/\d+\.\d+\.\d+/openfisca_dummy_country/model/model\.py#L\d+-L\d+$')
