@@ -2,7 +2,8 @@
 
 from httplib import OK, NOT_FOUND
 import json
-from nose.tools import assert_equal
+import re
+from nose.tools import assert_equal, assert_regexp_matches
 from . import subject
 
 # /variables
@@ -35,14 +36,9 @@ def test_return_code_existing_parameter():
 def test_input_variable_value():
     response = subject.get('/variable/birth')
     variable = json.loads(response.data)
-    assert_equal(
-        variable,
-        {
-            u"description": u"Date de naissance",
-            u"valueType": u"Date",
-            u"defaultValue": "1970-01-01",
-            u"definitionPeriod": u"eternity",
-            u"entity": u"individu",
-            # u"source": u"https://github.com/openfisca/openfisca-dummy-country/blob/master/openfisca_dummy_country/model/model.py#L31-L35"
-            }
-        )
+    assert_equal(variable['description'], u"Date de naissance")
+    assert_equal(variable['valueType'], u"Date")
+    assert_equal(variable['defaultValue'], u"1970-01-01")
+    assert_equal(variable['definitionPeriod'], u"eternity")
+    assert_equal(variable['entity'], u"individu")
+    assert_regexp_matches(variable['source'], '^https://github.com/openfisca/openfisca-dummy-country/blob/\d+.\d+.\d+/openfisca_dummy_country/model/model.py$')

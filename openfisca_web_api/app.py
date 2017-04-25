@@ -46,7 +46,10 @@ def create_app(country_package = os.environ.get('COUNTRY_PACKAGE')):
 
     @app.after_request
     def apply_headers(response):
-        response.headers.extend(data['headers'])
+        response.headers.extend({
+            'Country-Package': data['country_package_metadata']['name'],
+            'Country-Package-Version': data['country_package_metadata']['version']
+            })
         return response
 
     return app
