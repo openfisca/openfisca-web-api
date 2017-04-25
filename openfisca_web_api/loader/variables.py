@@ -30,7 +30,7 @@ def build_variables(tax_benefit_system, country_package_metadata):
             'defaultValue': format_value(variable.default),
             'definitionPeriod': variable.definition_period,
             'entity': variable.entity.key,
-            # 'reference': '',
+            'reference': variable.url,
             'source': build_source_url(
                 country_package_metadata,
                 variable.formula_class.source_file_path,

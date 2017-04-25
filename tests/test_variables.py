@@ -44,12 +44,12 @@ def check_input_variable_value(key, expected_value):
 
 def test_input_variable_value():
     expected_values = {
-        u"description": u"Date de naissance",
-        u"valueType": u"Date",
-        u"defaultValue": u"1970-01-01",
-        u"definitionPeriod": u"eternity",
-        u"entity": u"individu",
-        # url
+        u'description': u'Date de naissance',
+        u'valueType': u'Date',
+        u'defaultValue': u'1970-01-01',
+        u'definitionPeriod': u'eternity',
+        u'entity': u'individu',
+        u'reference': [u'https://fr.wikipedia.org/wiki/Date_de_naissance'],
         }
 
     for key, expected_value in expected_values.iteritems():
