@@ -2,7 +2,7 @@
 
 from httplib import OK, NOT_FOUND
 import json
-from nose.tools import assert_equal, assert_regexp_matches, assert_not_in
+from nose.tools import assert_equal, assert_regexp_matches, assert_not_in, assert_items_equal, assert_in
 from . import subject
 
 # /variables
@@ -97,3 +97,32 @@ def test_variable_formula_github_link():
 def test_variable_formula_content():
     formula_code = "def function(individu, period):\n    salaire_brut = individu('salaire_brut', period)\n\n    return salaire_brut * 0.8\n"
     assert_equal(variable['formulas']['0001-01-01']['content'], formula_code)
+
+
+dated_variable_response = subject.get('/variable/rsa')
+dated_variable = json.loads(dated_variable_response.data)
+
+
+def test_return_code_existing_dated_variable():
+    assert_equal(dated_variable_response.status_code, OK)
+
+
+def test_dated_variable_formulas_dates():
+    assert_items_equal(dated_variable['formulas'], ['2010-01-01', '2011-01-01', '2013-01-01'])
+
+
+def test_dated_variable_formulas_content():
+    formula_code_2010 = "def function_2010(individu, period):\n    salaire_imposable = individu('salaire_imposable', period, options = [DIVIDE])\n\n    return (salaire_imposable < 500) * 100.0\n"
+    formula_code_2011 = "def function_2011_2012(individu, period):\n    salaire_imposable = individu('salaire_imposable', period, options = [DIVIDE])\n\n    return (salaire_imposable < 500) * 200.0\n"
+    formula_code_2013 = "def function_2013(individu, period):\n    salaire_imposable = individu('salaire_imposable', period, options = [DIVIDE])\n\n    return (salaire_imposable < 500) * 300.0\n"
+
+    assert_equal(dated_variable['formulas']['2010-01-01']['content'], formula_code_2010)
+    assert_equal(dated_variable['formulas']['2011-01-01']['content'], formula_code_2011)
+    assert_equal(dated_variable['formulas']['2013-01-01']['content'], formula_code_2013)
+
+
+def test_dated_variable_with_no_start():
+    response = subject.get('/variable/contribution_sociale')
+    variable = json.loads(response.data)
+    assert_items_equal(variable['formulas'], ['0001-01-01', '1880-01-01'])
+    assert_in('function_avant_1880', variable['formulas']['0001-01-01']['content'])

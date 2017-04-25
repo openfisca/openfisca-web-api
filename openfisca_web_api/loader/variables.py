@@ -22,20 +22,31 @@ def build_source_url(country_package_metadata, source_file_path, start_line_numb
         ).encode('utf-8')
 
 
-def build_formulas(variable, country_package_metadata):
-    source_code, start_line_number = inspect.getsourcelines(variable.formula_class.function)
+def build_formula(formula, country_package_metadata, remove_first_line = False):
+    source_code, start_line_number = inspect.getsourcelines(formula.function)
+    if remove_first_line:
+        source_code = source_code[1:]
+        start_line_number = start_line_number + 1
     source_code = textwrap.dedent(''.join(source_code))
+
     return {
-        '0001-01-01': {
-            'source': build_source_url(
-                country_package_metadata,
-                variable.formula_class.source_file_path,
-                start_line_number,
-                source_code
-                ),
-            'content': source_code,
-            }
+        'source': build_source_url(
+            country_package_metadata,
+            formula.source_file_path,
+            start_line_number,
+            source_code
+            ),
+        'content': source_code,
         }
+
+def build_formulas(dated_formulas, country_package_metadata):
+    def get_start_or_default(dated_formula):
+        return dated_formula['start_instant'].date.isoformat() if dated_formula['start_instant'] else '0001-01-01'
+
+    return {
+        get_start_or_default(dated_formula): build_formula(dated_formula['formula_class'], country_package_metadata, remove_first_line = True)
+        for dated_formula in dated_formulas
+    }
 
 
 def build_variable(variable, country_package_metadata):
@@ -56,8 +67,11 @@ def build_variable(variable, country_package_metadata):
     if variable.url:
         result['references'] = variable.url
     if hasattr(variable.formula_class, 'function') and variable.formula_class.function:
-        result['formulas'] = build_formulas(variable, country_package_metadata)
-
+        result['formulas'] = {
+            '0001-01-01': build_formula(variable.formula_class, country_package_metadata)
+        }
+    if hasattr(variable.formula_class, 'dated_formulas_class'):
+        result['formulas'] = build_formulas(variable.formula_class.dated_formulas_class, country_package_metadata)
     return result
 
 
