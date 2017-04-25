@@ -21,6 +21,7 @@ def build_source_url(country_package_metadata, source_file_path, start_line_numb
         start_line_number + nb_lines - 1,
         ).encode('utf-8')
 
+
 def build_variables(tax_benefit_system, country_package_metadata):
     return {
         name: {

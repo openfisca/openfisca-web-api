@@ -2,7 +2,6 @@
 
 from httplib import OK, NOT_FOUND
 import json
-import re
 from nose.tools import assert_equal, assert_regexp_matches
 from . import subject
 
@@ -23,22 +22,39 @@ def test_response_data():
         )
 
 
+# /variable/<id>
+
+
 def test_error_code_non_existing_variable():
     response = subject.get('/variable/non_existing_variable')
     assert_equal(response.status_code, NOT_FOUND)
 
 
-def test_return_code_existing_parameter():
-    response = subject.get('/variable/birth')
-    assert_equal(response.status_code, OK)
+input_variable_response = subject.get('/variable/birth')
+input_variable = json.loads(input_variable_response.data)
+
+
+def test_return_code_existing_input_variable():
+    assert_equal(input_variable_response.status_code, OK)
+
+
+def check_input_variable_value(key, expected_value):
+    assert_equal(input_variable[key], expected_value)
 
 
 def test_input_variable_value():
-    response = subject.get('/variable/birth')
-    variable = json.loads(response.data)
-    assert_equal(variable['description'], u"Date de naissance")
-    assert_equal(variable['valueType'], u"Date")
-    assert_equal(variable['defaultValue'], u"1970-01-01")
-    assert_equal(variable['definitionPeriod'], u"eternity")
-    assert_equal(variable['entity'], u"individu")
-    assert_regexp_matches(variable['source'], '^https://github\.com/openfisca/openfisca-dummy-country/blob/\d+\.\d+\.\d+/openfisca_dummy_country/model/model\.py#L\d+-L\d+$')
+    expected_values = {
+        u"description": u"Date de naissance",
+        u"valueType": u"Date",
+        u"defaultValue": u"1970-01-01",
+        u"definitionPeriod": u"eternity",
+        u"entity": u"individu",
+        # url
+        }
+
+    for key, expected_value in expected_values.iteritems():
+        yield check_input_variable_value, key, expected_value
+
+
+def test_input_variable_github_url():
+    assert_regexp_matches(input_variable['source'], '^https://github\.com/openfisca/openfisca-dummy-country/blob/\d+\.\d+\.\d+/openfisca_dummy_country/model/model\.py#L\d+-L\d+$')
