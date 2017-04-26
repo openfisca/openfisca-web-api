@@ -99,6 +99,14 @@ def test_variable_formula_content():
     assert_equal(variable['formulas']['0001-01-01']['content'], formula_code)
 
 
+def test_variable_with_start_and_stop_date():
+    response = subject.get('/variable/fixed_tax')
+    variable = json.loads(response.data)
+    assert_items_equal(variable['formulas'], ['1980-01-01', '1990-01-01'])
+    assert_is_none(variable['formulas']['1990-01-01'])
+    assert_in('function', variable['formulas']['1980-01-01']['content'])
+
+
 dated_variable_response = subject.get('/variable/rsa')
 dated_variable = json.loads(dated_variable_response.data)
 
@@ -132,3 +140,12 @@ def test_interrupted_dated_variable():
     response = subject.get('/variable/rmi')
     variable = json.loads(response.data)
     assert_is_none(variable['formulas']['2010-01-01'])
+
+
+def test_dated_variable_with_start_and_stop_date():
+    response = subject.get('/variable/api')
+    variable = json.loads(response.data)
+    assert_items_equal(variable['formulas'], ['2000-01-01', '2005-01-01', '2010-01-01'])
+    assert_is_none(variable['formulas']['2010-01-01'])
+    assert_in('function_2005', variable['formulas']['2005-01-01']['content'])
+    assert_in('function_2000', variable['formulas']['2000-01-01']['content'])

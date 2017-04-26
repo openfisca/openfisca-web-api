@@ -24,9 +24,9 @@ def build_source_url(country_package_metadata, source_file_path, start_line_numb
         ).encode('utf-8')
 
 
-def build_formula(formula, country_package_metadata, remove_first_line = False):
+def build_formula(formula, country_package_metadata):
     source_code, start_line_number = inspect.getsourcelines(formula.function)
-    if remove_first_line:
+    if source_code[0].lstrip(' ').startswith('@'):  # remove decorator
         source_code = source_code[1:]
         start_line_number = start_line_number + 1
     source_code = textwrap.dedent(''.join(source_code))
@@ -47,7 +47,7 @@ def build_formulas(dated_formulas, country_package_metadata):
         return dated_formula['start_instant'].date.isoformat() if dated_formula['start_instant'] else '0001-01-01'
 
     result = {
-        get_start_or_default(dated_formula): build_formula(dated_formula['formula_class'], country_package_metadata, remove_first_line = True)
+        get_start_or_default(dated_formula): build_formula(dated_formula['formula_class'], country_package_metadata)
         for dated_formula in dated_formulas
         }
 
