@@ -59,6 +59,7 @@ def build_formulas(dated_formulas, country_package_metadata):
 
 def build_variable(variable, country_package_metadata):
     result = {
+        'id': variable.name,
         'description': variable.label,
         'valueType': variable.__class__.__name__.strip('Col'),
         'defaultValue': format_value(variable.default),
