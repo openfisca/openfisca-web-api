@@ -15,7 +15,7 @@ setup(
     url='https://github.com/openfisca/openfisca-web-api/tree/rewrite',
     extras_require={
         'test': [
-            'Openfisca-Dummy-Country == 0.1.5',
+            'Openfisca-Dummy-Country == 0.1.6',
             'nose',
             'flake8',
             ],
@@ -25,7 +25,7 @@ setup(
         'flask == 0.12',
         'flask-cors == 3.0.2',
         'gunicorn >= 19.7.1',
-        'OpenFisca-Core >= 11.0.0, < 12.0',
+        'OpenFisca-Core >= 12.0.1, < 13.0',
         ],
     packages=find_packages(exclude=['openfisca_web_api.tests*']),
     test_suite='nose.collector',
