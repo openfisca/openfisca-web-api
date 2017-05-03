@@ -2,15 +2,8 @@
 
 from httplib import OK, NOT_FOUND
 import json
-import pkg_resources
 from nose.tools import assert_equal
-
-from openfisca_web_api.app import create_app
-
-TEST_COUNTRY_PACKAGE_NAME = 'openfisca_dummy_country'
-distribution = pkg_resources.get_distribution(TEST_COUNTRY_PACKAGE_NAME)
-subject = create_app(TEST_COUNTRY_PACKAGE_NAME).test_client()
-
+from . import subject
 
 # /parameters
 
@@ -21,14 +14,6 @@ def test_return_code():
     assert_equal(parameters_response.status_code, OK)
 
 
-def test_package_name_header():
-    assert_equal(parameters_response.headers.get('Country-Package'), distribution.key)
-
-
-def test_package_version_header():
-    assert_equal(parameters_response.headers.get('Country-Package-Version'), distribution.version)
-
-
 def test_response_data():
     parameters = json.loads(parameters_response.data)
     assert_equal(
@@ -36,8 +21,8 @@ def test_response_data():
         {u'description': u'Taux d\'impôt sur les salaires'}
         )
 
-# /parameter/<id>
 
+# /parameter/<id>
 
 def test_error_code_non_existing_parameter():
     response = subject.get('/parameter/non.existing.parameter')

@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import datetime
-import importlib
-
-DATE_FORMAT = "%Y-%m-%d"
+from commons import get_next_day
 
 
 def build_values(values):
@@ -15,12 +12,6 @@ def build_values(values):
         result[value_object['start']] = value_object['value']
 
     return result
-
-
-def get_next_day(date):
-    parsed_date = datetime.datetime.strptime(date, DATE_FORMAT)
-    next_day = parsed_date + datetime.timedelta(days=1)
-    return next_day.strftime(DATE_FORMAT)
 
 
 def get_value(date, values):
@@ -92,15 +83,6 @@ def walk_legislation_json(node_json, parameters_json, path_fragments):
                 )
 
 
-def build_tax_benefit_system(country_package_name):
-    try:
-        country_package = importlib.import_module(country_package_name)
-    except ImportError:
-        raise ValueError(
-            u"{} is not installed in your current environment".format(country_package_name).encode('utf-8'))
-    return country_package.CountryTaxBenefitSystem()
-
-
 def build_parameters(tax_benefit_system):
     legislation_json = tax_benefit_system.get_legislation()
     parameters_json = []
@@ -111,11 +93,3 @@ def build_parameters(tax_benefit_system):
         )
 
     return {parameter['id']: parameter for parameter in parameters_json}
-
-
-def build_headers(tax_benefit_system):
-    package_name, version = tax_benefit_system.get_package_metadata()
-    return {
-        'Country-Package': package_name,
-        'Country-Package-Version': version
-        }
