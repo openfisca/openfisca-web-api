@@ -23,6 +23,3 @@ def test_basic_call():
     assert_in('country_package_version', res_json)
     assert_in('variables', res_json)
     assert_is_instance(res_json['variables'], list)
-
-    source_file_path = res_json['variables'][0]['source_file_path']
-    assert source_file_path.startswith('model'), source_file_path
