@@ -25,7 +25,7 @@ setup(
         'flask == 0.12',
         'flask-cors == 3.0.2',
         'gunicorn >= 19.7.1',
-        'OpenFisca-Core >= 8.0.0, < 12.0',
+        'OpenFisca-Core >= 11.0.0, < 12.0',
         ],
     packages=find_packages(exclude=['openfisca_web_api.tests*']),
     test_suite='nose.collector',
