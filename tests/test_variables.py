@@ -48,7 +48,7 @@ def test_input_variable_value():
         u'description': u'Date de naissance',
         u'valueType': u'Date',
         u'defaultValue': u'1970-01-01',
-        u'definitionPeriod': u'eternity',
+        u'definitionPeriod': u'ETERNITY',
         u'entity': u'individu',
         u'references': [u'https://fr.wikipedia.org/wiki/Date_de_naissance'],
         }
@@ -78,7 +78,7 @@ def test_variable_value():
         u'description': u'Salaire net',
         u'valueType': u'Float',
         u'defaultValue': 0,
-        u'definitionPeriod': u'month',
+        u'definitionPeriod': u'MONTH',
         u'entity': u'individu',
         }
 
