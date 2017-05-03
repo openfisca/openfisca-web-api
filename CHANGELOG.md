@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.1.0
+
+* Make the API compatible with OpenFisca Core 12
+
 ## 5.0.1
 
 * Technical change: return a nice error message to the user instead of a generic "Server Error".

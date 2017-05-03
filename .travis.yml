@@ -6,7 +6,7 @@ addons:
   ssh_known_hosts: api.openfisca.fr
 install:
   - pip install --upgrade pip wheel  # pip >= 8.0 needed to be compatible with "manylinux" wheels, used by numpy >= 1.11
-  - pip install "OpenFisca-France==15.1.0"  # Needed only for tests.
+  - pip install "OpenFisca-France==18.2.0"  # Needed only for tests.
   - pip install --editable .[test]
 script: ./travis-run-tests.sh
 before_deploy:
