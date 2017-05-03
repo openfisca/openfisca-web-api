@@ -4,7 +4,11 @@ import datetime
 import inspect
 import textwrap
 
-from commons import get_next_day
+
+def get_next_day(date):
+    parsed_date = datetime.datetime.strptime(date, "%Y-%m-%d")
+    next_day = parsed_date + datetime.timedelta(days = 1)
+    return next_day.isoformat().split('T')[0]
 
 
 def format_value(value):

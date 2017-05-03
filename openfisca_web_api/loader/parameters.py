@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from commons import get_next_day
-
 
 def build_values(values):
     result = {}
-    stop_date = values[0].get('stop')
-    if stop_date:
-        result[get_next_day(stop_date)] = None
     for value_object in values:
-        result[value_object['start']] = value_object['value']
+        result[value_object['start']] = value_object.get('value')
 
     return result
 

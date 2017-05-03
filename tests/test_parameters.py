@@ -34,7 +34,7 @@ def test_return_code_existing_parameter():
     assert_equal(response.status_code, OK)
 
 
-def test_fuzzied_parameter_values():
+def test_parameter_values():
     response = subject.get('/parameter/impot.taux')
     parameter = json.loads(response.data)
     assert_equal(
