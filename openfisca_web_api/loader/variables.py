@@ -65,7 +65,7 @@ def build_variable(variable, country_package_metadata):
     result = {
         'id': variable.name,
         'description': variable.label,
-        'valueType': variable.__class__.__name__.strip('Col'),
+        'valueType': variable.__class__.__name__.replace('Col', ''),
         'defaultValue': format_value(variable.default),
         'definitionPeriod': variable.definition_period.upper(),
         'entity': variable.entity.key,
