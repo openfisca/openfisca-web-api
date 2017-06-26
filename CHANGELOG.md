@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.0.0
+
+* Remove deprecated route `/fields`
+* Make route `/variables` compatible with OpenFisca-Core >= 14
+
 ## 5.1.0
 
 * Make the API compatible with OpenFisca Core 12
