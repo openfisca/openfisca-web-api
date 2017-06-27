@@ -372,7 +372,7 @@ def test_calculate_with_wrong_input_variable_period():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'ValueError: Unable to set a value for variable rfr for month-long period 2013-01',
+        u'Unable to set a value for variable rfr for month-long period 2013-01',
         res_body_json['error']['message'],
         res.body,
         )
@@ -419,7 +419,7 @@ def test_calculate_with_wrong_variable_period():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'ValueError: Unable to compute variable revenu_disponible for period 2013-01',
+        u'Unable to compute variable revenu_disponible for period 2013-01',
         res_body_json['error']['message'],
         res.body,
         )
@@ -559,7 +559,8 @@ def test_calculate_with_wrong_input_period_string():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'ValueError: Invalid period i_am_a_wrong_period', res_body_json['error']['message'], res.body)
+    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'i_am_a_wrong_period', res_body_json['error']['message'], res.body)
 
 
 def test_calculate_with_wrong_input_period_none():
@@ -602,7 +603,8 @@ def test_calculate_with_wrong_input_period_none():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'ValueError: Invalid period null', res_body_json['error']['message'], res.body)
+    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'null', res_body_json['error']['message'], res.body)
 
 
 def test_calculate_with_wrong_period_string():
@@ -645,7 +647,8 @@ def test_calculate_with_wrong_period_string():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'ValueError: Invalid period i_am_a_wrong_period_string', res_body_json['error']['message'], res.body)
+    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'i_am_a_wrong_period_string', res_body_json['error']['message'], res.body)
 
 
 def test_calculate_with_wrong_period_list():
@@ -689,7 +692,7 @@ def test_calculate_with_wrong_period_list():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'ValueError: Invalid period',
+        u'Invalid period',
         res_body_json['error']['message'],
         res.body,
         )
@@ -737,7 +740,7 @@ def test_calculate_with_input_variable_set_to_wrong_entity():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'ValueError: Variable salaire_imposable is defined for entity individu.',
+        u'Variable salaire_imposable is defined for entity individu.',
         res_body_json['error']['message'],
         res.body,
         )
@@ -788,7 +791,7 @@ def test_calculate_with_variable_with_set_input_and_inconsistent_input_data():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'ValueError: Inconsistent input: variable loyer has already been set for all months '
+        u'Inconsistent input: variable loyer has already been set for all months '
         u'contained in period 2013, and value [ 12000.] provided for 2013 doesn\'t match the total ([ 999.99609375]).',
         res_body_json['error']['message'],
         res.body,
@@ -835,7 +838,7 @@ def test_calculate_with_wrong_entity_name():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'ValueError: Invalid entity name: i_am_a_wrong_entity', res_body_json['error']['message'], res.body)
+    assert_in(u'Invalid entity name: i_am_a_wrong_entity', res_body_json['error']['message'], res.body)
 
 
 def test_calculate_with_wrong_value_type():
@@ -879,7 +882,7 @@ def test_calculate_with_wrong_value_type():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'ValueError: Invalid value [15000] for variable salaire_imposable.',
+        u'Invalid value [15000] for variable salaire_imposable.',
         res_body_json['error']['message'], res.body
         )
 
@@ -924,4 +927,4 @@ def test_calculate_with_wrong_id_type():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'ValueError: Invalid id in entity', res_body_json['error']['message'], res.body)
+    assert_in(u'Invalid id in entity', res_body_json['error']['message'], res.body)
