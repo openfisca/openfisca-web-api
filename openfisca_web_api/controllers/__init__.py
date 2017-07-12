@@ -30,8 +30,6 @@ def index(req):
 
 def make_router():
     """Return a WSGI application that searches requests to controllers """
-    wsgihelpers.init_tracker('https://openfisca.innocraft.cloud/piwik.php', 1)
-
     global router
     routings = [
         ('GET', '^/$', index),

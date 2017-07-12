@@ -8,6 +8,9 @@ clean:
 apifr:
 	paster serve --reload development-france.ini
 
+trackfr:
+	paster serve --reload development-france.ini tracker_url=https://openfisca.innocraft.cloud/piwik.php tracker_idsite=1
+
 flake8:
 	@# Do not analyse .gitignored files.
 	@# `make` needs `$$` to output `$`. Ref: http://stackoverflow.com/questions/2382764.
