@@ -16,6 +16,7 @@ SWAGGER_BASE_PATH = '/api/2/formula'
 
 @wsgihelpers.wsgify
 def api1_swagger(req):
+    wsgihelpers.get_tracker().track(req.url.decode('utf-8'))
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 

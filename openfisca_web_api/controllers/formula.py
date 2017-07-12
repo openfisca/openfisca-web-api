@@ -16,6 +16,7 @@ from .. import contexts, conv, model, wsgihelpers
 @wsgihelpers.wsgify
 def api1_formula(req):
     API_VERSION = 1
+    wsgihelpers.get_tracker().track(req.url.decode('utf-8'))
     params = dict(req.GET)
     data = dict()
 
@@ -70,6 +71,7 @@ for cross-browser compatibility, by splitting combined requests.
 On a server, just test what your library handles.
 """
     API_VERSION = '2.1.0'
+    wsgihelpers.get_tracker().track(req.url.decode('utf-8'))
     params = dict(req.GET)
     data = dict()
 

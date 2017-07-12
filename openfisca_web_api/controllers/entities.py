@@ -11,6 +11,7 @@ from .. import contexts, conv, model, wsgihelpers
 
 @wsgihelpers.wsgify
 def api2_entities(req):
+    wsgihelpers.get_tracker().track(req.url.decode('utf-8'))
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 
