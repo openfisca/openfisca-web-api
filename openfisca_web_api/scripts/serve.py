@@ -18,8 +18,6 @@ BASE_CONF = {
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', action = 'store', default = 2000, help = "port to serve on", type = int)
-    parser.add_argument("--tracker_url", help="tracking http api endpoint url")
-    parser.add_argument("--tracker_idsite", help="id of the tracked website on tracking http api")
     parser = add_tax_benefit_system_arguments(parser)
     args = parser.parse_args()
 
@@ -30,10 +28,6 @@ def main():
         conf['extensions'] = os.linesep.join(args.extensions)
     if args.reforms:
         conf['reforms'] = os.linesep.join(args.reforms)
-
-    if args.tracker_url and args.tracker_idsite:
-        conf['tracker_url'] = os.linesep.join(args.tracker_url)
-        conf['tracker_idsite'] = os.linesep.join(args.tracker_idsite)
 
     app = make_app({}, **conf)
     httpd = make_server(HOST_NAME, args.port, app)
