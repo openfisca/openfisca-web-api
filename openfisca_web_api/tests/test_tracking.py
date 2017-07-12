@@ -31,14 +31,20 @@ def time_requests(nb_requests, url, method, headers = None, body = None):
         requests.append(Request.blank(url, method = method, headers = headers, body = body))
 
     for req in requests:
-        yield req.get_response(common.app)
+        req.get_response(common.app)
 
     exec_time = time.time() - start_time
     log.info('{:2.6f} s'.format(exec_time))
 
 
+# Request without body
+
+
 def test_multiple_requests__variables():
     time_requests(100, '/api/1/variables', 'GET')
+
+
+# Request with json body
 
 
 def test_multiple_requests__calculate():
@@ -72,4 +78,6 @@ def test_multiple_requests__calculate():
             ],
         'variables': ['revenu_disponible'],
         }
-    time_requests(100, '/api/1/calculate', 'POST', headers = (('Content-Type', 'application/json'),), body = json.dumps(test_case))
+    time_requests(100, '/api/1/calculate', 'POST',
+                  headers = (('Content-Type', 'application/json'),),
+                  body = json.dumps(test_case))
