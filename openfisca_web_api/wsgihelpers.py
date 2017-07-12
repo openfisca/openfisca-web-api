@@ -160,6 +160,7 @@ def init_tracker(url, idsite):
         log.info(message)
 
 
-def get_tracker():
+def track(url):
     global tracker
-    return tracker
+    if tracker:
+        tracker.track(url)
