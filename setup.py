@@ -52,6 +52,9 @@ setup(
         'parsers': [
             'OpenFisca-Parsers >= 1.0.2, < 2.0',
             ],
+        'tracker': [
+            'openfisca-tracker',
+            ],
         },
     install_requires = [
         'Babel >= 0.9.4',

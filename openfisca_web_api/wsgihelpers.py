@@ -15,6 +15,13 @@ from functools import update_wrapper
 import webob.dec
 import webob.exc
 
+from os import linesep
+import traceback
+import logging
+
+log = logging.getLogger(__name__)
+tracker = None
+
 
 def N_(message):
     return message
@@ -137,3 +144,22 @@ def handle_error(error, ctx, headers):
             ),
         headers = headers,
         )
+
+
+def init_tracker(url, idsite):
+    try:
+        from openfisca_tracker.piwik import PiwikTracker
+        global tracker
+        tracker = PiwikTracker(url, idsite)
+
+    except ImportError:
+        message = linesep.join([traceback.format_exc(),
+                                u'Module `tracker` not activated.',
+                                u'See more at <https://github.com/openfisca/tracker>.'])
+
+        log.info(message)
+
+
+def get_tracker():
+    global tracker
+    return tracker

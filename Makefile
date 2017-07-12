@@ -5,6 +5,9 @@ clean:
 	find . -name '*.mo' -exec rm \{\} \;
 	find . -name '*.pyc' -exec rm \{\} \;
 
+apifr:
+	paster serve --reload development-france.ini
+
 flake8:
 	@# Do not analyse .gitignored files.
 	@# `make` needs `$$` to output `$`. Ref: http://stackoverflow.com/questions/2382764.
