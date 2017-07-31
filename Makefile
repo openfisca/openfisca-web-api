@@ -9,7 +9,7 @@ apifr:
 	paster serve --reload development-france.ini
 
 apifr-with-tracking:
-	paster serve --reload development-france.ini tracker_url=https://openfisca.innocraft.cloud/piwik.php tracker_idsite=1
+	paster serve --reload development-france.ini tracker_url=https://stats.data.gouv.fr/piwik.php tracker_idsite=4
 
 flake8:
 	@# Do not analyse .gitignored files.
