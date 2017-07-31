@@ -8,7 +8,7 @@ clean:
 apifr:
 	paster serve --reload development-france.ini
 
-trackfr:
+apifr-with-tracking:
 	paster serve --reload development-france.ini tracker_url=https://openfisca.innocraft.cloud/piwik.php tracker_idsite=1
 
 flake8:
