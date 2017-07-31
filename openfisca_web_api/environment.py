@@ -194,10 +194,7 @@ def load_environment(global_conf, app_conf):
         cpu_count = multiprocessing.cpu_count()
 
     if conf.get('tracker_url') and conf.get('tracker_idsite'):
-        log.debug(u'Start tracking on: ' + conf['tracker_url'])
         wsgihelpers.init_tracker(conf['tracker_url'], conf['tracker_idsite'])
-    else:
-        log.debug(u'Tracking not activated.')
 
 
 def walk_legislation_json(node_json, descriptions, parameters_json, path_fragments):
