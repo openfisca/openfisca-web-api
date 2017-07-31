@@ -1,6 +1,11 @@
 # Changelog
 
-## 6.0.0
+## 6.2.0
+
+* Enable API monitoring with Piwik
+  - See the [documentation](https://github.com/openfisca/openfisca-web-api/#tracker)
+
+# 6.0.0
 
 * Remove deprecated route `/fields`
 * Make route `/variables` compatible with OpenFisca-Core >= 14
