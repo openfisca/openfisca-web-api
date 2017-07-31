@@ -76,6 +76,8 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
 
 @wsgihelpers.wsgify
 def api1_calculate(req):
+    wsgihelpers.track(req.url.decode('utf-8'))
+
     def calculate_simulations(scenarios, variables, trace):
         simulations = []
         for scenario_index, scenario in enumerate(scenarios):

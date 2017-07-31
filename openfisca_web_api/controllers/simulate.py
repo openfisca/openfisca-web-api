@@ -23,6 +23,7 @@ def N_(message):
 
 @wsgihelpers.wsgify
 def api1_simulate(req):
+    wsgihelpers.track(req.url.decode('utf-8'))
     ctx = contexts.Ctx(req)
     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
 

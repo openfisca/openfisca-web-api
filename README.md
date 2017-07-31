@@ -117,3 +117,30 @@ See the [`examples` directory](./examples/).
 ## Deploy in production
 
 See the [`production-config` directory](./production-config/).
+
+## Tracker
+
+The OpenFisca Web API comes with an [optional tracker](https://github.com/openfisca/tracker) which allows you to measure the usage of the API.
+
+#### Tracker installation
+
+The tracker is not installed by default. To install it, run:
+
+```sh
+pip install openfisca_web_api[tracker]  # Or `pip install --editable ".[tracker]"` for an editable installation
+```
+
+
+#### Tracker configuration
+
+The tracker is activated when these two variables are set in the `.ini` configuration file:
+
+* `tracker_url`: An URL ending with `piwik.php`. It defines the Piwik instance that will receive the tracking information.
+* `tracker_idsite`: An integer. It defines the identifier of the tracked site on your Piwik instance.
+
+For instance, to use the main OpenFisca piwik instance, add these lines to your configuration file:
+
+```ini
+tracker_url = https://stats.data.gouv.fr/piwik.php
+tracker_idsite = 4
+```
