@@ -2,7 +2,7 @@
 
 
 from openfisca_core import decompositions
-from openfisca_core.reforms import Reform, compose_reforms
+from openfisca_core.reforms import Reform
 
 
 # Declarations, initialized in environment module
@@ -26,7 +26,9 @@ def get_cached_composed_reform(reform_keys, tax_benefit_system):
     composed_reform_tbs = reformed_tbs.get(full_key)
     if composed_reform_tbs is None:
         reforms_to_apply = [reforms[reform_key] for reform_key in reform_keys]
-        composed_reform_tbs = compose_reforms(reforms_to_apply, tax_benefit_system)
+        composed_reform_tbs = tax_benefit_system
+        for reform in reforms_to_apply:
+            composed_reform_tbs = reform(composed_reform_tbs)
         reformed_tbs[full_key] = composed_reform_tbs
     return composed_reform_tbs
 
