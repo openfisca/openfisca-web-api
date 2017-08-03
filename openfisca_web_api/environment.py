@@ -166,19 +166,19 @@ def load_environment(global_conf, app_conf):
     global country_package_version
     country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
 
-    log.debug(u'Cache legislation JSON with references to original XML.')
-    legislation_json = tax_benefit_system.get_legislation(with_source_file_infos=True)
-    parameters_json = []
-    walk_legislation_json(
-        legislation_json,
+    log.debug(u'Cache legislation parmeters')
+    legislation = tax_benefit_system.get_legislation()
+    parameters = []
+    walk_legislation(
+        legislation,
         descriptions = [],
-        parameters_json = parameters_json,
+        parameters = parameters,
         path_fragments = [],
         )
-    model.parameters_json_cache = parameters_json
+    model.parameters_cache = parameters
 
     if not conf['debug']:
-        # Do this after tax_benefit_system.get_legislation(with_source_file_infos=True).
+        # Do this after tax_benefit_system.get_legislation().
         log.debug(u'Compute and cache compact legislation for each first day of month since at least 2 legal years.')
         today = periods.instant(datetime.date.today())
         first_day_of_year = today.offset('first-of', 'year')
@@ -197,27 +197,28 @@ def load_environment(global_conf, app_conf):
         wsgihelpers.init_tracker(conf['tracker_url'], conf['tracker_idsite'])
 
 
-def walk_legislation_json(node_json, descriptions, parameters_json, path_fragments):
-    children_json = node_json.get('children') or None
-    if children_json is None:
-        parameter_json = node_json.copy()  # No need to deepcopy since it is a leaf.
+def walk_legislation(node, descriptions, parameters, path_fragments):
+    node_type = type(node).__name__
+    if node_type == 'Node':
+        for child_name, child in node.children.iteritems():
+            walk_legislation(
+                child,
+                descriptions = descriptions + [getattr(node, 'description', None)],
+                parameters = parameters,
+                path_fragments = path_fragments + [child_name],
+                )
+    else:
+        parameter = {}
+
         description = u' ; '.join(
             fragment
-            for fragment in descriptions + [node_json.get('description')]
+            for fragment in descriptions + [getattr(node, 'description', None)]
             if fragment
             ) or None
         if description is not None:
-            parameter_json['description'] = description
-        parameter_json['name'] = u'.'.join(path_fragments)
-        if 'xml_file_path' in node_json:
-            parameter_json['xml_file_path'] = get_relative_file_path(node_json['xml_file_path'])
-        parameter_json = collections.OrderedDict(sorted(parameter_json.iteritems()))
-        parameters_json.append(parameter_json)
-    else:
-        for child_name, child_json in children_json.iteritems():
-            walk_legislation_json(
-                child_json,
-                descriptions = descriptions + [node_json.get('description')],
-                parameters_json = parameters_json,
-                path_fragments = path_fragments + [child_name],
-                )
+            parameter['description'] = description
+
+        parameter['name'] = u'.'.join(path_fragments)
+
+        parameter = collections.OrderedDict(sorted(parameter.iteritems()))
+        parameters.append(parameter)

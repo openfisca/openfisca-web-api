@@ -12,7 +12,7 @@ extensions = None
 decomposition_json_by_file_path_cache = {}
 input_variables_and_parameters_by_column_name_cache = {}
 input_variables_extractor = None
-parameters_json_cache = None
+parameters_cache = None
 reformed_tbs = None
 tax_benefit_system = None
 
