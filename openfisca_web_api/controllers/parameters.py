@@ -83,7 +83,7 @@ def api1_parameters(req):
         instant = data['instant']
         parameters_json = []
         dated_legislation_json = legislations.generate_dated_legislation_json(
-            tax_benefit_system.get_legislation(),
+            tax_benefit_system.get_parameters(),
             instant,
             )
         for name in data['names']:
