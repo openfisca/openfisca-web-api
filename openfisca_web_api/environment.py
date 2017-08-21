@@ -6,20 +6,32 @@ import collections
 import datetime
 import importlib
 import logging
+import traceback
 import multiprocessing
+
 import os
+from os import linesep
+
 import pkg_resources
 import sys
 import weakref
 
 from biryani import strings
 from openfisca_core import periods
+
+from . import conf, conv, model, wsgihelpers
+
+log = logging.getLogger(__name__)
+
 try:
     from openfisca_parsers import input_variables_extractors
 except ImportError:
     input_variables_extractors = None
-
-from . import conf, conv, model, wsgihelpers
+    message = linesep.join([traceback.format_exc(),
+                            u'Could not import module `openfisca_parsers`. Some routes will not work properly.',
+                            u'If your are sure of your installation, look at the stack trace above to determine the origin of this error.',
+                            linesep])
+    log.warn(message)
 
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,8 +41,6 @@ country_package_dir_path = None
 country_package_version = None
 api_package_version = None
 cpu_count = None
-
-log = logging.getLogger(__name__)
 
 
 class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.

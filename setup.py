@@ -48,6 +48,7 @@ setup(
         'test': [
             'flake8',
             'nose',
+            'OpenFisca-Parsers >= 1.0.2, < 2.0',
             ],
         'parsers': [
             'OpenFisca-Parsers >= 1.0.2, < 2.0',
