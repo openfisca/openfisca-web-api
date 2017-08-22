@@ -325,8 +325,6 @@ def test_calculate_with_trace():
     assert_is_instance(first_scenario_tracebacks, list)
     first_traceback = first_scenario_tracebacks[0]
     assert_is_instance(first_traceback, dict)
-    traceback_with_parameters = next(item for item in first_scenario_tracebacks if item.get('parameters'))
-    assert_is_instance(traceback_with_parameters['parameters'], list)
 
 
 def test_calculate_with_wrong_input_variable_period():
