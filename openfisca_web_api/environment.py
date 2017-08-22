@@ -6,11 +6,8 @@ import collections
 import datetime
 import importlib
 import logging
-import traceback
 import multiprocessing
-
 import os
-from os import linesep
 
 import pkg_resources
 import sys
@@ -22,17 +19,6 @@ from openfisca_core import periods
 from . import conf, conv, model, wsgihelpers
 
 log = logging.getLogger(__name__)
-
-try:
-    from openfisca_parsers import input_variables_extractors
-except ImportError:
-    input_variables_extractors = None
-    message = linesep.join([traceback.format_exc(),
-                            u'Could not import module `openfisca_parsers`. Some routes will not work properly.',
-                            u'If your are sure of your installation, look at the stack trace above to determine the origin of this error.',
-                            linesep])
-    log.warn(message)
-
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -159,8 +145,6 @@ def load_environment(global_conf, app_conf):
         model.get_cached_or_new_decomposition_json(tax_benefit_system)
 
     log.debug(u'Initialize lib2to3-based input variables extractor.')
-    if input_variables_extractors is not None:
-        model.input_variables_extractor = input_variables_extractors.setup(tax_benefit_system)
 
     global country_package_dir_path
     # - Do not use pkg_resources.get_distribution(conf["country_package"]).location
