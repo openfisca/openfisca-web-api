@@ -6,7 +6,7 @@
 
 import collections
 
-from . import calculate, entities, field, formula, graph, parameters, reforms, simulate, swagger, variables
+from . import calculate, entities, field, formula, parameters, reforms, simulate, swagger, variables
 from .. import contexts, urls, wsgihelpers
 
 
@@ -39,7 +39,6 @@ def make_router():
         ('GET', '^/api/1/field/?$', field.api1_field),
         ('GET', '^/api/1/formula/(?P<name>[^/]+)/?$', formula.api1_formula),
         ('GET', '^/api/2/formula/(?:(?P<period>[A-Za-z0-9:-]*)/)?(?P<names>[A-Za-z0-9_+-]+)/?$', formula.api2_formula),
-        ('GET', '^/api/1/graph/?$', graph.api1_graph),
         ('GET', '^/api/1/parameters/?$', parameters.api1_parameters),
         ('GET', '^/api/1/reforms/?$', reforms.api1_reforms),
         ('POST', '^/api/1/simulate/?$', simulate.api1_simulate),
