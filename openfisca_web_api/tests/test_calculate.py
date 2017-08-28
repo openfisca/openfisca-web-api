@@ -557,7 +557,7 @@ def test_calculate_with_wrong_input_period_string():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'period', res_body_json['error']['message'], res.body)
     assert_in(u'i_am_a_wrong_period', res_body_json['error']['message'], res.body)
 
 
@@ -601,7 +601,7 @@ def test_calculate_with_wrong_input_period_none():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'period', res_body_json['error']['message'], res.body)
     assert_in(u'null', res_body_json['error']['message'], res.body)
 
 
@@ -645,7 +645,7 @@ def test_calculate_with_wrong_period_string():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'period', res_body_json['error']['message'], res.body)
     assert_in(u'i_am_a_wrong_period_string', res_body_json['error']['message'], res.body)
 
 
@@ -690,7 +690,7 @@ def test_calculate_with_wrong_period_list():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'Invalid period',
+        u'period',
         res_body_json['error']['message'],
         res.body,
         )
