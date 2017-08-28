@@ -8,7 +8,6 @@ from ..controllers.swagger import (
     build_metadata,
     map_path_base_to_swagger,
     map_type_to_swagger,
-    map_parameters_to_swagger,
     map_parameter_to_swagger,
     )
 from . import common
@@ -115,27 +114,6 @@ def test_map_type_to_swagger_string():
 
 def test_map_type_to_swagger_enum():
     assert_equal(map_type_to_swagger('Enumeration'), {'type': 'string'})
-
-
-def test_map_parameters_to_swagger():
-    target_column = model.tax_benefit_system.column_by_name['revenu_disponible']
-
-    actual = [
-        description.get('name')
-        for description in map_parameters_to_swagger(target_column)
-        ]
-
-    assert_equal(
-        actual,
-        [
-            u'revenus_du_travail',
-            u'ppe',
-            u'impots_directs',
-            u'pensions',
-            u'prestations_sociales',
-            u'revenus_du_capital',
-            ]
-        )
 
 
 def test_map_parameter_to_swagger():

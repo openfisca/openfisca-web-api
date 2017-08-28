@@ -6,7 +6,7 @@
 
 import collections
 
-from openfisca_core import legislations, periods
+from openfisca_core import parameters, periods
 
 from .. import conf, contexts, conv, environment, model, wsgihelpers
 
@@ -82,8 +82,8 @@ def api1_parameters(req):
     else:
         instant = data['instant']
         parameters_json = []
-        dated_legislation_json = legislations.generate_dated_legislation_json(
-            tax_benefit_system.get_legislation(),
+        dated_legislation_json = parameters.generate_dated_legislation_json(
+            tax_benefit_system.get_parameters(),
             instant,
             )
         for name in data['names']:

@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.2.1
+
+* Adapt to OpenFisca-Core 17.0.0
+
 ## 6.2.0
 
 * Enable API monitoring with Piwik

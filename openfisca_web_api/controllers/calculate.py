@@ -12,7 +12,7 @@ import itertools
 import os
 import time
 
-from openfisca_core.legislations import ParameterNotFound
+from openfisca_core.parameters import ParameterNotFound
 from openfisca_core.taxbenefitsystems import VariableNotFound
 
 from .. import conf, contexts, conv, environment, model, wsgihelpers

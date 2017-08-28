@@ -325,8 +325,6 @@ def test_calculate_with_trace():
     assert_is_instance(first_scenario_tracebacks, list)
     first_traceback = first_scenario_tracebacks[0]
     assert_is_instance(first_traceback, dict)
-    traceback_with_parameters = next(item for item in first_scenario_tracebacks if item.get('parameters'))
-    assert_is_instance(traceback_with_parameters['parameters'], list)
 
 
 def test_calculate_with_wrong_input_variable_period():
@@ -559,7 +557,7 @@ def test_calculate_with_wrong_input_period_string():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'period', res_body_json['error']['message'], res.body)
     assert_in(u'i_am_a_wrong_period', res_body_json['error']['message'], res.body)
 
 
@@ -603,7 +601,7 @@ def test_calculate_with_wrong_input_period_none():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'period', res_body_json['error']['message'], res.body)
     assert_in(u'null', res_body_json['error']['message'], res.body)
 
 
@@ -647,7 +645,7 @@ def test_calculate_with_wrong_period_string():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
-    assert_in(u'Invalid period', res_body_json['error']['message'], res.body)
+    assert_in(u'period', res_body_json['error']['message'], res.body)
     assert_in(u'i_am_a_wrong_period_string', res_body_json['error']['message'], res.body)
 
 
@@ -692,7 +690,7 @@ def test_calculate_with_wrong_period_list():
     assert_equal(res.status_code, 400, res.body)
     res_body_json = json.loads(res.body)
     assert_in(
-        u'Invalid period',
+        u'period',
         res_body_json['error']['message'],
         res.body,
         )
