@@ -161,7 +161,7 @@ def load_environment(global_conf, app_conf):
     country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
 
     log.debug(u'Cache legislation parmeters')
-    legislation = tax_benefit_system.get_parameters()
+    legislation = tax_benefit_system.parameters
     parameters = []
     walk_legislation(
         legislation,
