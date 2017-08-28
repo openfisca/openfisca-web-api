@@ -179,7 +179,7 @@ def load_environment(global_conf, app_conf):
         instant = first_day_of_year.offset(-2, 'year')
         two_years_later = first_day_of_year.offset(2, 'year')
         while instant < two_years_later:
-            tax_benefit_system.get_compact_legislation(instant)
+            tax_benefit_system.get_parameters_at_instant(instant)
             instant = instant.offset(1, 'month')
 
     # Initialize multiprocessing and load_alert
