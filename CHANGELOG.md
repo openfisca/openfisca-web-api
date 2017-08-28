@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.2.2
+
+* Finish adapting to OpenFisca-Core 17.0.0
+  - One renaming had not been applied 
+
 ## 6.2.1
 
 * Adapt to OpenFisca-Core 17.0.0
