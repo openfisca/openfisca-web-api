@@ -7,12 +7,12 @@
 [OpenFisca](https://www.openfisca.fr/) is a versatile microsimulation free software.
 This is the source code of the Web-API module.
 
-The documentation of the project is hosted at https://doc.openfisca.fr/
+The documentation of the project is hosted at http://openfisca.org/doc/
 
 ## Local install
 
 If you want to run the Web API on your machine, follow these steps.
-Otherwise, read the documentation to learn how to [interact with `api.openfisca.fr`](https://doc.openfisca.fr/openfisca-web-api/index.html).
+Otherwise, read the documentation to learn how to [interact with `api.openfisca.fr`](http://openfisca.org/doc/openfisca-web-api/index.html).
 
 Make sure you have Python 2 installed:
 
