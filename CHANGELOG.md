@@ -39,7 +39,7 @@
 ## 4.0.0
 
 * Restrict the accepted formats to define a period
-  - The valid formats are listed in [the doc](https://doc.openfisca.fr/periodsinstants.html)
+  - The valid formats are listed in [the doc](http://openfisca.org/doc/periodsinstants.html)
 
 ## 3.4.0
 
