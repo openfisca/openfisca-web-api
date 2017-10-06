@@ -5,13 +5,18 @@
 **The official API is now available in [OpenFisca Core repository](https://github.com/openfisca/openfisca-core).**  
 **The current package isn't maintained anymore: it won't evolve, and it is not guaranteed to be compatible with future versions of OpenFisca.**
 
+The aim of this package was to provide OpenFisca information and computations through a web interface, without installing anything locally.
 
-[![Build Status](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
+However, after a few years of existence, it appeared:
+* That versioning OpenFisca API and the Core module apart was difficult to maintain
+* That this API endpoints needed to be improved to match users experiences
 
-[More build statuses](https://www.openfisca.fr/build-status)
+## Introduction
+
+[![Build Status](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api) - [More build statuses](https://www.openfisca.fr/build-status)
 
 [OpenFisca](https://www.openfisca.fr/) is a versatile microsimulation free software.
-This is the source code of the Web-API module.
+This is the source code of the deprecated Web-API module.
 
 The documentation of the project is hosted at http://openfisca.org/doc/
 
