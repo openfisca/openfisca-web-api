@@ -1,4 +1,10 @@
-# OpenFisca Web-API
+# OpenFisca Web-API - DEPRECATED
+
+## This package is deprecated
+
+**The official API is now available in [OpenFisca Core repository](https://github.com/openfisca/openfisca-core).**  
+**The current package isn't maintained anymore: it won't evolve, and it is not guaranteed to be compatible with future versions of OpenFisca.**
+
 
 [![Build Status](https://travis-ci.org/openfisca/openfisca-web-api.svg?branch=master)](https://travis-ci.org/openfisca/openfisca-web-api)
 
