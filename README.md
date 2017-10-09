@@ -2,8 +2,8 @@
 
 ## This package is deprecated
 
-**The official API is now packaged in [OpenFisca Core repository](https://github.com/openfisca/openfisca-core).**  
-**The current package isn't maintained anymore.**
+**The new OpenFisca Web API is now packaged in [OpenFisca-Core](https://github.com/openfisca/openfisca-core).**  
+**This package isn't maintained anymore.**
 
 The aim of this package was to provide OpenFisca information and computations through a web interface, without installing anything locally.
 
