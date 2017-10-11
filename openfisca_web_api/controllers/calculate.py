@@ -37,8 +37,10 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
     for scenario, simulation in itertools.izip(scenarios, simulations):
         if intermediate_variables:
             holders = []
-            for step in simulation.traceback.itervalues():
-                holder = step['holder']
+            for node, node_trace in simulation.tracer.trace.iteritems():
+                splits = node.replace('>', '').split('<')
+                variable_name = splits[0]
+                holder = simulation.get_holder(variable_name)
                 if holder not in holders:
                     holders.append(holder)
         else:
@@ -357,7 +359,7 @@ def api1_calculate(req):
 
     calculate_simulation_start_time = time.time()
 
-    trace_simulations = data['trace'] or data['intermediate_variables']
+    trace_simulations = data['intermediate_variables']
 
     try:
         base_simulations = calculate_simulations(scenarios, data['variables'], trace = trace_simulations)
@@ -399,41 +401,8 @@ def api1_calculate(req):
                 variables = data['variables'],
                 )
 
-    if data['trace']:
-        simulations_variables_json = []
-        tracebacks_json = []
-        simulations = reform_simulations if data['reforms'] is not None else base_simulations
-        for simulation in simulations:
-            simulation_variables_json = {}
-            traceback_json = []
-            for (variable_name, period), step in simulation.traceback.iteritems():
-                holder = step['holder']
-                if variable_name not in simulation_variables_json:
-                    variable_value_json = holder.to_value_json()
-                    if variable_value_json is not None:
-                        simulation_variables_json[variable_name] = variable_value_json
-                column = holder.column
-                input_variables_infos = step.get('input_variables_infos')
-                parameters_infos = step.get('parameters_infos')
-                traceback_json.append(collections.OrderedDict(sorted(dict(
-                    cell_type = column.val_type,  # Unification with OpenFisca Julia name.
-                    default_input_variables = step.get('default_input_variables', False),
-                    entity = column.entity.key,
-                    input_variables = [
-                        (input_variable_name, str(input_variable_period))
-                        for input_variable_name, input_variable_period in input_variables_infos
-                        ] if input_variables_infos else None,
-                    is_computed = step.get('is_computed', False),
-                    label = column.label if column.label != variable_name else None,
-                    name = variable_name,
-                    parameters = parameters_infos or None,
-                    period = str(period) if period is not None else None,
-                    ).iteritems())))
-            simulations_variables_json.append(simulation_variables_json)
-            tracebacks_json.append(traceback_json)
-    else:
-        simulations_variables_json = None
-        tracebacks_json = None
+    simulations_variables_json = None
+    tracebacks_json = None
 
     response_data = collections.OrderedDict(sorted(dict(
         apiVersion = 1,

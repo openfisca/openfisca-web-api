@@ -207,7 +207,7 @@ def api1_simulate(req):
 
     decomposition_json = model.get_cached_or_new_decomposition_json(base_tax_benefit_system)
     try:
-        base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
+        base_simulations = [scenario.new_simulation() for scenario in base_scenarios]
     except ValueError as exc:
         wsgihelpers.handle_error(exc, ctx, headers)
 
@@ -235,7 +235,7 @@ def api1_simulate(req):
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(reform_tax_benefit_system)
         try:
-            reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
+            reform_simulations = [scenario.new_simulation() for scenario in reform_scenarios]
         except ValueError as exc:
             wsgihelpers.handle_error(exc, ctx, headers)
 
@@ -260,39 +260,8 @@ def api1_simulate(req):
         except ValueError as exc:
             wsgihelpers.handle_error(exc, ctx, headers)
 
-    if data['trace']:
-        simulations_variables_json = []
-        tracebacks_json = []
-        simulations = reform_simulations if data['reforms'] is not None else base_simulations
-        for simulation in simulations:
-            simulation_variables_json = {}
-            traceback_json = []
-            for (variable_name, period), step in simulation.traceback.iteritems():
-                holder = step['holder']
-                if variable_name not in simulation_variables_json:
-                    variable_value_json = holder.to_value_json()
-                    if variable_value_json is not None:
-                        simulation_variables_json[variable_name] = variable_value_json
-                input_variables_infos = step.get('input_variables_infos')
-                column = holder.column
-                traceback_json.append(dict(
-                    cell_type = column.val_type,  # Unification with OpenFisca Julia name.
-                    default_input_variables = step.get('default_input_variables', False),
-                    entity = column.entity,
-                    input_variables = [
-                        (variable_name, str(variable_period))
-                        for variable_name, variable_period in input_variables_infos
-                        ] if input_variables_infos else None,
-                    is_computed = step.get('is_computed', False),
-                    label = column.label if column.label != variable_name else None,
-                    name = variable_name,
-                    period = str(period) if period is not None else None,
-                    ))
-            simulations_variables_json.append(simulation_variables_json)
-            tracebacks_json.append(traceback_json)
-    else:
-        simulations_variables_json = None
-        tracebacks_json = None
+    simulations_variables_json = None
+    tracebacks_json = None
 
     response_data = dict(
         apiVersion = 1,

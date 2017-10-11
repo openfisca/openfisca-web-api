@@ -1,5 +1,10 @@
 # Changelog
 
+# 7.0.0
+
+* Deprecate and remove `trace` parameter in `/calculate` and `/simulate` routes.
+* Make API compatible with Core v19
+
 ## 6.2.2
 
 * Finish adapting to OpenFisca-Core 17.0.0
