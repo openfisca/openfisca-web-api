@@ -277,7 +277,7 @@ def test_calculate_with_reform():
     assert_equal(res.status_code, 200, res.body)
 
 
-def test_calculate_with_trace():
+def test_calculate_with_intermediate_variables():
     test_case = {
         'scenarios': [
             {
@@ -306,7 +306,7 @@ def test_calculate_with_trace():
                 'period': '2014',
                 },
             ],
-        'trace': True,
+        'intermediate_variables': True,
         'variables': ['irpp'],
         }
 
@@ -319,12 +319,7 @@ def test_calculate_with_trace():
     res = req.get_response(common.app)
     assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
-    tracebacks = res_body_json['tracebacks']
-    assert_is_instance(tracebacks, list)
-    first_scenario_tracebacks = tracebacks[0]
-    assert_is_instance(first_scenario_tracebacks, list)
-    first_traceback = first_scenario_tracebacks[0]
-    assert_is_instance(first_traceback, dict)
+    assert(res_body_json['value'][0]['familles'][0]['af_nbenf_fonc'])
 
 
 def test_calculate_with_wrong_input_variable_period():
