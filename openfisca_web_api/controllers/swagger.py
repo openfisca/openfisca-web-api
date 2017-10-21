@@ -5,6 +5,8 @@
 import datetime
 import pkg_resources
 
+from openfisca_core import columns
+
 from . import formula
 from .formula import default_period
 from .. import contexts, model, wsgihelpers
@@ -66,14 +68,15 @@ def build_metadata():
 def build_paths():
     return {
         '/{period}/' + name: {
-            'get': map_path_to_swagger(column)
+            'get': map_path_to_swagger(variable)
             }
-        for name, column in model.tax_benefit_system.column_by_name.iteritems()
-        if not column.is_input_variable()
+        for name, variable in model.tax_benefit_system.variables.iteritems()
+        if not variable.is_input_variable()
         }
 
 
-def map_path_to_swagger(column):
+def map_path_to_swagger(variable):
+    column = columns.make_column_from_variable(variable)
     column_json = column.to_json()
 
     result = map_path_base_to_swagger(column_json)
@@ -185,12 +188,13 @@ def map_parameters_to_swagger(column):
     input_variables, parameters = model.get_cached_input_variables_and_parameters(column)
 
     return [
-        map_parameter_to_swagger(model.tax_benefit_system.column_by_name[variable_name])
+        map_parameter_to_swagger(model.tax_benefit_system.variables[variable_name])
         for variable_name in input_variables
         ]
 
 
-def map_parameter_to_swagger(column):
+def map_parameter_to_swagger(variable):
+    column = columns.make_column_from_variable(variable)
     column_json = column.to_json()
 
     result = map_type_to_swagger(column_json.get('@type'))
@@ -209,7 +213,7 @@ def map_parameter_to_swagger(column):
 
 
 def get_default_value(column, column_json = None):
-    result = column.default
+    result = column.default_value
 
     if isinstance(result, datetime.date):
         result = '%s-%s-%s' % (result.year, result.month, result.day)

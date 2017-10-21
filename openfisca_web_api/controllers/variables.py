@@ -7,7 +7,7 @@
 import collections
 import datetime
 
-from openfisca_core import periods, simulations
+from openfisca_core import periods, simulations, columns
 
 from .. import conf, contexts, conv, environment, model, wsgihelpers
 
@@ -25,7 +25,7 @@ def api1_variables(req):
         )
 
     tax_benefit_system = model.tax_benefit_system
-    tax_benefit_system_variables_name = tax_benefit_system.column_by_name.keys()
+    tax_benefit_system_variables_name = tax_benefit_system.variables.keys()
 
     data, errors = conv.pipe(
         conv.struct(
@@ -64,9 +64,11 @@ def api1_variables(req):
     simulation = None
     variables_json = []
     for variable_name in data['names'] or tax_benefit_system_variables_name:
-        column = tax_benefit_system.column_by_name[variable_name]
+        variable = tax_benefit_system.variables[variable_name]
+        column = columns.make_column_from_variable(variable)
         variable_json = column.to_json()
-        variable_json['source_file_path'] = environment.get_relative_file_path(variable_json['source_file_path'])
+        if variable_json.get('source_file_path'):
+            variable_json['source_file_path'] = environment.get_relative_file_path(variable_json['source_file_path'])
         label = variable_json.get('label')
         if label is not None and label == variable_name:
             del variable_json['label']

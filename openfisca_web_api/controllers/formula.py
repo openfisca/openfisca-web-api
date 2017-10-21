@@ -7,7 +7,7 @@
 from datetime import datetime
 
 import numpy as np
-from openfisca_core import periods, simulations
+from openfisca_core import periods, simulations, columns
 from openfisca_core.taxbenefitsystems import VariableNotFound
 
 from .. import contexts, conv, model, wsgihelpers
@@ -111,7 +111,7 @@ On a server, just test what your library handles.
 
 def get_column_from_formula_name(formula_name, tax_benefit_system):
     try:
-        result = tax_benefit_system.get_column(formula_name, check_existence = True)
+        result = tax_benefit_system.get_variable(formula_name, check_existence = True)
     except VariableNotFound as exc:
         raise Exception(dict(
             code = 404,
@@ -143,7 +143,8 @@ def normalize(params, tax_benefit_system):
 
 
 def normalize_param(name, value, tax_benefit_system):
-    column = tax_benefit_system.get_column(name, check_existence = True)
+    variable = tax_benefit_system.get_variable(name, check_existence = True)
+    column = columns.make_column_from_variable(variable)
 
     result, error = conv.pipe(
         column.input_to_dated_python  # if column is not a date, this will be None and conv.pipe will be pass-through
@@ -231,7 +232,7 @@ def create_simulation(data, period, tax_benefit_system):
 
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
-        column = tax_benefit_system.column_by_name[column_name]
+        column = tax_benefit_system.variables[column_name]
         holder = result.get_or_new_holder(column_name)
 
         if period.unit == 'year':

@@ -97,8 +97,8 @@ def make_validate_variable(reforms, base_tax_benefit_system, reform_tax_benefit_
         if reforms is None:
             return value, None
         else:
-            is_valid = value in base_tax_benefit_system.column_by_name and \
-                value in reform_tax_benefit_system.column_by_name
+            is_valid = value in base_tax_benefit_system.variables and \
+                value in reform_tax_benefit_system.variables
             return value, None if is_valid else \
                 u'Variable "{}" must exist in both base and reform tax and benefit system'.format(value)
     return validate_variable
