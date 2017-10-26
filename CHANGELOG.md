@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.0
+
+* Declare the web API compatible with Core v19
+
 # 7.0.0
 
 * Deprecate and remove `trace` parameter in `/calculate` and `/simulate` routes.
