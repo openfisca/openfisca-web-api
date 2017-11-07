@@ -7,7 +7,7 @@
 import collections
 import datetime
 
-from openfisca_core import periods, simulations
+from openfisca_core import periods, simulations, columns
 
 from .. import contexts, conv, model, wsgihelpers
 
@@ -56,7 +56,7 @@ def api1_field(req):
                 variable = conv.pipe(
                     conv.empty_to_none,
                     conv.default(u'revenu_disponible'),
-                    conv.test_in(tax_benefit_system.column_by_name),
+                    conv.test_in(tax_benefit_system.variables),
                     ),
                 ),
             default = conv.noop,
@@ -80,9 +80,9 @@ def api1_field(req):
             )
 
     variable_name = data['variable']
-    column = tax_benefit_system.column_by_name[variable_name]
-    value_json = column.to_json()
-    if data['input_variables'] and not column.is_input_variable():
+    variable = tax_benefit_system.get_variable(variable_name)
+    value_json = columns.make_column_from_variable(variable).to_json()
+    if data['input_variables'] and not variable.is_input_variable():
         simulation = simulations.Simulation(
             period = periods.period(datetime.date.today().year),
             tax_benefit_system = tax_benefit_system,
@@ -92,7 +92,7 @@ def api1_field(req):
             get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
             with_input_variables_details = True,
             )
-    value_json['entity'] = column.entity.key  # Overwrite with symbol instead of key plural for compatibility.
+    value_json['entity'] = variable.entity.key  # Overwrite with symbol instead of key plural for compatibility.
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(

@@ -117,7 +117,7 @@ def test_map_type_to_swagger_enum():
 
 
 def test_map_parameter_to_swagger():
-    target_column = model.tax_benefit_system.column_by_name['revenus_du_capital']
+    target_column = model.tax_benefit_system.variables['revenus_du_capital']
 
     expected = {
         'name': u'revenus_du_capital',
@@ -132,7 +132,7 @@ def test_map_parameter_to_swagger():
 
 
 def test_map_enum_parameter_to_swagger():
-    target_column = model.tax_benefit_system.column_by_name['taille_entreprise']
+    target_column = model.tax_benefit_system.variables['taille_entreprise']
 
     expected = {
         'name': u'taille_entreprise',

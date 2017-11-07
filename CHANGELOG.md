@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.0
+
+* Make the web API compatible with Core v20
+
 ## 7.1.0
 
 * Declare the web API compatible with Core v19
