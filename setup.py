@@ -61,6 +61,7 @@ setup(
         'PasteDeploy',
         'WebError >= 0.10',
         'WebOb >= 1.1',
+        'enum34 >= 1.1.6',
         ],
     message_extractors = {'openfisca_web_api': [
         ('**.py', 'python', None),
