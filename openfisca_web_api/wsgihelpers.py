@@ -116,6 +116,7 @@ def respond_json(ctx, data, code = None, headers = [], json_dumps_default = None
     #     text = json.dumps(data, encoding = 'utf-8', ensure_ascii = False, indent = 2)
     # except UnicodeDecodeError:
     #     text = json.dumps(data, ensure_ascii = True, indent = 2)
+
     if json_dumps_default is None:
         text = json.dumps(data)
     else:

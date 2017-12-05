@@ -76,16 +76,16 @@ def test_map_path_base_to_swagger_with_enum():
 
     actual = map_path_base_to_swagger({
         "@type": "Enumeration",
-        "default": "0",
+        "default": "non_pertinent",
         "entity": "ind",
         "label": "Catégorie de taille d'entreprise (pour calcul des cotisations sociales)",
         "name": "taille_entreprise",
         "labels": {
-            "0": "Non pertinent",
-            "1": "Moins de 10 salariés",
-            "2": "De 10 à 19 salariés",
-            "3": "De 20 à 249 salariés",
-            "4": "Plus de 250 salariés"
+            "non_pertinent": "Non pertinent",
+            "moins_de_10": "Moins de 10 salariés",
+            "de_10_a_19": "De 10 à 19 salariés",
+            "de_20_a_249": "De 20 à 249 salariés",
+            "plus_de_250": "Plus de 250 salariés"
             }
         })
 
@@ -136,17 +136,16 @@ def test_map_enum_parameter_to_swagger():
 
     expected = {
         'name': u'taille_entreprise',
-        'description': u"Cat\xe9gorie de taille d'entreprise",
         'in': 'query',
+        'default': 'non_pertinent',
+        'description': u"Cat\xe9gorie de taille d'entreprise",
         'type': 'string',
-        'enum': [
-            u'Non pertinent',
-            u'Moins de 10 salariés',
-            u'De 10 à 19 salariés',
-            u'De 20 à 249 salariés',
-            u'Plus de 250 salariés',
-            ],
-        'default': u'Non pertinent',
+        'enum': {
+            'non_pertinent': u"Non pertinent",
+            'moins_de_10': u"Moins de 10 salariés",
+            'de_10_a_19': u"De 10 à 19 salariés",
+            'de_20_a_249': u"De 20 à 249 salariés",
+            'plus_de_250': u"Plus de 250 salariés"
+            },
         }
-
     assert_equal(map_parameter_to_swagger(target_column), expected)
