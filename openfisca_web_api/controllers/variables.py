@@ -67,6 +67,14 @@ def api1_variables(req):
         variable = tax_benefit_system.variables[variable_name]
         column = columns.make_column_from_variable(variable)
         variable_json = column.to_json()
+        # This part checks that no enum tries to go through the API
+        if 'cerfa_field' in variable_json.keys():
+            cerfa = variable_json['cerfa_field']
+            for key in cerfa:
+                from enum import Enum
+                if isinstance(key, Enum):
+                    cerfa[key.name] = cerfa[key]
+                    del cerfa[key]
         if variable_json.get('source_file_path'):
             variable_json['source_file_path'] = environment.get_relative_file_path(variable_json['source_file_path'])
         label = variable_json.get('label')
@@ -94,6 +102,7 @@ def api1_variables(req):
         )
     if hasattr(tax_benefit_system, 'CURRENCY'):
         response_dict['currency'] = tax_benefit_system.CURRENCY
+
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(response_dict.iteritems())),
         headers = headers,

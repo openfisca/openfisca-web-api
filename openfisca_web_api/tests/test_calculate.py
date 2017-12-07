@@ -87,7 +87,7 @@ def test_calculate_with_axes():
                     {
                         "id": "Personne Principale",
                         "salaire_imposable": 0,
-                        "statut_marital": 2
+                        "statut_marital": 'celibataire'
                         },
                     {
                         "id": "Personne Conjoint",
@@ -170,8 +170,8 @@ def test_calculate_with_labels():
     assert_equal(res.status_code, 200, res.body)
     res_body_json = json.loads(res.body)
     individus = res_body_json['value'][0]['individus']
-    assert_equal(individus[0]['categorie_salarie']['2013-01'], 0)
-    assert_equal(individus[1]['categorie_salarie']['2013-01'], 1)
+    assert_equal(individus[0]['categorie_salarie']['2013-01'], 'prive_non_cadre')
+    assert_equal(individus[1]['categorie_salarie']['2013-01'], 'prive_cadre')
 
     # Then test returning labels of enumerations.
     test_case['labels'] = True

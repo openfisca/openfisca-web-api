@@ -10,7 +10,7 @@ from openfisca_core import columns
 from . import formula
 from .formula import default_period
 from .. import contexts, model, wsgihelpers
-
+from enum import Enum
 
 PACKAGE_VERSION = pkg_resources.get_distribution('OpenFisca-Web-API').version
 SWAGGER_BASE_PATH = '/api/2/formula'
@@ -198,9 +198,8 @@ def map_parameter_to_swagger(variable):
     column_json = column.to_json()
 
     result = map_type_to_swagger(column_json.get('@type'))
-
     if column_json.get('labels'):
-        result['enum'] = column_json.get('labels').values()
+        result['enum'] = {i[0]: i[1] for i in column_json.get('labels').items()}
 
     result.update({
         'name': column_json.get('name'),
@@ -214,7 +213,8 @@ def map_parameter_to_swagger(variable):
 
 def get_default_value(column, column_json = None):
     result = column.default_value
-
+    if isinstance(column.default_value, Enum):
+        return column.default_value.name
     if isinstance(result, datetime.date):
         result = '%s-%s-%s' % (result.year, result.month, result.day)
     elif column_json.get('labels'):  # the default value is actually the key to the array of allowed values

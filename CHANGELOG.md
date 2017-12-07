@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.0
+
+* Use a string instead of an int to indicate an Enum item in the JSON request and response
+* Make the web API compatible with Core v21
+
 ## 7.2.0
 
 * Make the web API compatible with Core v20
