@@ -24,6 +24,7 @@ deploy:
     on:
       branch: master
   - provider: pypi
+    skip_cleanup: true
     user: openfisca-bot
     password:
       secure: Ou0bDDMEsy08YkkD3soCjftZT6IqAGZQO7oE0iTJOY2jw4Zy+y5RHAyignSCnpvFZNVDc1+bG+BpwAaZ1bKqa0Be57ktK81bo/k4kf+OwCNT6Et2S4i4woLoDRwPjgMOn3/dmIE7H19wwuTQo4AB0WcdgMcBreyO+k4IvcYzQjU=
