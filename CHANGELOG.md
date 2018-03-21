@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.1.0
+
+* Declare package compatible with core v22
+
 ## 8.0
 
 * Use a string instead of an int to indicate an Enum item in the JSON request and response
@@ -21,7 +25,7 @@
 ## 6.2.2
 
 * Finish adapting to OpenFisca-Core 17.0.0
-  - One renaming had not been applied 
+  - One renaming had not been applied
 
 ## 6.2.1
 
