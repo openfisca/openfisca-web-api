@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.1.1
+
+* Remove explicit dependency towards numpy
+
 ## 8.1.0
 
 * Declare package compatible with core v22
