@@ -207,8 +207,10 @@ def respond(req, version, data, params):
 
 
 def compute(formula_name, simulation):
-    resulting_dated_holder = simulation.compute(formula_name, simulation.period)
-    return resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
+    array = simulation.calculate(formula_name, simulation.period)
+    column = columns.make_column_from_variable(simulation.tax_benefit_system.get_variable(formula_name))
+    transform_dated_value_to_json = column.transform_dated_value_to_json
+    return transform_dated_value_to_json(array.tolist()[0])
 
 
 def create_simulation(data, period, tax_benefit_system):
@@ -233,7 +235,7 @@ def create_simulation(data, period, tax_benefit_system):
     # Inject all variables from query string into arrays.
     for column_name, value in data.iteritems():
         column = tax_benefit_system.variables[column_name]
-        holder = result.get_or_new_holder(column_name)
+        holder = result.get_holder(column_name)
 
         if period.unit == 'year':
             holder.put_in_cache(np.array([value], dtype = column.dtype), period)
