@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.2.0
+
+* Adapt to Core v23
+
 ## 8.1.1
 
 * Remove explicit dependency towards numpy
