@@ -5,9 +5,8 @@
 
 
 import collections
-import datetime
 
-from openfisca_core import periods, simulations, columns
+from openfisca_core import columns
 
 from .. import contexts, conv, model, wsgihelpers
 
@@ -82,16 +81,6 @@ def api1_field(req):
     variable_name = data['variable']
     variable = tax_benefit_system.get_variable(variable_name)
     value_json = columns.make_column_from_variable(variable).to_json()
-    if data['input_variables'] and not variable.is_input_variable():
-        simulation = simulations.Simulation(
-            period = periods.period(datetime.date.today().year),
-            tax_benefit_system = tax_benefit_system,
-            )
-        holder = simulation.get_or_new_holder(variable_name)
-        value_json['formula'] = holder.formula.to_json(
-            get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
-            with_input_variables_details = True,
-            )
     value_json['entity'] = variable.entity.key  # Overwrite with symbol instead of key plural for compatibility.
 
     return wsgihelpers.respond_json(ctx,

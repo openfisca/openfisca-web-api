@@ -86,10 +86,6 @@ def api1_variables(req):
                     period = periods.period(datetime.date.today().year),
                     tax_benefit_system = model.tax_benefit_system,
                     )
-            holder = simulation.get_or_new_holder(variable_name)
-            variable_json['formula'] = holder.formula.to_json(
-                get_input_variables_and_parameters = model.get_cached_input_variables_and_parameters,
-                )
         variables_json.append(variable_json)
 
     response_dict = dict(
