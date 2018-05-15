@@ -2,7 +2,7 @@
 
 ## This package is deprecated
 
-**The new OpenFisca Web API is now packaged in [OpenFisca-Core](https://github.com/openfisca/openfisca-core).**  
+**The new OpenFisca Web API is now packaged in [OpenFisca-Core](https://github.com/openfisca/openfisca-core).**
 **This package isn't maintained anymore.**
 
 The aim of this package was to provide OpenFisca information and computations through a web interface, without installing anything locally.
@@ -10,6 +10,11 @@ The aim of this package was to provide OpenFisca information and computations th
 However, after a few years of existence, it appeared:
 * That versioning OpenFisca API and the Core module apart was difficult to maintain
 * That this API endpoints needed to be improved to match users experiences
+
+This final version (`8.2.0`) is known to be compatible with OpenFisca-Core `23.0.1` and OpenFisca-France `21.9.1`.
+
+This package will not be adapted to further versions of OpenFisca-Core.
+
 
 ## Introduction
 
